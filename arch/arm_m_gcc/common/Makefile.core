@@ -132,7 +132,9 @@ endif
 #  オフセットファイル生成のための定義
 #
 ifeq ($(ARM_ARCH),ARMV6M)
-	TARGET_OFFSET_TRB = $(COREDIR)/core_offset_v6m.trb
+	# ARMv6-M用テンプレートは未変換（.trbは削除済み．必要時は上流から
+	# 取得して.py変換すること）
+	TARGET_OFFSET_TRB = $(COREDIR)/core_offset_v6m.py
 else
 	TARGET_OFFSET_TRB = $(COREDIR)/core_offset.py
 endif

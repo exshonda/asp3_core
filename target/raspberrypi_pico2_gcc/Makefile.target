@@ -89,8 +89,8 @@ endif
 #
 cfg1_out.timestamp: $(TARGETDIR)/target_timer.cfg
 offset.timestamp: 
-kernel_cfg.timestamp: $(TARGETDIR)/target_kernel.trb
-check.timestamp: $(TARGETDIR)/target_check.trb
+kernel_cfg.timestamp: $(TARGETDIR)/target_kernel.py
+check.timestamp: $(TARGETDIR)/target_check.py
 
 #
 # リンカスクリプトの定義
