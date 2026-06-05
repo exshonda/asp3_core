@@ -20,6 +20,8 @@
 
 #ifdef TOPPERS_OMIT_TECS
 
+#include "mps2_an521.h"
+
 /*
  *  起動メッセージのターゲットシステム名
  */
@@ -29,6 +31,28 @@
  *  システムログの低レベル出力のための文字出力
  */
 extern void target_fput_log(char c);
+
+/*
+ *  シリアルポートの数
+ */
+#define TNUM_PORT		1		/* サポートするシリアルポートの数 */
+
+/*
+ *  SIOドライバで使用するUARTに関する設定
+ */
+#define SIO_UART_BASE		MPS2_AN521_UART0_BASE	/* UARTのベース番地 */
+#define SIO_UART_BAUDRATE	115200U					/* ボーレート */
+#define SIO_UART_BAUDDIV	(CPU_CLOCK_HZ / SIO_UART_BAUDRATE)
+												/* ボーレート分周比の設定値 */
+
+/*
+ *  SIO割込みを登録するための定義（combined割込みを使用）
+ */
+#define INTNO_SIO		(MPS2_AN521_UART0_COMBINED_IRQn + 16)
+												/* UART割込み番号 */
+#define ISRPRI_SIO		1						/* UART ISR優先度 */
+#define INTPRI_SIO		(-2)					/* UART割込み優先度 */
+#define INTATR_SIO		TA_NULL					/* UART割込み属性 */
 
 /*
  *  低レベル出力で使用する SIO ポート

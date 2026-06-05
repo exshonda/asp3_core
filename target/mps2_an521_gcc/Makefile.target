@@ -51,6 +51,13 @@ KERNEL_ASMOBJS := $(KERNEL_ASMOBJS) start.o
 KERNEL_COBJS := $(KERNEL_COBJS) target_kernel_impl.o
 
 #
+#  システムサービスに関する定義（非TECS版）
+#
+ifdef OMIT_TECS
+SYSSVC_COBJS := $(SYSSVC_COBJS) target_serial.o cmsdk_uart.o
+endif
+
+#
 #  使用するタイマ
 #
 ifeq ($(KERNEL_TIMER), SYSTICK)
