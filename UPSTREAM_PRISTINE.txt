@@ -1,0 +1,39 @@
+# 上流TOPPERS/ASP3から一切変更していないファイルの一覧。
+# ここに載るファイルは、上流マージ時に新バージョンで上書き更新してよい。
+# DIVERGENCE_MAP.md に載っていないファイルはすべてここに分類される。
+#
+# 運用：上流ファイルに手を入れたら、この一覧から削除して DIVERGENCE_MAP.md へ移すこと。
+
+# --- kernel コア（編集禁止） ---
+kernel/task.c
+kernel/task_manage.c
+kernel/task_refer.c
+kernel/task_sync.c
+kernel/task_except.c
+kernel/semaphore.c
+kernel/eventflag.c
+kernel/dataqueue.c
+kernel/pridataq.c
+kernel/mailbox.c
+kernel/mempfix.c
+kernel/time_event.c
+kernel/time_manage.c
+kernel/wait.c
+kernel/startup.c
+kernel/interrupt.c
+kernel/exception.c
+
+# --- include（編集禁止） ---
+include/kernel.h
+include/itron.h
+include/t_stddef.h
+include/t_syslog.h
+include/sil.h
+
+# --- library（編集禁止） ---
+library/log_output.c
+library/vasyslog.c
+library/strerror.c
+library/t_perror.c
+
+# （実際のファイル構成に合わせて随時更新すること）

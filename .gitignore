@@ -1,0 +1,31 @@
+# ビルド成果物
+build/
+*.elf
+*.bin
+*.hex
+*.uf2
+*.map
+*.o
+*.a
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# compile_commands（生成物・symlinkはコミットしない）
+/compile_commands.json
+
+# テスト結果
+*.tap
+results_*.xml
+
+# エディタ
+.vscode/settings.json
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db

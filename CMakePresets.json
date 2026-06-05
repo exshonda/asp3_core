@@ -1,0 +1,78 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "_base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "posix",
+      "inherits": "_base",
+      "displayName": "POSIX CLI (host simulation)",
+      "description": "非Pico：ASP3_TARGET直接指定。ハードなし・最速確認/TAP用",
+      "cacheVariables": {
+        "ASP3_TARGET": "linux_gcc"
+      }
+    },
+    {
+      "name": "m33-qemu",
+      "inherits": "_base",
+      "displayName": "Cortex-M33 / QEMU (mps2-an521)",
+      "description": "非Pico：ASP3_TARGET直接指定。ハードなし・ARMv8-M確認用",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
+      "cacheVariables": {
+        "ASP3_TARGET": "mps2_an521_gcc"
+      }
+    },
+    {
+      "name": "stm32mp257-a35",
+      "inherits": "_base",
+      "displayName": "STM32MP257F-DK (Cortex-A35)",
+      "description": "非Pico：ASP3_TARGET直接指定。ARMv8-Aベアメタル実機",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-a35.cmake",
+      "cacheVariables": {
+        "ASP3_TARGET": "stm32mp257f_dk_arm64_gcc"
+      }
+    },
+    {
+      "name": "pico2-m33",
+      "inherits": "_base",
+      "displayName": "Raspberry Pi PICO2 (Cortex-M33)",
+      "description": "Pico：PICO_PLATFORMで選択（エントリ.cmakeがASP3_TARGETへ対応付け）",
+      "cacheVariables": {
+        "PICO_BOARD": "pico2",
+        "PICO_PLATFORM": "rp2350-arm-s"
+      }
+    },
+    {
+      "name": "pico2-riscv",
+      "inherits": "_base",
+      "displayName": "Raspberry Pi PICO2 (RISC-V Hazard3)",
+      "description": "Pico：PICO_PLATFORMで選択。RP2350 RISC-V実機",
+      "cacheVariables": {
+        "PICO_BOARD": "pico2",
+        "PICO_PLATFORM": "rp2350-riscv"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "posix",          "configurePreset": "posix" },
+    { "name": "m33-qemu",       "configurePreset": "m33-qemu" },
+    { "name": "stm32mp257-a35", "configurePreset": "stm32mp257-a35" },
+    { "name": "pico2-m33",      "configurePreset": "pico2-m33" },
+    { "name": "pico2-riscv",    "configurePreset": "pico2-riscv" }
+  ],
+  "testPresets": [
+    {
+      "name": "posix",
+      "configurePreset": "posix",
+      "output": { "outputOnFailure": true }
+    }
+  ]
+}

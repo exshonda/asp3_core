@@ -1,0 +1,28 @@
+# .clangd — クロスコンパイル時のclangd補正
+# ルートに ".clangd" として配置する（このファイルは clangd_config として出力）
+#
+# 目的：compile_commands.json の arm-none-eabi-gcc 由来のフラグを
+#       clangd が解釈できるよう補正し、組み込みヘッダのinclude解決を効かせる。
+
+CompileFlags:
+  # クロスコンパイラを認識させる（query-driverと併用推奨）
+  Compiler: arm-none-eabi-gcc
+  Add:
+    - "--target=arm-none-eabi"
+  Remove:
+    # clangが解釈できないGCC固有フラグを除去
+    - "-mfpu=*"
+    - "-mfloat-abi=*"
+    - "-mcpu=*"
+    - "-mthumb"
+    - "-march=*"
+    - "-mabi=*"
+
+Diagnostics:
+  # 組み込み特有の未使用警告等を抑制（必要に応じて調整）
+  Suppress:
+    - "unknown_argument"
+
+# 注意：clangd 起動オプションにも以下を付与すること
+#   clangd --query-driver="/usr/bin/arm-none-eabi-gcc*"
+# VS Code の場合 settings.json の clangd.arguments に追加する。

@@ -1,0 +1,210 @@
+# ==============================================================
+# TOPPERS/ASP3 Core — ターゲットハードウェア記述
+# target_spec.yaml
+#
+# 使い方：
+#   1. このファイルを target/<target_name>/target_spec.yaml にコピー
+#   2. ターゲットのデータシートを参照しながら全フィールドを記入
+#   3. AIに渡して target/ 配下のファイルを生成させる
+#      「target_spec.yamlとPORTING_GUIDE.mdを読んで移植を開始せよ」
+#
+# フィールドを Unknown のまま残してよい場合：
+#   AIが推定・質問するが、メモリマップ・タイマ・シリアルは必須。
+# ==============================================================
+
+# --------------------------------------------------------------
+# ターゲット基本情報
+# --------------------------------------------------------------
+target:
+  name: ""                 # ディレクトリ名（例: rp2350-arm-s_pico_sdk）
+  display_name: ""         # 表示名（例: Raspberry Pi PICO2 Cortex-M33）
+  vendor: ""               # チップベンダー（例: raspberrypi, st, renesas, nxp）
+  chip: ""                 # チップ型番（例: RP2350, STM32MP257F, RZ/A3UL）
+  board: ""                # ボード名（例: PICO2, STM32MP257F-DK）
+  sdk: ""                  # 使用SDK（pico_sdk / fsp / hal_ll / cmsis / bare）
+
+# --------------------------------------------------------------
+# アーキテクチャ
+# --------------------------------------------------------------
+architecture:
+  isa: ""                  # armv8-m / armv8-a / armv7-m / riscv32
+  core: ""                 # cortex-m33 / cortex-a35 / cortex-m4 / hazard3
+  endian: little           # little / big
+
+  # FPU / 保護機能
+  fpu: false               # FPU搭載（true/false）
+  fpu_type: ""             # fpv5-d16 / fpv4-sp-d16 / fpv5-sp-d16（FPUあり時）
+  mpu: false               # MPU搭載
+  trustzone: false         # TrustZone搭載（ARMv8-M/A）
+
+  # ARM M-profile 固有
+  nvic_prio_bits: 0        # NVICプライオリティビット数（例: 3=8段階, 8=256段階）
+  num_irq: 0               # 外部割り込み（IRQ）数
+
+  # ARM A-profile 固有
+  el_boot: 0               # ブート時のEL（1=EL1, 3=EL3）
+  has_vbar: false          # VBARレジスタ有無（ベクタテーブルリロケーション）
+  gic_version: 0           # GICバージョン（2 / 3）
+  gic_dist_base: 0x0       # GICディストリビュータベースアドレス
+  gic_rdist_base: 0x0      # GICv3 再配置ディストリビュータベースアドレス
+  gic_cpu_base: 0x0        # GICv2 CPUインタフェースベースアドレス
+
+  # RISC-V 固有
+  misa: ""                 # ISA文字列（例: rv32imac）
+  plic_base: 0x0           # PLICベースアドレス
+  clint_base: 0x0          # CLINTベースアドレス
+
+# --------------------------------------------------------------
+# メモリマップ
+# （データシートの Memory Map セクションを参照すること）
+# --------------------------------------------------------------
+memory:
+  flash:
+    start: 0x0             # フラッシュ/ROM 開始アドレス（XIPアドレス）
+    size: 0x0              # フラッシュサイズ（バイト、例: 0x200000=2MB）
+
+  sram:
+    start: 0x0             # SRAM 開始アドレス
+    size: 0x0              # SRAMサイズ（バイト、例: 0x80000=512KB）
+
+  # 追加メモリ領域（あれば記載）
+  extra_sram:
+    - name: ""             # 領域名（例: DTCM, SRAM_B）
+      start: 0x0
+      size: 0x0
+
+  vector_table: 0x0        # ベクタテーブルアドレス（通常=フラッシュ先頭）
+  stack_top: 0x0           # 初期スタックトップ（0=SRAM末尾を自動計算）
+
+  kernel_data:             # カーネルデータ配置（変更不要な場合はSRAMと同じ）
+    start: 0x0             # 0=SRAMと同じ
+    size: 0x0              # 0=全SRAM
+
+# --------------------------------------------------------------
+# クロック
+# --------------------------------------------------------------
+clock:
+  system_hz: 0             # システムクロック周波数（Hz）
+  peripheral_hz: 0         # ペリフェラルクロック（0=system_hzと同じ）
+  notes: ""                # PLL設定等の補足（例: "PLL configured by SDK"）
+
+# --------------------------------------------------------------
+# tick タイマー
+# （カーネルtick割り込みを生成するタイマ）
+# --------------------------------------------------------------
+tick_timer:
+  type: ""                 # systick / gpt / tim / mtu / custom
+                           # systick: Cortex-M内蔵SysTick（最優先で選ぶこと）
+  peripheral: ""           # タイマペリフェラル名（例: TIM2, GPT0）
+  base_address: 0x0        # タイマベースアドレス（SysTick=0xE000E010）
+  source_hz: 0             # タイマソースクロック（0=system_hz）
+  tick_hz: 1000            # カーネルtick周波数（通常1000=1ms）
+  irq_num: -1              # タイマ割り込み番号（SysTick=-1固定）
+  irq_priority: 255        # タイマ割り込みプライオリティ（最低優先度推奨）
+
+  # 高分解能タイマ（HRT）
+  # ASP3はtickレスHRTを使用。tick_timerと同じペリフェラルまたは別のもの。
+  hrt_type: ""             # systick / dwt / custom（SysTick推奨）
+  hrt_freq_hz: 0           # HRTカウント周波数（0=system_hz）
+
+# --------------------------------------------------------------
+# シリアル出力
+# （syslog/デバッグ出力用UART）
+# --------------------------------------------------------------
+serial:
+  type: ""                 # uart / usb_cdc / semihosting / rtt / lpuart
+                           # semihosting: QEMUまたはデバッガ経由（ハード不要）
+  peripheral: ""           # ペリフェラル名（例: UART0, USART3, SCI0）
+  base_address: 0x0        # UARTベースアドレス
+  tx_pin: -1               # TXピン番号（-1=SDK任せ / ピン固定の場合は番号）
+  rx_pin: -1               # RXピン番号
+  baud: 115200             # ボーレート
+  clock_hz: 0              # UARTソースクロック（0=peripheral_hz）
+  irq_num: -1              # UART割り込み番号（-1=ポーリング使用）
+  irq_priority: 192        # UART割り込みプライオリティ
+
+# --------------------------------------------------------------
+# 参照実装
+# （AIがコード生成時に参照すべき既存ターゲット）
+# --------------------------------------------------------------
+reference:
+  closest_target: ""       # 最も近い実装（例: mps2_an521_gcc, rp2350-arm-s_pico_sdk）
+  arch_dir: ""             # 使用するarch/配下ディレクトリ（例: arm_gcc, riscv_gcc）
+  context_switch_ref: ""   # コンテキストスイッチの参照実装
+  notes: ""                # 既存実装との差異・特記事項
+
+# --------------------------------------------------------------
+# AIへの補足指示
+# （移植時にAIに伝えたい追加情報）
+# --------------------------------------------------------------
+ai_notes: |
+  # ここに自由記述
+  # 例：
+  # - ブート後にSDKがシステムクロックを設定するためclock.system_hzはSDK依存
+  # - ベクタテーブルはRAMに再配置が必要（フラッシュは読み取り専用ではない）
+  # - tick_timerはSDK提供のadd_repeating_timer_usを使用すること
+
+---
+# ==============================================================
+# 記入例：Raspberry Pi PICO2（Cortex-M33 / RP2350）
+# ==============================================================
+# target:
+#   name: rp2350-arm-s_pico_sdk
+#   display_name: Raspberry Pi PICO2 (Cortex-M33)
+#   vendor: raspberrypi
+#   chip: RP2350
+#   board: PICO2
+#   sdk: pico_sdk
+#
+# architecture:
+#   isa: armv8-m
+#   core: cortex-m33
+#   endian: little
+#   fpu: true
+#   fpu_type: fpv5-sp-d16
+#   mpu: true
+#   trustzone: true
+#   nvic_prio_bits: 3
+#   num_irq: 26
+#
+# memory:
+#   flash:
+#     start: 0x10000000
+#     size: 0x200000       # 2MB
+#   sram:
+#     start: 0x20000000
+#     size: 0x80000        # 512KB
+#   vector_table: 0x10000000
+#   stack_top: 0x0         # SRAM末尾を自動計算
+#
+# clock:
+#   system_hz: 125000000
+#   notes: "SDK初期化後に125MHzに設定される"
+#
+# tick_timer:
+#   type: custom            # Pico SDK の add_repeating_timer_us を使用
+#   peripheral: sdk_timer
+#   tick_hz: 1000
+#   irq_priority: 255
+#   hrt_type: systick
+#   hrt_freq_hz: 125000000
+#
+# serial:
+#   type: uart
+#   peripheral: UART0
+#   base_address: 0x40034000
+#   tx_pin: 0
+#   rx_pin: 1
+#   baud: 115200
+#   notes: "Pico SDKのuart_init()で初期化"
+#
+# reference:
+#   closest_target: mps2_an521_gcc
+#   arch_dir: arm_gcc
+#   context_switch_ref: arch/arm_gcc/common/core_support.S
+#   notes: "SysTick以外はSDKラッパー経由で制御"
+#
+# ai_notes: |
+#   - SDK初期化はmain()より前にstdio_init_all()で実施済みと仮定
+#   - 割り込みはSDKのirq_set_exclusive_handler()で登録すること
+#   - RP2350のデュアルコアのうちCore0のみ使用（Core1はsleep_run_from_xosc()で停止）
