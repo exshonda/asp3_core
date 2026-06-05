@@ -36,58 +36,133 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: syslog.h 1437 2020-05-20 12:12:16Z ertl-hiro $
+ *  $Id: target_serial.c 1437 2020-05-20 12:12:16Z ertl-hiro $
  */
 
 /*
- *		システムログ機能
+ *		シリアルインタフェースドライバのターゲット依存部（CT11MPCore用）
+ *		（非TECS版専用）
  */
 
-#ifndef TOPPERS_SYSLOG_H
-#define TOPPERS_SYSLOG_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <t_stddef.h>
+#include <kernel.h>
 #include <t_syslog.h>
+#include "target_syssvc.h"
+#include "target_serial.h"
 
 /*
- *  ログ情報の重要度のビットマップを作るためのマクロ
+ *  SIOドライバの初期化
  */
-#define LOG_MASK(prio)		(1U << (prio))
-#define LOG_UPTO(prio)		((1U << ((prio) + 1)) - 1)
-
-/*
- *  パケット形式の定義
- */
-typedef struct t_syslog_rlog {
-	uint_t	count;		/* ログバッファ中のログの数 */
-	uint_t	lost;		/* 失われたログの数 */
-	uint_t	logmask;	/* ログバッファに記録すべき重要度 */
-	uint_t	lowmask;	/* 低レベル出力すべき重要度 */
-} T_SYSLOG_RLOG;
-
-/*
- *  システムログ機能のサービスコール
- */
-extern ER		syslog_wri_log(uint_t prio, const SYSLOG *p_syslog) throw();
-extern ER_UINT	syslog_rea_log(SYSLOG *p_syslog) throw();
-extern ER		syslog_msk_log(uint_t logmask, uint_t lowmask) throw();
-extern ER		syslog_ref_log(T_SYSLOG_RLOG *pk_rlog) throw();
-extern ER		syslog_fls_log(void) throw();
-
-#ifdef TOPPERS_OMIT_TECS
-/*
- *  システムログ機能の初期化
- */
-extern void	syslog_initialize(EXINF exinf) throw();
-
-#endif /* TOPPERS_OMIT_TECS */
-
-#ifdef __cplusplus
+void
+sio_initialize(EXINF exinf)
+{
+	uart_pl011_initialize();
 }
-#endif
 
-#endif /* TOPPERS_SYSLOG_H */
+/*
+ *  SIOドライバの終了処理
+ */
+void
+sio_terminate(EXINF exinf)
+{
+	uart_pl011_terminate();
+}
+
+/*
+ *  SIOの割込みサービスルーチン
+ */
+void
+sio_isr(EXINF exinf)
+{
+	uart_pl011_isr((ID) exinf);
+}
+
+/*
+ *  SIOポートのオープン
+ */
+SIOPCB *
+sio_opn_por(ID siopid, EXINF exinf)
+{
+	SIOPCB	*p_siopcb;
+
+	/*
+	 *  デバイス依存のオープン処理
+	 */
+	p_siopcb = uart_pl011_opn_por(siopid, exinf);
+
+	/*
+	 *  SIOの割込みマスクを解除する．
+	 */
+	(void) ena_int(INTNO_SIO);
+	return(p_siopcb);
+}
+
+/*
+ *  SIOポートのクローズ
+ */
+void
+sio_cls_por(SIOPCB *p_siopcb)
+{
+	/*
+	 *  デバイス依存のクローズ処理
+	 */
+	uart_pl011_cls_por(p_siopcb);
+
+	/*
+	 *  SIOの割込みをマスクする．
+	 */
+	(void) dis_int(INTNO_SIO);
+}
+
+/*
+ *  SIOポートへの文字送信
+ */
+bool_t
+sio_snd_chr(SIOPCB *p_siopcb, char c)
+{
+	return(uart_pl011_snd_chr(p_siopcb, c));
+}
+
+/*
+ *  SIOポートからの文字受信
+ */
+int_t
+sio_rcv_chr(SIOPCB *p_siopcb)
+{
+	return(uart_pl011_rcv_chr(p_siopcb));
+}
+
+/*
+ *  SIOポートからのコールバックの許可
+ */
+void
+sio_ena_cbr(SIOPCB *p_siopcb, uint_t cbrtn)
+{
+	uart_pl011_ena_cbr(p_siopcb, cbrtn);
+}
+
+/*
+ *  SIOポートからのコールバックの禁止
+ */
+void
+sio_dis_cbr(SIOPCB *p_siopcb, uint_t cbrtn)
+{
+	uart_pl011_dis_cbr(p_siopcb, cbrtn);
+}
+
+/*
+ *  SIOポートからの送信可能コールバック
+ */
+void
+uart_pl011_irdy_snd(EXINF exinf)
+{
+	sio_irdy_snd(exinf);
+}
+
+/*
+ *  SIOポートからの受信通知コールバック
+ */
+void
+uart_pl011_irdy_rcv(EXINF exinf)
+{
+	sio_irdy_rcv(exinf);
+}

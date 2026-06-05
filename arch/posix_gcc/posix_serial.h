@@ -1,10 +1,9 @@
 /*
- *  TOPPERS Software
- *      Toyohashi Open Platform for Embedded Real-Time Systems
+ *  TOPPERS/ASP Kernel
+ *      Toyohashi Open Platform for Embedded Real-Time Systems/
+ *      Advanced Standard Profile Kernel
  * 
- *  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
- *                              Toyohashi Univ. of Technology, JAPAN
- *  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
+ *  Copyright (C) 2006-2022 by Embedded and Real-Time Systems Laboratory
  *              Graduate School of Information Science, Nagoya Univ., JAPAN
  * 
  *  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -36,58 +35,95 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: syslog.h 1437 2020-05-20 12:12:16Z ertl-hiro $
+ *  $Id: posix_serial.h 1709 2022-10-18 14:11:45Z ertl-hiro $
  */
 
 /*
- *		システムログ機能
+ *		シリアルインタフェースドライバのターゲット依存部（POSIX用）
  */
 
-#ifndef TOPPERS_SYSLOG_H
-#define TOPPERS_SYSLOG_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef TOPPERS_POSIX_SERIAL_H
+#define TOPPERS_POSIX_SERIAL_H
 
 #include <t_stddef.h>
-#include <t_syslog.h>
 
 /*
- *  ログ情報の重要度のビットマップを作るためのマクロ
+ *  SIOポート数の定義
  */
-#define LOG_MASK(prio)		(1U << (prio))
-#define LOG_UPTO(prio)		((1U << ((prio) + 1)) - 1)
+#define TNUM_SIOP		1		/* サポートするSIOポートの数 */
 
 /*
- *  パケット形式の定義
+ *  SIO割込みを登録するための定義
  */
-typedef struct t_syslog_rlog {
-	uint_t	count;		/* ログバッファ中のログの数 */
-	uint_t	lost;		/* 失われたログの数 */
-	uint_t	logmask;	/* ログバッファに記録すべき重要度 */
-	uint_t	lowmask;	/* 低レベル出力すべき重要度 */
-} T_SYSLOG_RLOG;
+#define ISRPRI_SIO		1		/* SIOの割込みサービスルーチンのISR優先度 */
+
+#ifndef TOPPERS_MACRO_ONLY
 
 /*
- *  システムログ機能のサービスコール
+ *  SIOポート管理ブロックの定義
  */
-extern ER		syslog_wri_log(uint_t prio, const SYSLOG *p_syslog) throw();
-extern ER_UINT	syslog_rea_log(SYSLOG *p_syslog) throw();
-extern ER		syslog_msk_log(uint_t logmask, uint_t lowmask) throw();
-extern ER		syslog_ref_log(T_SYSLOG_RLOG *pk_rlog) throw();
-extern ER		syslog_fls_log(void) throw();
+typedef struct sio_port_control_block	SIOPCB;
 
-#ifdef TOPPERS_OMIT_TECS
 /*
- *  システムログ機能の初期化
+ *  コールバックルーチンの識別番号
  */
-extern void	syslog_initialize(EXINF exinf) throw();
+#define SIO_RDY_SND		1U		/* 送信可能コールバック */
+#define SIO_RDY_RCV		2U		/* 受信通知コールバック */
 
-#endif /* TOPPERS_OMIT_TECS */
+/*
+ *  SIOドライバの初期化
+ */
+extern void		sio_initialize(EXINF exinf);
 
-#ifdef __cplusplus
-}
-#endif
+/*
+ *  SIOドライバの終了処理
+ */
+extern void		sio_terminate(EXINF exinf);
 
-#endif /* TOPPERS_SYSLOG_H */
+/*
+ *  SIOの割込みサービスルーチン
+ */
+extern void		sio_isr(EXINF exinf);
+
+/*
+ *  SIOポートのオープン
+ */
+extern SIOPCB	*sio_opn_por(ID siopid, EXINF exinf);
+
+/*
+ *  SIOポートのクローズ
+ */
+extern void		sio_cls_por(SIOPCB *p_siopcb);
+
+/*
+ *  SIOポートへの文字送信
+ */
+extern bool_t	sio_snd_chr(SIOPCB *siopcb, char c);
+
+/*
+ *  SIOポートからの文字受信
+ */
+extern int_t	sio_rcv_chr(SIOPCB *siopcb);
+
+/*
+ *  SIOポートからのコールバックの許可
+ */
+extern void		sio_ena_cbr(SIOPCB *siopcb, uint_t cbrtn);
+
+/*
+ *  SIOポートからのコールバックの禁止
+ */
+extern void		sio_dis_cbr(SIOPCB *siopcb, uint_t cbrtn);
+
+/*
+ *  SIOポートからの送信可能コールバック
+ */
+extern void		sio_irdy_snd(EXINF exinf);
+
+/*
+ *  SIOポートからの受信通知コールバック
+ */
+extern void		sio_irdy_rcv(EXINF exinf);
+
+#endif /* TOPPERS_MACRO_ONLY */
+#endif /* TOPPERS_POSIX_SERIAL_H */

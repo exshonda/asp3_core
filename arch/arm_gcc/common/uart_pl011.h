@@ -4,7 +4,7 @@
  * 
  *  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
  *                              Toyohashi Univ. of Technology, JAPAN
- *  Copyright (C) 2006-2016 by Embedded and Real-Time Systems Laboratory
+ *  Copyright (C) 2006-2020 by Embedded and Real-Time Systems Laboratory
  *              Graduate School of Information Science, Nagoya Univ., JAPAN
  * 
  *  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -36,15 +36,19 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: uart_pl011.h 906 2018-03-04 13:16:53Z ertl-hiro $
+ *  $Id: uart_pl011.h 359 2015-07-26 10:27:20Z ertl-hiro $
  */
 
 /*
- *		ARM PrimCell UART（PL011）に関する定義
+ *		ARM PrimCell UART（PL011）に関する定義と簡易SIOドライバ
  */
 
 #ifndef TOPPERS_UART_PL011_H
 #define TOPPERS_UART_PL011_H
+
+/*
+ *		ARM PrimCell UART（PL011）に関する定義
+ */
 
 /*
  *  UARTレジスタの番地の定義
@@ -91,4 +95,129 @@
 #define UART_IMSC_RXIM	UINT_C(0x0010)		/* 受信割込みマスク */
 #define UART_IMSC_TXIM	UINT_C(0x0020)		/* 送信割込みマスク */
 
+#ifdef TOPPERS_OMIT_TECS
+/*
+ *		ARM PrimCell UART（PL011）用 簡易SIOドライバ
+ */
+#include <sil.h>
+
+/*
+ *  SIOポート数の定義
+ */
+#define TNUM_SIOP		1		/* サポートするSIOポートの数 */
+
+/*
+ *  コールバックルーチンの識別番号
+ */
+#define SIO_RDY_SND		1U		/* 送信可能コールバック */
+#define SIO_RDY_RCV		2U		/* 受信通知コールバック */
+
+#ifndef TOPPERS_MACRO_ONLY
+
+/*
+ *  SIOポート管理ブロックの定義
+ */
+typedef struct sio_port_control_block	SIOPCB;
+
+/*
+ *  プリミティブな送信／受信関数
+ */
+
+/*
+ *  受信バッファに文字があるか？
+ */
+Inline bool_t
+uart_pl011_getready(uintptr_t base)
+{
+	return((sil_rew_mem(UART_FR(base)) & UART_FR_RXFE) == 0U);
+}
+
+/*
+ *  送信バッファに空きがあるか？
+ */
+Inline bool_t
+uart_pl011_putready(uintptr_t base)
+{
+	return((sil_rew_mem(UART_FR(base)) & UART_FR_TXFF) == 0U);
+}
+
+/*
+ *  受信した文字の取出し
+ */
+Inline char
+uart_pl011_getchar(uintptr_t base)
+{
+	return((char) sil_rew_mem(UART_DR(base)));
+}
+
+/*
+ *  送信する文字の書込み
+ */
+Inline void
+uart_pl011_putchar(uintptr_t base, char c)
+{
+	sil_wrw_mem(UART_DR(base), (uint32_t) c);
+}
+
+/*
+ *  シリアルインタフェースドライバに提供する機能
+ */
+
+/*
+ *  SIOドライバの初期化
+ */
+extern void		uart_pl011_initialize(void);
+
+/*
+ *  SIOドライバの終了処理
+ */
+extern void		uart_pl011_terminate(void);
+
+/*
+ *  SIOの割込みサービスルーチン
+ */
+extern void		uart_pl011_isr(ID siopid);
+
+/*
+ *  SIOポートのオープン
+ */
+extern SIOPCB	*uart_pl011_opn_por(ID siopid, EXINF exinf);
+
+/*
+ *  SIOポートのクローズ
+ */
+extern void		uart_pl011_cls_por(SIOPCB *siopcb);
+
+/*
+ *  SIOポートへの文字送信
+ */
+extern bool_t	uart_pl011_snd_chr(SIOPCB *siopcb, char c);
+
+/*
+ *  SIOポートからの文字受信
+ */
+extern int_t	uart_pl011_rcv_chr(SIOPCB *siopcb);
+
+/*
+ *  SIOポートからのコールバックの許可
+ */
+extern void		uart_pl011_ena_cbr(SIOPCB *siopcb, uint_t cbrtn);
+
+/*
+ *  SIOポートからのコールバックの禁止
+ */
+extern void		uart_pl011_dis_cbr(SIOPCB *siopcb, uint_t cbrtn);
+
+/*
+ *  SIOポートからの送信可能コールバック
+ */
+extern void		uart_pl011_irdy_snd(EXINF exinf);
+
+/*
+ *  SIOポートからの受信通知コールバック
+ */
+extern void		uart_pl011_irdy_rcv(EXINF exinf);
+
+#endif /* TOPPERS_MACRO_ONLY */
+#endif /* TOPPERS_OMIT_TECS */
 #endif /* TOPPERS_UART_PL011_H */

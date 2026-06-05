@@ -4,7 +4,7 @@
  * 
  *  Copyright (C) 2001-2011 by Industrial Technology Institute,
  *                              Miyagi Prefectural Government, JAPAN
- *  Copyright (C) 2007-2016 by Embedded and Real-Time Systems Laboratory
+ *  Copyright (C) 2007-2020 by Embedded and Real-Time Systems Laboratory
  *              Graduate School of Information Science, Nagoya Univ., JAPAN
  * 
  *  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -36,15 +36,20 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: scif.h 1070 2018-11-25 01:06:05Z ertl-hiro $
+ *  $Id: scif.h 1437 2020-05-20 12:12:16Z ertl-hiro $
  */
 
 /*
- *		FIFO内蔵シリアルコミュニケーションインタフェースに関する定義
+ *		FIFO内蔵シリアルコミュニケーションインタフェースに関する定義と
+ *		簡易SIOドライバ
  */
 
 #ifndef TOPPERS_SCIF_H
 #define TOPPERS_SCIF_H
+
+/*
+ *		FIFO内蔵シリアルコミュニケーションインタフェースに関する定義
+ */
 
 /*
  *  SCIFレジスタの番地の定義
@@ -69,7 +74,7 @@
 #define SCIF_SCSMR_8BIT		0x0000U		/* 8ビットデータ */
 #define SCIF_SCSMR_7BIT		0x0040U		/* 7ビットデータ */
 #define SCIF_SCSMR_NOPARITY	0x0000U		/* パリティビットなし */
-#define SCIF_SCSMR_PARITY	0x0020U		/* パリティビット付加 */
+#define SCIF_SCSMR_PARITY	0x0020U		/* パリティビットの付加 */
 #define SCIF_SCSMR_EVEN		0x0000U		/* 偶数パリティ */
 #define SCIF_SCSMR_ODD		0x0010U		/* 奇数パリティ */
 #define SCIF_SCSMR_1STOP	0x0000U		/* 1ストッピビット */
@@ -150,4 +155,167 @@
 #define SCIF_SCEMR_ABCS16	0x0000U		/* ビットレートの16倍の基本クロック */
 #define SCIF_SCEMR_ABCS8	0x0001U		/* ビットレートの8倍の基本クロック */
 
+#ifdef TOPPERS_OMIT_TECS
+/*
+ *		FIFO内蔵シリアルコミュニケーションインタフェース用 簡易SIOドライバ
+ */
+#include <sil.h>
+
+/*
+ *  SIOポート数の定義
+ */
+#define TNUM_SIOP		1		/* サポートするSIOポートの数 */
+
+/*
+ *  コールバックルーチンの識別番号
+ */
+#define SIO_RDY_SND		1U		/* 送信可能コールバック */
+#define SIO_RDY_RCV		2U		/* 受信通知コールバック */
+
+#ifndef TOPPERS_MACRO_ONLY
+
+/*
+ *  SIOポート管理ブロックの定義
+ */
+typedef struct sio_port_control_block	SIOPCB;
+
+/*
+ *  プリミティブな送信／受信関数
+ */
+
+/*
+ *  受信バッファに文字があるか？
+ */
+Inline bool_t
+scif_getready(uintptr_t base)
+{
+	uint16_t	fsr;
+	uint16_t	lsr;
+
+	fsr = sil_reh_mem(SCIF_SCFSR(base));
+	lsr = sil_reh_mem(SCIF_SCLSR(base));
+	if ((fsr & (SCIF_SCFSR_ER|SCIF_SCFSR_BRK)) != 0U) {
+		fsr &= ~(SCIF_SCFSR_ER|SCIF_SCFSR_BRK);
+		sil_wrh_mem(SCIF_SCFSR(base), fsr);
+	}
+	if ((lsr & SCIF_SCLSR_ORER) != 0U) {
+		lsr &= ~(SCIF_SCLSR_ORER);
+		sil_wrh_mem(SCIF_SCLSR(base), lsr);
+	}
+	return((fsr & SCIF_SCFSR_RDF) != 0U);
+}
+
+/*
+ *  送信バッファに空きがあるか？
+ */
+Inline bool_t
+scif_putready(uintptr_t base)
+{
+	uint16_t	fsr;
+
+	fsr = sil_reh_mem(SCIF_SCFSR(base));
+	return((fsr & SCIF_SCFSR_TDFE) != 0U);
+}
+
+/*
+ *  受信した文字の取出し
+ */
+Inline bool_t
+scif_getchar(uintptr_t base, char *p_c)
+{
+	uint16_t	fsr;
+	uint16_t	lsr;
+
+	fsr = sil_reh_mem(SCIF_SCFSR(base));
+	lsr = sil_reh_mem(SCIF_SCLSR(base));
+	if ((fsr & (SCIF_SCFSR_ER|SCIF_SCFSR_BRK)) != 0U) {
+		fsr &= ~(SCIF_SCFSR_ER|SCIF_SCFSR_BRK);
+		sil_wrh_mem(SCIF_SCFSR(base), fsr);
+	}
+	if ((lsr & SCIF_SCLSR_ORER) != 0U) {
+		lsr &= ~(SCIF_SCLSR_ORER);
+		sil_wrh_mem(SCIF_SCLSR(base), lsr);
+	}
+	if ((fsr & SCIF_SCFSR_RDF) != 0U) {
+		*p_c = (char) sil_reb_mem(SCIF_SCFRDR(base));
+		fsr &= ~(SCIF_SCFSR_RDF);
+		sil_wrh_mem(SCIF_SCFSR(base), fsr);
+		return(true);
+	}
+	return(false);
+}
+
+/*
+ *  送信する文字の書込み
+ */
+Inline void
+scif_putchar(uintptr_t base, char c)
+{
+	sil_wrb_mem(SCIF_SCFTDR(base), c);
+	sil_wrh_mem(SCIF_SCFSR(base),
+				(uint16_t) ~(SCIF_SCFSR_TEND|SCIF_SCFSR_TDFE));
+}
+
+/*
+ *  シリアルインタフェースドライバに提供する機能
+ */
+
+/*
+ *  SIOドライバの初期化
+ */
+extern void		scif_initialize(void);
+
+/*
+ *  SIOドライバの終了処理
+ */
+extern void		scif_terminate(void);
+
+/*
+ *  SIOの割込みサービスルーチン
+ */
+extern void		scif_isr_rx(ID siopid);
+extern void		scif_isr_tx(ID siopid);
+
+/*
+ *  SIOポートのオープン
+ */
+extern SIOPCB	*scif_opn_por(ID siopid, EXINF exinf);
+
+/*
+ *  SIOポートのクローズ
+ */
+extern void		scif_cls_por(SIOPCB *siopcb);
+
+/*
+ *  SIOポートへの文字送信
+ */
+extern bool_t	scif_snd_chr(SIOPCB *siopcb, char c);
+
+/*
+ *  SIOポートからの文字受信
+ */
+extern int_t	scif_rcv_chr(SIOPCB *siopcb);
+
+/*
+ *  SIOポートからのコールバックの許可
+ */
+extern void		scif_ena_cbr(SIOPCB *siopcb, uint_t cbrtn);
+
+/*
+ *  SIOポートからのコールバックの禁止
+ */
+extern void		scif_dis_cbr(SIOPCB *siopcb, uint_t cbrtn);
+
+/*
+ *  SIOポートからの送信可能コールバック
+ */
+extern void		scif_irdy_snd(EXINF exinf);
+
+/*
+ *  SIOポートからの受信通知コールバック
+ */
+extern void		scif_irdy_rcv(EXINF exinf);
+
+#endif /* TOPPERS_MACRO_ONLY */
+#endif /* TOPPERS_OMIT_TECS */
 #endif /* TOPPERS_SCIF_H */

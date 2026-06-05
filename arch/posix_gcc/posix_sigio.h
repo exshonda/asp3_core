@@ -1,10 +1,9 @@
 /*
- *  TOPPERS Software
- *      Toyohashi Open Platform for Embedded Real-Time Systems
+ *  TOPPERS/ASP Kernel
+ *      Toyohashi Open Platform for Embedded Real-Time Systems/
+ *      Advanced Standard Profile Kernel
  * 
- *  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
- *                              Toyohashi Univ. of Technology, JAPAN
- *  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
+ *  Copyright (C) 2006-2022 by Embedded and Real-Time Systems Laboratory
  *              Graduate School of Information Science, Nagoya Univ., JAPAN
  * 
  *  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -36,58 +35,21 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: syslog.h 1437 2020-05-20 12:12:16Z ertl-hiro $
+ *  $Id: posix_sigio.h 1709 2022-10-18 14:11:45Z ertl-hiro $
  */
 
 /*
- *		システムログ機能
+ *		POSIX用ノンブロッキングI/Oサポートモジュール
+ *
  */
 
-#ifndef TOPPERS_SYSLOG_H
-#define TOPPERS_SYSLOG_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <t_stddef.h>
-#include <t_syslog.h>
+#ifndef	TOPPERS_POSIX_SIGIO_H
+#define	TOPPERS_POSIX_SIGIO_H
 
 /*
- *  ログ情報の重要度のビットマップを作るためのマクロ
+ *  SIGIOハンドラ登録のための定数
  */
-#define LOG_MASK(prio)		(1U << (prio))
-#define LOG_UPTO(prio)		((1U << ((prio) + 1)) - 1)
+#define INTPRI_SIGIO	TMAX_INTPRI		/* 割込み優先度（最低優先度）*/
+#define INTATR_SIGIO	TA_EDGE			/* 割込み属性 */
 
-/*
- *  パケット形式の定義
- */
-typedef struct t_syslog_rlog {
-	uint_t	count;		/* ログバッファ中のログの数 */
-	uint_t	lost;		/* 失われたログの数 */
-	uint_t	logmask;	/* ログバッファに記録すべき重要度 */
-	uint_t	lowmask;	/* 低レベル出力すべき重要度 */
-} T_SYSLOG_RLOG;
-
-/*
- *  システムログ機能のサービスコール
- */
-extern ER		syslog_wri_log(uint_t prio, const SYSLOG *p_syslog) throw();
-extern ER_UINT	syslog_rea_log(SYSLOG *p_syslog) throw();
-extern ER		syslog_msk_log(uint_t logmask, uint_t lowmask) throw();
-extern ER		syslog_ref_log(T_SYSLOG_RLOG *pk_rlog) throw();
-extern ER		syslog_fls_log(void) throw();
-
-#ifdef TOPPERS_OMIT_TECS
-/*
- *  システムログ機能の初期化
- */
-extern void	syslog_initialize(EXINF exinf) throw();
-
-#endif /* TOPPERS_OMIT_TECS */
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* TOPPERS_SYSLOG_H */
+#endif /* TOPPERS_POSIX_SIGIO_H */

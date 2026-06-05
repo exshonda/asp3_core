@@ -1,11 +1,12 @@
 /*
- *  TOPPERS Software
- *      Toyohashi Open Platform for Embedded Real-Time Systems
+ *  TOPPERS/ASP Kernel
+ *      Toyohashi Open Platform for Embedded Real-Time Systems/
+ *      Advanced Standard Profile Kernel
  * 
  *  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
  *                              Toyohashi Univ. of Technology, JAPAN
- *  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
- *              Graduate School of Information Science, Nagoya Univ., JAPAN
+ *  Copyright (C) 2004-2026 by Embedded and Real-Time Systems Laboratory
+ *                  Graduate School of Informatics, Nagoya Univ., JAPAN
  * 
  *  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
  *  ア（本ソフトウェアを改変したものを含む．以下同じ）を使用・複製・改
@@ -36,58 +37,47 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: syslog.h 1437 2020-05-20 12:12:16Z ertl-hiro $
+ *  $Id: banner.c 1881 2026-05-18 03:52:07Z ertl-hiro $
  */
 
 /*
- *		システムログ機能
+ *		カーネル起動メッセージの出力（非TECS版専用）
  */
 
-#ifndef TOPPERS_SYSLOG_H
-#define TOPPERS_SYSLOG_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <t_stddef.h>
+#include <kernel.h>
 #include <t_syslog.h>
+#include "target_syssvc.h"
+#include "banner.h"
 
 /*
- *  ログ情報の重要度のビットマップを作るためのマクロ
+ *  ターゲット依存部の著作権表示のデフォルトの定義
  */
-#define LOG_MASK(prio)		(1U << (prio))
-#define LOG_UPTO(prio)		((1U << ((prio) + 1)) - 1)
+#ifndef TARGET_COPYRIGHT
+#define TARGET_COPYRIGHT		""
+#endif /* TARGET_COPYRIGHT */
 
 /*
- *  パケット形式の定義
+ *  カーネル起動メッセージ
  */
-typedef struct t_syslog_rlog {
-	uint_t	count;		/* ログバッファ中のログの数 */
-	uint_t	lost;		/* 失われたログの数 */
-	uint_t	logmask;	/* ログバッファに記録すべき重要度 */
-	uint_t	lowmask;	/* 低レベル出力すべき重要度 */
-} T_SYSLOG_RLOG;
+static const char banner[] = "\n"
+"TOPPERS/ASP3 Kernel Release %d.%X.%d for %s"
+" (" __DATE__ ", " __TIME__ ")\n"
+"Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory\n"
+"                            Toyohashi Univ. of Technology, JAPAN\n"
+"Copyright (C) 2004-2026 by Embedded and Real-Time Systems Laboratory\n"
+"                Graduate School of Informatics, Nagoya Univ., JAPAN\n"
+"%s";
 
 /*
- *  システムログ機能のサービスコール
+ *  カーネル起動メッセージの出力
  */
-extern ER		syslog_wri_log(uint_t prio, const SYSLOG *p_syslog) throw();
-extern ER_UINT	syslog_rea_log(SYSLOG *p_syslog) throw();
-extern ER		syslog_msk_log(uint_t logmask, uint_t lowmask) throw();
-extern ER		syslog_ref_log(T_SYSLOG_RLOG *pk_rlog) throw();
-extern ER		syslog_fls_log(void) throw();
-
-#ifdef TOPPERS_OMIT_TECS
-/*
- *  システムログ機能の初期化
- */
-extern void	syslog_initialize(EXINF exinf) throw();
-
-#endif /* TOPPERS_OMIT_TECS */
-
-#ifdef __cplusplus
+void
+print_banner(EXINF exinf)
+{
+	syslog_5(LOG_NOTICE, banner,
+				(TKERNEL_PRVER >> 12) & 0x0fU,
+				(TKERNEL_PRVER >> 4) & 0xffU,
+				TKERNEL_PRVER & 0x0fU,
+				TARGET_NAME,
+				TARGET_COPYRIGHT);
 }
-#endif
-
-#endif /* TOPPERS_SYSLOG_H */

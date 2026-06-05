@@ -44,6 +44,13 @@
 #ifndef TOPPERS_SIM_TIMER_CNTL_H
 #define TOPPERS_SIM_TIMER_CNTL_H
 
+#ifdef TOPPERS_OMIT_TECS
+
+#define simtim_advance	_kernel_simtim_advance
+#define simtim_add		_kernel_simtim_add
+
+#endif /* TOPPERS_OMIT_TECS */
+
 /*
  *  シミュレーション時刻を進める
  */

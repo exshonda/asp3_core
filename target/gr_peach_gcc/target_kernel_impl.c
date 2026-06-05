@@ -35,7 +35,7 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: target_kernel_impl.c 1773 2022-12-27 14:17:28Z ertl-hiro $
+ *  $Id: target_kernel_impl.c 1782 2023-01-08 14:50:43Z ertl-hiro $
  */
 
 /*
@@ -46,6 +46,7 @@
 #include <sil.h>
 #include "arm.h"
 #include "rza1.h"
+#include "scif.h"
 
 /*
  *  カーネル動作時のメモリマップと関連する定義
@@ -203,10 +204,20 @@ port_initialize(void)
 
 /*
  *  システムログの低レベル出力のための初期化
- *
+ */
+#ifndef TOPPERS_OMIT_TECS
+
+/*
  *  セルタイプtPutLogSIOPort内に実装されている関数を直接呼び出す．
  */
 extern void	tPutLogSIOPort_initialize(void);
+
+#else /* TOPPERS_OMIT_TECS */
+
+extern void	sio_initialize(EXINF exinf);
+extern void	target_fput_initialize(void);
+
+#endif /* TOPPERS_OMIT_TECS */
 
 /*
  *  ターゲット依存の初期化
@@ -251,6 +262,9 @@ target_initialize(void)
 	 */
 #ifndef TOPPERS_OMIT_TECS
 	tPutLogSIOPort_initialize();
+#else /* TOPPERS_OMIT_TECS */
+	sio_initialize(0);
+	target_fput_initialize();
 #endif /* TOPPERS_OMIT_TECS */
 }
 
@@ -294,3 +308,53 @@ gr_peach_set_led(uint_t led, uint_t set)
 {
 	rza1_config_port(RZA1_PORT_P(6), led, set);
 }
+
+#ifdef TOPPERS_OMIT_TECS
+/*
+ *		システムログの低レベル出力（本来は別のファイルにすべき）
+ */
+
+#include "target_syssvc.h"
+#include "target_serial.h"
+
+/*
+ *  低レベル出力用のSIOポート管理ブロック
+ */
+static SIOPCB	*p_siopcb_target_fput;
+
+/*
+ *  SIOポートの初期化
+ */
+void
+target_fput_initialize(void)
+{
+	p_siopcb_target_fput = sio_opn_por(SIOPID_FPUT, 0);
+}
+
+/*
+ *  SIOポートへのポーリング出力
+ */
+Inline void
+gr_peach_uart_fput(char c)
+{
+	/*
+	 *  送信できるまでポーリング
+	 */
+	while (!(sio_snd_chr(p_siopcb_target_fput, c))) {
+		sil_dly_nse(100);
+	}
+}
+
+/*
+ *  SIOポートへの文字出力
+ */
+void
+target_fput_log(char c)
+{
+	if (c == '\n') {
+		gr_peach_uart_fput('\r');
+	}
+	gr_peach_uart_fput(c);
+}
+
+#endif /* TOPPERS_OMIT_TECS */

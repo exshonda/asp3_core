@@ -2,9 +2,7 @@
  *  TOPPERS Software
  *      Toyohashi Open Platform for Embedded Real-Time Systems
  * 
- *  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
- *                              Toyohashi Univ. of Technology, JAPAN
- *  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
+ *  Copyright (C) 2005-2018 by Embedded and Real-Time Systems Laboratory
  *              Graduate School of Information Science, Nagoya Univ., JAPAN
  * 
  *  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -36,58 +34,146 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: syslog.h 1437 2020-05-20 12:12:16Z ertl-hiro $
+ *  $Id: test_svc.c 1152 2019-01-14 11:13:22Z ertl-hiro $
  */
 
-/*
- *		システムログ機能
+/* 
+ *		テストプログラム用サービス（非TECS版専用）
  */
 
-#ifndef TOPPERS_SYSLOG_H
-#define TOPPERS_SYSLOG_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <t_stddef.h>
+#include <kernel.h>
+#include <sil.h>
 #include <t_syslog.h>
+#include <t_stdlib.h>
+#include "syssvc/syslog.h"
+#include "target_syssvc.h"
+#include "test_svc.h"
 
 /*
- *  ログ情報の重要度のビットマップを作るためのマクロ
+ *	チェックポイント
  */
-#define LOG_MASK(prio)		(1U << (prio))
-#define LOG_UPTO(prio)		((1U << ((prio) + 1)) - 1)
+static uint_t	check_count;
 
 /*
- *  パケット形式の定義
+ *  テストプログラムの開始
  */
-typedef struct t_syslog_rlog {
-	uint_t	count;		/* ログバッファ中のログの数 */
-	uint_t	lost;		/* 失われたログの数 */
-	uint_t	logmask;	/* ログバッファに記録すべき重要度 */
-	uint_t	lowmask;	/* 低レベル出力すべき重要度 */
-} T_SYSLOG_RLOG;
-
-/*
- *  システムログ機能のサービスコール
- */
-extern ER		syslog_wri_log(uint_t prio, const SYSLOG *p_syslog) throw();
-extern ER_UINT	syslog_rea_log(SYSLOG *p_syslog) throw();
-extern ER		syslog_msk_log(uint_t logmask, uint_t lowmask) throw();
-extern ER		syslog_ref_log(T_SYSLOG_RLOG *pk_rlog) throw();
-extern ER		syslog_fls_log(void) throw();
-
-#ifdef TOPPERS_OMIT_TECS
-/*
- *  システムログ機能の初期化
- */
-extern void	syslog_initialize(EXINF exinf) throw();
-
-#endif /* TOPPERS_OMIT_TECS */
-
-#ifdef __cplusplus
+void
+test_start(const char *progname)
+{
+	syslog_1(LOG_NOTICE, "Test program: %s", progname);
+	check_count = 0U;
 }
-#endif
 
-#endif /* TOPPERS_SYSLOG_H */
+/*
+ *	テストプログラムの終了
+ */
+static void
+test_finish(void)
+{
+	SIL_PRE_LOC;
+
+	SIL_LOC_INT();
+	(void) syslog_fls_log();
+	(void) ext_ker();
+
+	/* ここへ来ることはないはず */
+	SIL_UNL_INT();
+}
+
+/*
+ *	チェックポイント
+ */
+void
+check_point(uint_t count)
+{
+	bool_t		errorflag = false;
+#ifdef CHECK_BIT_FUNC
+	ER			rercd;
+	extern ER	CHECK_BIT_FUNC(void);
+#endif /* CHECK_BIT_FUNC */
+	SIL_PRE_LOC;
+
+	/*
+	 *  割込みロック状態に
+	 */
+	SIL_LOC_INT();
+
+	/*
+	 *  シーケンスチェック
+	 */
+	if (++check_count == count) {
+		syslog_1(LOG_NOTICE, "Check point %d passed.", count);
+	}
+	else {
+		syslog_1(LOG_ERROR, "## Unexpected check point %d.\007", count);
+		errorflag = true;
+	}
+
+	/*
+	 *  カーネルの内部状態の検査
+	 */
+#ifdef CHECK_BIT_FUNC
+	rercd = CHECK_BIT_FUNC();
+	if (rercd < 0) {
+		syslog_2(LOG_ERROR, "## Internal inconsistency detected (%s, %d).\007",
+										itron_strerror(rercd), SERCD(rercd));
+		errorflag = true;
+	}
+#endif /* CHECK_BIT_FUNC */
+
+	/*
+	 *  エラーが検出された場合は，テストプログラムを終了する．
+	 */
+	if (errorflag) {
+		test_finish();
+	}
+
+	/*
+	 *  割込みロック状態を解除
+	 */
+	SIL_UNL_INT();
+}
+
+/*
+ *	完了チェックポイント
+ */
+void
+check_finish(uint_t count)
+{
+	if (count > 0U) {
+		check_point(count);
+		syslog_0(LOG_NOTICE, "All check points passed.");
+	}
+	test_finish();
+}
+
+/*
+ *	条件チェックのエラー処理
+ */
+void
+check_assert_error(const char *expr, const char *file, int_t line)
+{
+	syslog_3(LOG_ERROR, "## Assertion `%s' failed at %s:%u.\007",
+												expr, file, line);
+	test_finish();
+}
+
+/*
+ *	エラーコードチェックのエラー処理
+ */
+void
+check_ercd_error(ER ercd, const char *file, int_t line)
+{
+	syslog_3(LOG_ERROR, "## Unexpected error %s detected at %s:%u.\007",
+									itron_strerror(ercd), file, line);
+	test_finish();
+}
+
+/*
+ *	割込み優先度マスクの取得
+ */
+ER
+get_interrupt_priority_mask(PRI *p_ipm)
+{
+	return(get_ipm(p_ipm));
+}
