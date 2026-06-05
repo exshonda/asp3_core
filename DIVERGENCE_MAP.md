@@ -44,9 +44,26 @@
 
 ---
 
+## 削除済みファイル（上流マージで復活させないこと）
+
+「ファイルの削除」項目（`docs/dev/file-cleanup.md`）で削除した上流由来ファイル。
+上流マージ時にこれらが diff に現れても**取り込まない**。
+
+| 削除対象 | 由来項目 | 備考 |
+|---|---|---|
+| `tecsgen/`・`tecs_kernel/`・syssvc/arch/targetのTECSセル（`.cdl`・t接頭辞）・`sample/{sample1,tSample2}.cdl`・tSample2系・`test/*.cdl`・`extension/non_tecs/` | TECSレス | `docs/dev/tecs-less.md` の削除リスト参照 |
+| `cfg/*.rb`・`kernel/*.trb`・`arch/**/*.trb`・`target/*/*.trb` | cfgのPython化 | v6m系trbも削除（必要時は上流から取得して.py変換） |
+| `configure.rb`・`test/testexec.rb`・`test_cfg/testcfg.rb`・`utils/*.rb`・`utils/makerelease.py` | .rbツールの.py化 | |
+| `MANIFEST`・`E_PACKAGE`（全数．extension/内は残置）・`target/{ct11mpcore,gr_peach,macos_xcode,simtimer_ct11mpcore}_gcc/`・`arch/arm_gcc/rza1/`・`arch/simtimer/`・`test/simt_*.c` | ファイルの削除 | `docs/dev/file-cleanup.md` 参照 |
+
+※make版ビルドファイル（`sample/Makefile`・`Makefile.target/core/chip`・`configure.py`）は
+フェーズ2（`docs/dev/cmake.md` の前提条件解消後）で削除予定．現時点は併存．
+
+---
+
 ## 変更種別の凡例
 
-- **TECSレス**：上流の `extension/non_tecs/`（syssvc・ホストターゲット等）を採用。ローカル発明ではなく上流拡張。局所改変は syslog への構造化ログ付加のみ
+- **TECSレス**：上流の `extension/non_tecs/`（syssvc・ホストターゲット等）を採用。ローカル発明ではなく上流拡張
 - **新規追加**：上流に存在しないファイル（衝突なし・上流マージで無視可）
 - **改変**：上流ファイルをベースに変更（マージ時に要確認）
 - **全面置換**：上流とは別実装（テキストマージ不可・専用台帳で管理）
