@@ -139,10 +139,11 @@ CMake対応の完了に伴い不要となるmake版ビルドファイル：
 以下が解消されるまで削除できない：
 
 1. ~~pico2のCMake対応が未完~~ → **解消（2026-06-06）**
-2. **testcfg.py／testexec.py がMakefileビルドに依存**（configure.py経由）
-   → CMakeベースへの改修，または運用変更の判断が必要
+2. ~~testcfg.py／testexec.py がMakefileビルドに依存~~ → **解消（2026-06-06．
+   両ツールをCMakeベースに改修．dummy_gccもtarget.cmake追加でCMake対応）**
 3. ~~実機側ワークフロー（swd-run等）~~ → **解消（2026-06-06．run.cmakeで
-   swd-run/osdebug/console等をCMakeターゲット化）**。残りは
-   **dummy_gcc（cfgテスト用）**の扱いのみ
+   swd-run/osdebug/console等をCMakeターゲット化）**
+
+**→ 前提条件はすべて解消。フェーズ2（make版削除）は実施可能な状態**
 
 当面は**両ビルド系を併存**させ，上記解消後にフェーズ2として削除する。

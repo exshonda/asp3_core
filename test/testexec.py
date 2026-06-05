@@ -11,11 +11,11 @@
 #  スファイルの先頭コメントを参照）の下で利用することを許諾する．本ソフ
 #  トウェアは無保証で提供される．
 #
-#  $Id: testexec.py (converted from testexec.rb) $
+#  $Id: testexec.py (CMake-based test runner) $
 #
 
 #
-#		テストプログラムの実行スクリプト（Python版）
+#		テストプログラムの実行スクリプト（CMake版）
 #
 # 【実行方法】
 #	testexec.py <処理内容> <処理対象>
@@ -27,25 +27,22 @@
 #		clean			クリーン処理
 #
 #	処理対象：
-#		デフォルト		kernelとall
-#		kernel			ディレクトリが作られているすべてのカーネル
-#		kernel<数字>	指定したビルドオプションのカーネル
+#		デフォルト		all
 #		all				ディレクトリが作られているすべてのテストプログラム
 #		<テスト名>		指定したテストプログラム
 #
-# 【ターゲット毎のビルドオプション】
-#	ターゲット毎のビルドオプションを，TARGET_OPTIONSに作成する．異なる
-#	テスト用のビルドオプションを，各行に記述する．
+# 【ターゲットの指定】
+#	CMakeのconfigure引数を，TARGET_OPTIONSの1行目に記述する．
+#	例：
+#		--preset m33-qemu
+#		-G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-arm-none-eabi.cmake -DASP3_TARGET=mps2_an521_gcc
 #
-#	各行（最初の行が0）に記述するビルドオプション：
-#		0		機能テストプログラム
-#		1		性能評価プログラム
-#		2		（予約．旧：タイマドライバシミュレータ用）
-#		3		FPUを使用するテストプログラム（ARM向け）
+#	テストプログラム共通で必要な test_svc.c は自動で追加される．
 #
 # 【ターゲット毎の実行方法】
 #	ターゲット上でテストプログラムを実行するための記述を，TARGET_RUNに
-#	作成する．
+#	作成する（ビルドディレクトリ内で実行される．実行ファイルは asp.elf
+#	または asp）．TARGET_RUNが無い場合は ./asp（ホスト実行）を試みる．
 
 import os
 import re
@@ -54,6 +51,10 @@ import subprocess
 
 #
 #  テストプログラム毎に必要なオプションの定義
+#
+#  SRC：ソースファイル名（省略時はテスト名）／CFG：.cfgファイル名
+#  SRCDIR：testディレクトリ以外のソース位置／DEFS・NK_DEFS：追加マクロ定義
+#  SYSOBJ：追加するシステムサービスソース（test_svcは自動付与）
 #
 TEST_SPEC = {
     # 機能テストプログラム
@@ -69,34 +70,34 @@ TEST_SPEC = {
     "cpuexc10": {"SRC": "test_cpuexc10", "CFG": "test_cpuexc"},
     "dlynse":   {"SRC": "test_dlynse"},
     "dtq1":     {"SRC": "test_dtq1"},
-    "exttsk":   {"SRC": "test_exttsk", "CDL": "test_pf_bitkernel"},
+    "exttsk":   {"SRC": "test_exttsk"},
     "flg1":     {"SRC": "test_flg1"},
     "hrt1":     {"SRC": "test_hrt1"},
     "int1":     {"SRC": "test_int1"},
     "mpf1":     {"SRC": "test_mpf1"},
-    "mutex1":   {"SRC": "test_mutex1", "CDL": "test_pf_bitkernel"},
-    "mutex2":   {"SRC": "test_mutex2", "CDL": "test_pf_bitkernel"},
-    "mutex3":   {"SRC": "test_mutex3", "CDL": "test_pf_bitkernel"},
-    "mutex4":   {"SRC": "test_mutex4", "CDL": "test_pf_bitkernel"},
-    "mutex5":   {"SRC": "test_mutex5", "CDL": "test_pf_bitkernel"},
-    "mutex6":   {"SRC": "test_mutex6", "CDL": "test_pf_bitkernel"},
-    "mutex7":   {"SRC": "test_mutex7", "CDL": "test_pf_bitkernel"},
-    "mutex8":   {"SRC": "test_mutex8", "CDL": "test_pf_bitkernel"},
+    "mutex1":   {"SRC": "test_mutex1"},
+    "mutex2":   {"SRC": "test_mutex2"},
+    "mutex3":   {"SRC": "test_mutex3"},
+    "mutex4":   {"SRC": "test_mutex4"},
+    "mutex5":   {"SRC": "test_mutex5"},
+    "mutex6":   {"SRC": "test_mutex6"},
+    "mutex7":   {"SRC": "test_mutex7"},
+    "mutex8":   {"SRC": "test_mutex8"},
     "notify1":  {"SRC": "test_notify1"},
     "pdq1":     {"SRC": "test_pdq1"},
-    "raster1":  {"SRC": "test_raster1", "CDL": "test_pf_bitkernel"},
+    "raster1":  {"SRC": "test_raster1"},
     "raster2":  {"SRC": "test_raster2"},
     "sem1":     {"SRC": "test_sem1"},
     "sem2":     {"SRC": "test_sem2"},
     "suspend1": {"SRC": "test_suspend1"},
     "sysman1":  {"SRC": "test_sysman1"},
     "sysstat1": {"SRC": "test_sysstat1"},
-    "task1":    {"SRC": "test_task1", "CDL": "test_pf_bitkernel"},
+    "task1":    {"SRC": "test_task1"},
     "tmevt1":   {"SRC": "test_tmevt1"},
 
     # メッセージバッファ機能拡張パッケージの機能テストプログラム
-    "messagebuf1": {"SRC": "test_messagebuf1", "CDL": "test_pf_bitkernel"},
-    "messagebuf2": {"SRC": "test_messagebuf2", "CDL": "test_pf_bitkernel"},
+    "messagebuf1": {"SRC": "test_messagebuf1"},
+    "messagebuf2": {"SRC": "test_messagebuf2"},
 
     # オーバランハンドラ機能拡張パッケージの機能テストプログラム
     "ovrhdr1":  {"SRC": "test_ovrhdr1"},
@@ -113,30 +114,31 @@ TEST_SPEC = {
     "subprio3": {"SRC": "test_subprio3"},
 
     # 優先度継承拡張パッケージの機能テストプログラム
-    "inherit1": {"SRC": "test_inherit1", "CDL": "test_pf_bitkernel"},
-    "inherit2": {"SRC": "test_inherit2", "CDL": "test_pf_bitkernel"},
-    "inherit3": {"SRC": "test_inherit3", "CDL": "test_pf_bitkernel"},
-    "inherit4": {"SRC": "test_inherit4", "CDL": "test_pf_bitkernel"},
-    "inherit5": {"SRC": "test_inherit5", "CDL": "test_pf_bitkernel"},
-    "inherit6": {"SRC": "test_inherit6", "CDL": "test_pf_bitkernel"},
-    "inherit7": {"SRC": "test_inherit7", "CDL": "test_pf_bitkernel"},
-
+    "inherit1": {"SRC": "test_inherit1"},
+    "inherit2": {"SRC": "test_inherit2"},
+    "inherit3": {"SRC": "test_inherit3"},
+    "inherit4": {"SRC": "test_inherit4"},
+    "inherit5": {"SRC": "test_inherit5"},
+    "inherit6": {"SRC": "test_inherit6"},
+    "inherit7": {"SRC": "test_inherit7"},
 
     # 性能評価プログラム
-    "perf0": {"TARGET": 1, "CDL": "perf_pf", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},
-    "perf1": {"TARGET": 1, "CDL": "perf_pf", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},
-    "perf2": {"TARGET": 1, "CDL": "perf_pf", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},
-    "perf3": {"TARGET": 1, "CDL": "perf_pf", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},
-    "perf4": {"TARGET": 1, "CDL": "perf_pf", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},
-    "perf5": {"TARGET": 1, "CDL": "perf_pf", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},
+    "perf0": {"SYSOBJ": "histogram", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},
+    "perf1": {"SYSOBJ": "histogram", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},
+    "perf2": {"SYSOBJ": "histogram", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},
+    "perf3": {"SYSOBJ": "histogram", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},
+    "perf4": {"SYSOBJ": "histogram", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},
+    "perf5": {"SYSOBJ": "histogram", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},
 
     # ARM向けテストプログラム
     "arm_cpuexc1": {"SRC": "arm_cpuexc1", "SRCDIR": "arch/arm_gcc/test"},
-    "arm_fpu1": {"TARGET": 3, "SRC": "arm_fpu1", "SRCDIR": "arch/arm_gcc/test"},
+    "arm_fpu1": {"SRC": "arm_fpu1", "SRCDIR": "arch/arm_gcc/test",
+                 "DEFS": "-DUSE_ARM_FPU_ALWAYS"},
 }
 
-used_src_dir = "."
-target_options = {}
+#  ソースルート（本スクリプトの位置から決定）
+src_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+target_options = ""
 
 
 def system(command):
@@ -144,41 +146,16 @@ def system(command):
 
 
 #
-#  カーネルライブラリの作成
+#  追加マクロ定義（-DXXX形式）をCMakeリスト形式へ変換
 #
-def BuildKernel(target, mkdir_flag=False):
-    if target not in target_options:
-        return
-
-    kernel_dir = "KERNELLIB" + str(target)
-    if not os.path.isdir(kernel_dir):
-        if mkdir_flag:
-            os.mkdir(kernel_dir)
-        else:
-            return
-
-    cwd = os.getcwd()
-    os.chdir(kernel_dir)
-    try:
-        print(f"== building: {kernel_dir} ==")
-        config_command = f"python3 {used_src_dir}/configure.py"
-        config_command += " -f"
-        config_command += f" {target_options[target]}"
-        print(config_command)
-        system(config_command)
-        system("make libkernel.a")
-        if os.path.isfile("Makefile.bak"):
-            os.remove("Makefile.bak")
-    finally:
-        os.chdir(cwd)
-
-
-#
-#  全カーネルライブラリの作成
-#
-def BuildAllKernel():
-    for target in target_options:
-        BuildKernel(target)
+def defs_to_cmake_list(*defs_strings):
+    items = []
+    for defs in defs_strings:
+        if not defs:
+            continue
+        for d in defs.split():
+            items.append(re.sub(r"^-D", "", d))
+    return ";".join(items)
 
 
 #
@@ -198,63 +175,35 @@ def BuildTest(test, test_spec, mkdir_flag=False):
     os.chdir(obj_dir)
     try:
         print(f"== building: {test_name} ==")
-        config_command = f"python3 {used_src_dir}/configure.py"
-        if "TARGET" in test_spec:
-            config_command += f" {target_options[test_spec['TARGET']]}"
-        else:
-            config_command += f" {target_options[0]}"
+
+        src_abs = src_root
+        applname = test_spec.get("SRC", test)
+
+        config_command = f"cmake -S {src_abs} -B . {target_options}"
         if "SRCDIR" in test_spec:
-            config_command += f" -a \"{used_src_dir}/{test_spec['SRCDIR']}" \
-                              f" {used_src_dir}/test\""
+            config_command += f" -DASP3_APPLDIR={src_abs}/{test_spec['SRCDIR']}"
+            config_command += f" -DASP3_APP_INCLUDE_DIRS={src_abs}/test"
         else:
-            config_command += f" -a {used_src_dir}/test"
+            config_command += f" -DASP3_APPLDIR={src_abs}/test"
+        config_command += f" -DASP3_APPLNAME={applname}"
 
-        if "DEFS" not in test_spec:
-            if "TARGET" in test_spec:
-                kernel_dir = "KERNELLIB" + str(test_spec["TARGET"])
-            else:
-                kernel_dir = "KERNELLIB0"
-            if os.path.isdir("../" + kernel_dir):
-                config_command += " -L ../" + kernel_dir
-        if "SRC" in test_spec:
-            config_command += f" -A {test_spec['SRC']}"
-        else:
-            config_command += f" -A {test}"
+        #  .cfgファイル名がソース名と異なる場合（cpuexc系等）
         if "CFG" in test_spec:
-            config_command += f" -c {test_spec['CFG']}.cfg"
-        if "CDL" in test_spec:
-            config_command += f" -C {test_spec['CDL']}.cdl"
-        else:
-            config_command += " -C test_pf.cdl"
-        if "SYSOBJ" in test_spec:
-            config_command += " -S \"" \
-                + " ".join(f + ".o" for f in test_spec["SYSOBJ"].split()) \
-                + "\""
-        if "APPLOBJ" in test_spec:
-            config_command += " -U \"" \
-                + " ".join(f + ".o" for f in test_spec["APPLOBJ"].split()) \
-                + "\""
-        if "OPTS" in test_spec:
-            config_command += f" -o \"{test_spec['OPTS']}\""
-        if "DEFS" in test_spec:
-            config_command += f" -O \"{test_spec['DEFS']}\""
-        if "NK_DEFS" in test_spec:
-            config_command += f" -O \"{test_spec['NK_DEFS']}\""
+            config_command += f" -DASP3_APPCFGNAME={test_spec['CFG']}"
+
+        #  テストプログラム共通のtest_svcと，スペック指定の追加ソース
+        extra_files = [f"{src_abs}/syssvc/test_svc.c"]
+        for f in test_spec.get("SYSOBJ", "").split():
+            extra_files.append(f"{src_abs}/syssvc/{f}.c")
+        config_command += " \"-DASP3_EXTRA_APP_C_FILES=" + ";".join(extra_files) + "\""
+
+        defs = defs_to_cmake_list(test_spec.get("DEFS"), test_spec.get("NK_DEFS"))
+        if defs:
+            config_command += f" \"-DASP3_EXTRA_COMPILE_DEFS={defs}\""
+
         print(config_command)
-        system(config_command)
-
-        #  【asp3_core変更】非TECS環境向け：テストプログラムの.cfgが
-        #  INCLUDEするtecsgen.cfgのスタブを生成する（非TECS版システム
-        #  サービス ユーザーズマニュアル §2.7の方法）
-        if not os.path.isfile("tecsgen.cfg"):
-            with open("tecsgen.cfg", "w", encoding="utf-8") as f:
-                f.write('INCLUDE("syssvc/syslog.cfg");\n'
-                        'INCLUDE("syssvc/banner.cfg");\n'
-                        'INCLUDE("syssvc/serial.cfg");\n')
-
-        system("make")
-        if os.path.isfile("Makefile.bak"):
-            os.remove("Makefile.bak")
+        if system(config_command):
+            system("cmake --build .")
     finally:
         os.chdir(cwd)
 
@@ -284,8 +233,10 @@ def ExecTest(test, test_spec):
         if os.path.isfile("../TARGET_RUN"):
             with open("../TARGET_RUN", encoding="utf-8") as f:
                 system(f.read())
-        else:
+        elif os.path.isfile("asp"):
             system("./asp")
+        else:
+            system("./asp.elf")
     finally:
         os.chdir(cwd)
 
@@ -296,31 +247,6 @@ def ExecTest(test, test_spec):
 def ExecAllTest():
     for test, test_spec in TEST_SPEC.items():
         ExecTest(test, test_spec)
-
-
-#
-#  カーネルライブラリのクリーン
-#
-def CleanKernel(target):
-    if target not in target_options:
-        return
-
-    kernel_dir = "KERNELLIB" + str(target)
-    if os.path.isdir(kernel_dir):
-        cwd = os.getcwd()
-        os.chdir(kernel_dir)
-        try:
-            system("make clean")
-        finally:
-            os.chdir(cwd)
-
-
-#
-#  全カーネルライブラリのクリーン
-#
-def CleanAllKernel():
-    for target in target_options:
-        CleanKernel(target)
 
 
 #
@@ -336,7 +262,7 @@ def CleanTest(test, test_spec):
     cwd = os.getcwd()
     os.chdir(obj_dir)
     try:
-        system("make clean")
+        system("cmake --build . --target clean")
     finally:
         os.chdir(cwd)
 
@@ -350,31 +276,13 @@ def CleanAllTest():
 
 
 def main():
-    global used_src_dir, target_options
+    global target_options
 
     #
-    #  ソースディレクトリ名を取り出す
+    #  ターゲットの指定（CMakeのconfigure引数）を読む
     #
-    m = re.match(r"^(.*)\/test\/testexec", sys.argv[0])
-    if m:
-        src_dir = m.group(1)
-    else:
-        src_dir = "."
-
-    if re.match(r"^\/", src_dir):
-        used_src_dir = src_dir
-    else:
-        used_src_dir = "../" + src_dir
-
-    #
-    #  ターゲット依存のオプションを読む
-    #
-    target_options = {}
     with open("TARGET_OPTIONS", encoding="utf-8") as file:
-        for index, line in enumerate(file):
-            line = line.rstrip("\n")
-            if line != "":
-                target_options[index] = line
+        target_options = file.readline().rstrip("\n")
 
     #
     #  パラメータで指定された処理の実行
@@ -391,25 +299,6 @@ def main():
             exec_only = True
         elif param == "clean":
             clean_flag = True
-
-        elif param == "kernel":
-            if clean_flag:
-                CleanAllKernel()
-            else:
-                if not exec_only:
-                    BuildAllKernel()
-                # カーネルには，execはない
-            proc_flag = True
-
-        elif re.match(r"^kernel([0-9]+)$", param):
-            target = int(re.match(r"^kernel([0-9]+)$", param).group(1))
-            if clean_flag:
-                CleanKernel(target)
-            else:
-                if not exec_only:
-                    BuildKernel(target, True)
-                # カーネルには，execはない
-            proc_flag = True
 
         elif param == "all":
             if clean_flag:
@@ -435,13 +324,11 @@ def main():
             proc_flag = True
 
     if not proc_flag:
-        # デフォルトの処理対象（kernelとall）
+        # デフォルトの処理対象（all）
         if clean_flag:
-            CleanAllKernel()
             CleanAllTest()
         else:
             if not exec_only:
-                BuildAllKernel()
                 BuildAllTest()
             if not build_only:
                 ExecAllTest()

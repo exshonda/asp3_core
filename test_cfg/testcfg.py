@@ -11,30 +11,42 @@
 #  スファイルの先頭コメントを参照）の下で利用することを許諾する．本ソフ
 #  トウェアは無保証で提供される．
 #
-#  $Id: testcfg.py (converted from testcfg.rb) $
+#  $Id: testcfg.py (CMake-based cfg test runner) $
 #
 
 #
-#  testcfg.rb のPython版（コンフィギュレータのテストランナ）
+#		コンフィギュレータのテストランナ（CMake版）
 #
+#  test_cfg/ のテストプログラムをCMakeでビルドし，cfgのエラーメッセージ
+#  と生成ファイル（kernel_cfg.c/h）を期待値と比較する．
+#
+# 【実行方法】
+#	testcfg.py [-c] <処理内容> <処理対象>
+#
+#	-c，--copy		生成されたファイル・エラー出力をテスト期待値とする
+#
+#	処理内容：デフォルト=buildとexec／build／exec／clean
+#	処理対象：デフォルト=all／all／<テスト名>
+#
+# 【ターゲットの指定】
+#	CMakeのconfigure引数をTARGET_OPTIONSの1行目に記述する．
+#	素のカーネルビルド（dummyターゲット）の例：
+#	  -G Ninja -DASP3_TARGET=dummy_gcc -DASP3_OMIT_DEFAULT_SYSSVC=ON -DASP3_EXTRA_COMPILE_DEFS=TOPPERS_OMIT_SYSLOG
+#
+# 【エラー出力の比較方法】
+#	ビルドのstderrを取得し，以下の正規化を行ってから期待値と比較する：
+#	  - make/ninja等のビルドツール由来の行を除去
+#	  - ファイルパスを test_cfg/ 起点に正規化
+#	これによりビルドシステム（make/CMake）や実行場所に依存しない比較とする．
 
 import os
 import re
 import sys
 import subprocess
 
-#  オプションの定義
-#
-#  -c，--copy			生成されたファイルをテスト期待値とする
-
 #
 #  テストプログラム毎に必要なオプションの定義
 #
-#  【asp3_core変更】非TECSデフォルト環境では，TARGET_OPTIONSに以下を
-#  指定してシステムサービスなしの素のビルドとする：
-#    -T dummy_gcc OMIT_DEFAULT_SYSSVC -O "-DTOPPERS_OMIT_SYSLOG"
-#  （OMIT_DEFAULT_SYSSVC＝syssvcオブジェクト自動付与の抑止，
-#    TOPPERS_OMIT_SYSLOG＝カーネル内LOGマクロの無効化）
 CFG_TEST_SPEC = {
     # ビルドに成功するテスト
     "cfg_all1": {},
@@ -62,10 +74,17 @@ PASS1_TEST_SPEC = {
     "pass1_cfg1": {},
 }
 
+ALL_SPECS = (
+    (CFG_TEST_SPEC, True),
+    (PASS3_TEST_SPEC, False),
+    (PASS2_TEST_SPEC, False),
+    (PASS1_TEST_SPEC, False),
+)
+
+#  ソースルート（本スクリプトの位置から決定）
+src_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 copy_flag = False
-src_dir = "."
-used_src_dir = "."
-target_options = {}
+target_options = ""
 
 
 def system(command):
@@ -77,27 +96,29 @@ def obj_dir_name(test):
 
 
 #
-#  カーネルライブラリの作成
+#  エラー出力の正規化
 #
-def BuildKernel():
-    if not os.path.isdir("KERNELLIB"):
-        os.mkdir("KERNELLIB")
-
-    cwd = os.getcwd()
-    os.chdir("KERNELLIB")
-    try:
-        print("== building: KERNELLIB ==")
-        config_command = f"python3 {used_src_dir}/configure.py"
-        config_command += f" {target_options[0]}"
-        config_command += " -c empty.cfg"
-        print(config_command)
-        system(config_command)
-        system("touch empty.cfg")
-        system("make libkernel.a")
-        if os.path.isfile("Makefile.bak"):
-            os.remove("Makefile.bak")
-    finally:
-        os.chdir(cwd)
+#  エラーメッセージ行（"... error: ..."）のみを抽出し，パスを
+#  test_cfg/ 起点に正規化する．ビルドツール（make/ninja）由来の行や
+#  コンパイラの進捗・引用行はここで除外される．
+#
+def normalize_error_lines(text):
+    lines = []
+    seen = set()
+    for line in text.splitlines():
+        if not re.search(r"(^|: )error: ", line):
+            continue
+        if re.match(r"^(make(\[[0-9]+\])?: |ninja: |FAILED: )", line):
+            continue
+        #  パスを test_cfg/ 起点に正規化（"path/to/test_cfg/xxx.cfg:NN:" 等）
+        line = re.sub(r"(^|[\s\"'(])[^\s\"'(]*?/(test_cfg/)", r"\1\2", line)
+        #  offset.h用とkernel_cfg用でcfgのパス2が2回走るため，
+        #  同一エラーの重複を除去する（Makefile版は1回目で停止）
+        if line in seen:
+            continue
+        seen.add(line)
+        lines.append(line)
+    return "\n".join(lines) + ("\n" if lines else "")
 
 
 #
@@ -115,59 +136,22 @@ def BuildTest(test, test_spec, mkdir_flag=False):
     cwd = os.getcwd()
     os.chdir(obj_dir)
     try:
-        system("rm *.timestamp")
-
         print(f"== building: {obj_dir} ==")
-        config_command = f"python3 {used_src_dir}/configure.py"
-        if "TARGET" in test_spec:
-            config_command += f" {target_options[test_spec['TARGET']]}"
-        else:
-            config_command += f" {target_options[0]}"
-        config_command += f" -a {used_src_dir}/test_cfg"
 
-        if "TARGET" not in test_spec or test_spec["TARGET"] == 0:
-            config_command += " -L ../KERNELLIB"
-        if "SRC" in test_spec:
-            config_command += f" -A {test_spec['SRC']}"
-        else:
-            config_command += f" -A {test}"
+        config_command = f"cmake -S {src_root} -B . {target_options}"
+        config_command += f" -DASP3_APPLDIR={src_root}/test_cfg"
+        config_command += f" -DASP3_APPLNAME={test_spec.get('SRC', test)}"
         if "CFG" in test_spec:
-            config_command += f" -c {test_spec['CFG']}.cfg"
-        if "SYSOBJ" in test_spec:
-            config_command += " -S \"" \
-                + " ".join(f + ".o" for f in test_spec["SYSOBJ"].split()) \
-                + "\""
-        if "APPLOBJ" in test_spec:
-            config_command += " -U \"" \
-                + " ".join(f + ".o" for f in test_spec["APPLOBJ"].split()) \
-                + "\""
-        if "DEFS" in test_spec:
-            config_command += f" -O \"{test_spec['DEFS']}\""
-        if "OPTS" in test_spec:
-            config_command += f" {test_spec['OPTS']}"
+            config_command += f" -DASP3_APPCFGNAME={test_spec['CFG']}"
         print(config_command)
-        system(config_command)
+        if not system(config_command):
+            return
 
-        if "ML_MANUAL" in test_spec:
-            # 手動メモリ配置の場合は，リンカスクリプトをコピーする
-            cp_command = f"cp {used_src_dir}/test_cfg/{test}/ldscript.ld ."
-            print(cp_command)
-            system(cp_command)
-
-        make_commands = [
-            "make cfg1_out.c 2> error.txt",
-            "make cfg1_out.syms",
-            "make kernel_cfg.c 2>> error.txt",
-            "make asp.syms",
-            "make 2>> error.txt",
-        ]
-        for command in make_commands:
-            status = system(command)
-            if not status:
-                break
-
-        if os.path.isfile("Makefile.bak"):
-            os.remove("Makefile.bak")
+        #  ビルドし，出力（cfgのエラーメッセージを含む）をerror.txtに
+        #  取得する（ninjaは子プロセスの出力をstdoutに集約する）
+        with open("error.txt", "w", encoding="utf-8") as err:
+            subprocess.call("cmake --build .", shell=True,
+                            stderr=subprocess.STDOUT, stdout=err)
     finally:
         os.chdir(cwd)
 
@@ -176,30 +160,57 @@ def BuildTest(test, test_spec, mkdir_flag=False):
 #  全テストプログラムの作成
 #
 def BuildAllTest():
-    for test, test_spec in CFG_TEST_SPEC.items():
-        BuildTest(test, test_spec)
-    for test, test_spec in PASS3_TEST_SPEC.items():
-        BuildTest(test, test_spec)
-    for test, test_spec in PASS2_TEST_SPEC.items():
-        BuildTest(test, test_spec)
-    for test, test_spec in PASS1_TEST_SPEC.items():
-        BuildTest(test, test_spec)
+    for spec, _ in ALL_SPECS:
+        for test, test_spec in spec.items():
+            BuildTest(test, test_spec)
 
 
 #
-#  ファイルの比較
+#  ファイルの比較（正規化なし：生成ファイル用）
 #
-def diffFile(test, filename, obj_dir):
-    diff_command = f"diff {used_src_dir}/test_cfg/{test}/{filename} {filename}"
+def diffFile(test, expected, actual, obj_dir):
+    diff_command = f"diff {expected} {actual}"
     print(diff_command)
     ret = system(diff_command)
     if not ret:
         if copy_flag:
-            cp_command = f"cp {filename} {used_src_dir}/test_cfg/{test}/"
+            cp_command = f"cp {actual} {expected}"
             print(cp_command)
             system(cp_command)
         else:
-            print(f"#TODO# cp {obj_dir}/{filename} {src_dir}/test_cfg/{test}/")
+            print(f"#TODO# cp {obj_dir}/{actual} {expected}")
+
+
+#
+#  エラー出力の比較（正規化あり）
+#
+def diffError(test, obj_dir):
+    expected_path = f"{src_root}/test_cfg/{test}/error.txt"
+    if os.path.isfile("error.txt"):
+        with open("error.txt", encoding="utf-8") as f:
+            actual = normalize_error_lines(f.read())
+    else:
+        actual = ""
+
+    if os.path.isfile(expected_path):
+        with open(expected_path, encoding="utf-8") as f:
+            expected = normalize_error_lines(f.read())
+        if expected != actual:
+            print(f"== error.txt mismatch (normalized) ==")
+            import difflib
+            sys.stdout.writelines(difflib.unified_diff(
+                expected.splitlines(keepends=True),
+                actual.splitlines(keepends=True),
+                fromfile="expected", tofile="actual"))
+            if copy_flag:
+                with open(expected_path, "w", encoding="utf-8") as f:
+                    f.write(actual)
+                print(f"== copied normalized error.txt to {expected_path} ==")
+            else:
+                print(f"#TODO# update {expected_path}")
+    elif actual != "":
+        print("== unexpected errors ==")
+        print(actual)
 
 
 #
@@ -216,16 +227,14 @@ def CfgTest(test, test_spec, gen_flag=False):
         print(f"== checking: {obj_dir} ==")
 
         # エラーメッセージのチェック
-        if os.path.isfile(f"{used_src_dir}/test_cfg/{test}/error.txt"):
-            diffFile(test, "error.txt", obj_dir)
-        elif os.path.getsize("error.txt") > 0:
-            print("cat error.txt")
-            system("cat error.txt")
+        diffError(test, obj_dir)
 
         # 生成ファイルのチェック
         if gen_flag:
-            diffFile(test, "kernel_cfg.h", obj_dir)
-            diffFile(test, "kernel_cfg.c", obj_dir)
+            diffFile(test, f"{src_root}/test_cfg/{test}/kernel_cfg.h",
+                     "generated/kernel_cfg.h", obj_dir)
+            diffFile(test, f"{src_root}/test_cfg/{test}/kernel_cfg.c",
+                     "generated/kernel_cfg.c", obj_dir)
     finally:
         os.chdir(cwd)
 
@@ -234,27 +243,9 @@ def CfgTest(test, test_spec, gen_flag=False):
 #  全テストプログラムのテスト結果のチェック
 #
 def ExecAllTest():
-    for test, test_spec in CFG_TEST_SPEC.items():
-        CfgTest(test, test_spec, True)
-    for test, test_spec in PASS3_TEST_SPEC.items():
-        CfgTest(test, test_spec)
-    for test, test_spec in PASS2_TEST_SPEC.items():
-        CfgTest(test, test_spec)
-    for test, test_spec in PASS1_TEST_SPEC.items():
-        CfgTest(test, test_spec)
-
-
-#
-#  カーネルライブラリのクリーン
-#
-def CleanKernel():
-    if os.path.isdir("KERNELLIB"):
-        cwd = os.getcwd()
-        os.chdir("KERNELLIB")
-        try:
-            system("make clean")
-        finally:
-            os.chdir(cwd)
+    for spec, gen_flag in ALL_SPECS:
+        for test, test_spec in spec.items():
+            CfgTest(test, test_spec, gen_flag)
 
 
 #
@@ -268,8 +259,9 @@ def CleanTest(test, test_spec):
     cwd = os.getcwd()
     os.chdir(obj_dir)
     try:
-        system("make clean")
-        system("rm error.txt")
+        system("cmake --build . --target clean")
+        if os.path.isfile("error.txt"):
+            os.remove("error.txt")
     finally:
         os.chdir(cwd)
 
@@ -278,18 +270,20 @@ def CleanTest(test, test_spec):
 #  全テストプログラムのクリーン
 #
 def CleanAllTest():
-    for test, test_spec in CFG_TEST_SPEC.items():
-        CleanTest(test, test_spec)
-    for test, test_spec in PASS3_TEST_SPEC.items():
-        CleanTest(test, test_spec)
-    for test, test_spec in PASS2_TEST_SPEC.items():
-        CleanTest(test, test_spec)
-    for test, test_spec in PASS1_TEST_SPEC.items():
-        CleanTest(test, test_spec)
+    for spec, _ in ALL_SPECS:
+        for test, test_spec in spec.items():
+            CleanTest(test, test_spec)
+
+
+def find_spec(test):
+    for spec, gen_flag in ALL_SPECS:
+        if test in spec:
+            return spec[test], gen_flag
+    return None, False
 
 
 def main():
-    global copy_flag, src_dir, used_src_dir, target_options
+    global copy_flag, target_options
 
     #
     #  オプションの処理
@@ -302,26 +296,10 @@ def main():
             params.append(arg)
 
     #
-    #  ソースディレクトリ名を取り出す
+    #  ターゲットの指定（CMakeのconfigure引数）を読む
     #
-    m = re.match(r"^(.*)\/test_cfg\/testcfg", sys.argv[0])
-    if m:
-        src_dir = m.group(1)
-    else:
-        src_dir = "."
-
-    if re.match(r"^\/", src_dir):
-        used_src_dir = src_dir
-    else:
-        used_src_dir = "../" + src_dir
-
-    #
-    #  ターゲット依存のオプションを読む
-    #
-    target_options = {}
     with open("TARGET_OPTIONS", encoding="utf-8") as file:
-        for index, line in enumerate(file):
-            target_options[index] = line.rstrip("\n")
+        target_options = file.readline().rstrip("\n")
 
     #
     #  パラメータで指定された処理の実行
@@ -339,15 +317,6 @@ def main():
         elif param == "clean":
             clean_flag = True
 
-        elif param == "kernel":
-            if clean_flag:
-                CleanKernel()
-            else:
-                if not exec_only:
-                    BuildKernel()
-                # カーネルには，execはない
-            proc_flag = True
-
         elif param == "all":
             if clean_flag:
                 CleanAllTest()
@@ -359,29 +328,25 @@ def main():
             proc_flag = True
 
         else:
-            for spec, gen_flag in ((CFG_TEST_SPEC, True), (PASS3_TEST_SPEC, False),
-                                   (PASS2_TEST_SPEC, False), (PASS1_TEST_SPEC, False)):
-                if param in spec:
-                    if clean_flag:
-                        CleanTest(param, spec[param])
-                    else:
-                        if not exec_only:
-                            BuildTest(param, spec[param], True)
-                        if not build_only:
-                            CfgTest(param, spec[param], gen_flag)
-                    break
+            test_spec, gen_flag = find_spec(param)
+            if test_spec is not None:
+                if clean_flag:
+                    CleanTest(param, test_spec)
+                else:
+                    if not exec_only:
+                        BuildTest(param, test_spec, True)
+                    if not build_only:
+                        CfgTest(param, test_spec, gen_flag)
             else:
                 print(f"invalid parameter: {param}")
             proc_flag = True
 
     if not proc_flag:
-        # デフォルトの処理対象（kernelとall）
+        # デフォルトの処理対象（all）
         if clean_flag:
-            CleanKernel()
             CleanAllTest()
         else:
             if not exec_only:
-                BuildKernel()
                 BuildAllTest()
             if not build_only:
                 ExecAllTest()

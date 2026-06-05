@@ -109,7 +109,9 @@ cfgのPython化（`cfg-python.md`）の後続作業。
 ### 残課題・備考
 
 - ビルド・テストフローはPythonのみで完結（Ruby不要）になった。Ruby版・`tecsgen/`の削除は「ファイルの削除」項目で実施
-- testcfg/testexecの実行にはTARGET_OPTIONSの作成が必要（testcfg.py冒頭コメント参照）
+- testcfg/testexecの実行にはTARGET_OPTIONSの作成が必要（各ツール冒頭コメント参照）
+- 2026-06-06：両ツールを**CMakeベースに改修**（フェーズ2＝make版削除の前提条件解消．
+  TARGET_OPTIONSはCMakeのconfigure引数を記述する形式に変更）
 
 ## 削除対象ファイル（「ファイルの削除」項目で実施）
 

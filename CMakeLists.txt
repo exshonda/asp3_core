@@ -50,6 +50,14 @@ list(APPEND ASP3_COMPILE_OPTIONS
 )
 
 #
+#  追加のコンパイル定義（テストランナ等が -DASP3_EXTRA_COMPILE_DEFS=
+#  "HRT_CONFIG1;SIMTIM_TEST" の形で指定する）
+#
+if(DEFINED ASP3_EXTRA_COMPILE_DEFS)
+    list(APPEND ASP3_COMPILE_DEFS ${ASP3_EXTRA_COMPILE_DEFS})
+endif()
+
+#
 #  生成されるCコードの出力先
 #
 set(CFG_GEN_DIR ${CMAKE_BINARY_DIR}/generated)
@@ -63,6 +71,19 @@ set(CFG2_OUT_DB_FILE ${CFG_GEN_DIR}/cfg2_out.db)
 file(MAKE_DIRECTORY ${CFG_GEN_DIR})
 
 #
+#  tecsgen.cfgスタブの生成（非TECS環境向け）
+#  test/のテストプログラムの.cfgが INCLUDE("tecsgen.cfg") するため，
+#  非TECS版システムサービスのINCLUDEに展開するスタブを生成しておく
+#  （非TECS版システムサービス ユーザーズマニュアル §2.7の方法）
+#
+if(NOT EXISTS ${CFG_GEN_DIR}/tecsgen.cfg)
+    file(WRITE ${CFG_GEN_DIR}/tecsgen.cfg
+        "INCLUDE(\"syssvc/syslog.cfg\");\n"
+        "INCLUDE(\"syssvc/banner.cfg\");\n"
+        "INCLUDE(\"syssvc/serial.cfg\");\n")
+endif()
+
+#
 #  アプリケーション（サンプル）の定義
 #
 if(NOT DEFINED ASP3_APPLNAME)
@@ -71,7 +92,12 @@ endif()
 if(NOT DEFINED ASP3_APPLDIR)
     set(ASP3_APPLDIR ${ASP3_ROOT_DIR}/sample)
 endif()
-set(ASP3_APP_CFG_FILE ${ASP3_APPLDIR}/${ASP3_APPLNAME}.cfg)
+#  .cfgファイル名がアプリ名と異なる場合は ASP3_APPCFGNAME で指定する
+if(DEFINED ASP3_APPCFGNAME)
+    set(ASP3_APP_CFG_FILE ${ASP3_APPLDIR}/${ASP3_APPCFGNAME}.cfg)
+else()
+    set(ASP3_APP_CFG_FILE ${ASP3_APPLDIR}/${ASP3_APPLNAME}.cfg)
+endif()
 list(APPEND ASP3_APP_INCLUDE_DIRS ${ASP3_APPLDIR})
 
 #
@@ -278,11 +304,23 @@ endfunction()
 #
 #  サンプルアプリケーション（asp）
 #
+#  アプリのCソースは存在する場合のみ加える（cfg段階でエラーになる
+#  ことを期待するテスト（.cfgのみ）に対応．Makefile版ではcfgエラーで
+#  停止するためソース不在に到達しないのと等価）
+set(ASP3_APP_MAIN_SRC ${ASP3_APPLDIR}/${ASP3_APPLNAME}.c)
+if(NOT EXISTS ${ASP3_APP_MAIN_SRC})
+    set(ASP3_APP_MAIN_SRC "")
+endif()
 add_executable(asp
     ${ASP3_START_FILES}
-    ${ASP3_APPLDIR}/${ASP3_APPLNAME}.c
+    ${ASP3_APP_MAIN_SRC}
+    ${ASP3_EXTRA_APP_C_FILES}
 )
-asp3_add_syssvc(asp)
+#  ASP3_OMIT_DEFAULT_SYSSVC=ON でシステムサービスを組み込まない
+#  （cfgテスト等の素のカーネルビルド用．configure.pyの同名引数に相当）
+if(NOT ASP3_OMIT_DEFAULT_SYSSVC)
+    asp3_add_syssvc(asp)
+endif()
 target_include_directories(asp
     PRIVATE ${ASP3_ROOT_DIR}/kernel    # ASP3_START_FILES（start.S）用
 )
