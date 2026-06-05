@@ -263,8 +263,9 @@ def main():
     #  【asp3_core変更】コンフィギュレータのデフォルトをPython版（cfg.py）
     #  とする．Ruby版を使用する場合は -g "ruby $(SRCDIR)/cfg/cfg.rb" を指定
     #  する（その場合は生成テンプレートも.trbを指定すること）．
+    #  -B はバイトコードキャッシュ（__pycache__）の出力を抑止する．
     #
-    cfg = cfg or "python3 $(SRCDIR)/cfg/cfg.py"
+    cfg = cfg or "python3 -B $(SRCDIR)/cfg/cfg.py"
     tecsgen = tecsgen or ruby + " $(TECSDIR)/tecsgen.rb"
 
     #

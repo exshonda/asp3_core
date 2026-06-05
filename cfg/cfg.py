@@ -45,9 +45,6 @@ import re
 import pickle
 import argparse
 
-# バイトコードキャッシュ（__pycache__）を出力しない
-sys.dont_write_bytecode = True
-
 # Ensure cfg directory is in path for imports
 _TOOL_ROOT = os.path.dirname(os.path.abspath(__file__))
 if _TOOL_ROOT not in sys.path:
