@@ -333,7 +333,7 @@ scope: target / syssvc / cfg / cmake / upstream / ci
 |---|---|
 | **プロジェクト全体像** | **`docs/OVERVIEW.md`** |
 | **開発の始め方・人間/AIの分担** | **`START.md`** |
-| ビルド・テスト方法 | 本ファイル §4 |
+| ビルド・テスト方法 | 本ファイル §4 + `docs/building.md`（Makefile版/CMake版の詳細手順） |
 | 新ターゲット移植 | `docs/porting/PORTING_GUIDE.md` + `target_spec.yaml` |
 | 既存実装の参照 | `docs/porting/IMPL_INDEX.md` |
 | 機能追加の実施記録・経緯 | `docs/dev/README.md` + 本ファイル §1「機能追加の実施ルール」 |
