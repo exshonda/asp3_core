@@ -1,0 +1,31 @@
+{
+  "version": 4,
+  "include": [
+    "../../cmake/presets-base.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "zybo-qemu",
+      "inherits": "_base",
+      "displayName": "Cortex-A9 / QEMU (xilinx-zynq-a9)",
+      "description": "非Pico：ASP3_TARGET直接指定。ハードなし・ARMv7-A確認用",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
+      "cacheVariables": {
+        "ASP3_TARGET": "zybo_z7_gcc"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "zybo-qemu",
+      "configurePreset": "zybo-qemu"
+    },
+    {
+      "name": "run-zybo-qemu",
+      "configurePreset": "zybo-qemu",
+      "targets": [
+        "run"
+      ]
+    }
+  ]
+}

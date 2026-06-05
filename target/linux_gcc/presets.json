@@ -1,0 +1,39 @@
+{
+  "version": 4,
+  "include": [
+    "../../cmake/presets-base.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "posix",
+      "inherits": "_base",
+      "displayName": "POSIX CLI (host simulation)",
+      "description": "非Pico：ASP3_TARGET直接指定。ハードなし・最速確認/TAP用",
+      "cacheVariables": {
+        "ASP3_TARGET": "linux_gcc"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "posix",
+      "configurePreset": "posix"
+    },
+    {
+      "name": "run-posix",
+      "configurePreset": "posix",
+      "targets": [
+        "run"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "posix",
+      "configurePreset": "posix",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

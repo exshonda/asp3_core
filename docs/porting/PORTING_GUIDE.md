@@ -508,19 +508,37 @@ diff <(./build/posix/asp_test --tap) <(./serial_capture.py /dev/ttyUSB0)
 上流変更時のリスク: 上流ターゲット追加時に命名衝突確認 |
 ```
 
-### 9-2. CMakePresets.json への追加
+### 9-2. プリセットの追加（target/<name>/presets.json）
+
+プリセットはターゲット依存部のフォルダに置き、ルートの `CMakePresets.json` は
+include の一覧のみを持つ（共通設定は `cmake/presets-base.json` の `_base`）。
+
+**(1) `target/<name>/presets.json` を作成**：
 
 ```json
 {
-  "name": "<name>",
-  "displayName": "<display_name>",
-  "generator": "Ninja",
-  "cacheVariables": {
-    "ASP3_TARGET": "<name>",
-    "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-<arch>.cmake",
-    "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-  }
+  "version": 4,
+  "include": ["../../cmake/presets-base.json"],
+  "configurePresets": [
+    {
+      "name": "<preset名>",
+      "inherits": "_base",
+      "displayName": "<display_name>",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-<arch>.cmake",
+      "cacheVariables": { "ASP3_TARGET": "<name>" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "<preset名>", "configurePreset": "<preset名>" },
+    { "name": "run-<preset名>", "configurePreset": "<preset名>", "targets": ["run"] }
+  ]
 }
+```
+
+**(2) ルート `CMakePresets.json` の `include` に1行追加**：
+
+```json
+"target/<name>/presets.json"
 ```
 
 ### 9-3. CI（GitHub Actions）への追加

@@ -304,7 +304,7 @@ scope: target / syssvc / cfg / cmake / upstream / ci
 1. `target/<name>/target_spec.yaml` をテンプレートから作成・記入する。
 2. `PORTING_GUIDE.md` のStep順に実装する（target.cmake は変数積み上げ＋arch.cmake include）。
 3. 各Stepの「✅ 確認」を通過してから次に進む。
-4. 完了後、`DIVERGENCE_MAP.md`・`CMakePresets.json`・`.github/workflows/ci.yml`・`docs/porting/IMPL_INDEX.md` を更新する。
+4. 完了後、`DIVERGENCE_MAP.md`・`target/<name>/presets.json`（＋ルート`CMakePresets.json`のinclude追記）・`.github/workflows/ci.yml`・`docs/porting/IMPL_INDEX.md` を更新する。
 
 メモリマップ・割り込み設定・コンテキストスイッチは誤るとハードフォルトの原因になるため、**生成後に必ず人間の確認を求めること**。
 

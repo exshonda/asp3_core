@@ -27,6 +27,11 @@ cmake --build build/m33-qemu --target run
 
 プリセット一覧は `cmake --list-presets` で表示される。
 
+> プリセット定義は**ターゲット依存部のフォルダ**（`target/<name>/presets.json`）に
+> あり、ルートの `CMakePresets.json` はそれらを include する一覧のみを持つ
+> （共通設定は `cmake/presets-base.json`）。ターゲット追加時の手順は
+> `docs/porting/PORTING_GUIDE.md` Step 9-2 を参照。
+
 ### make のように簡単に使う（ninja）
 
 ジェネレータが Ninja のため、ビルドフォルダ内では ninja が make の代わりになる。

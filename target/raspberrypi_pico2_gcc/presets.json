@@ -1,0 +1,38 @@
+{
+  "version": 4,
+  "include": [
+    "../../cmake/presets-base.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "pico2-m33",
+      "inherits": "_base",
+      "displayName": "Raspberry Pi PICO2 (Cortex-M33)",
+      "description": "非Pico-SDK：ベアメタル移植（ASP3_TARGET直接指定）。実機書込みはOpenOCD（--target run）",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
+      "cacheVariables": {
+        "ASP3_TARGET": "raspberrypi_pico2_gcc"
+      }
+    },
+    {
+      "name": "pico2-riscv",
+      "inherits": "_base",
+      "displayName": "Raspberry Pi PICO2 (RISC-V Hazard3)",
+      "description": "Pico：PICO_PLATFORMで選択。RP2350 RISC-V実機（予約：arch/riscv_gcc未実装）",
+      "cacheVariables": {
+        "PICO_BOARD": "pico2",
+        "PICO_PLATFORM": "rp2350-riscv"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "pico2-m33",
+      "configurePreset": "pico2-m33"
+    },
+    {
+      "name": "pico2-riscv",
+      "configurePreset": "pico2-riscv"
+    }
+  ]
+}

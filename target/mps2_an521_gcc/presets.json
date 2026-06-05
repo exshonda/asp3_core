@@ -1,0 +1,31 @@
+{
+  "version": 4,
+  "include": [
+    "../../cmake/presets-base.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "m33-qemu",
+      "inherits": "_base",
+      "displayName": "Cortex-M33 / QEMU (mps2-an521)",
+      "description": "非Pico：ASP3_TARGET直接指定。ハードなし・ARMv8-M確認用",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
+      "cacheVariables": {
+        "ASP3_TARGET": "mps2_an521_gcc"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "m33-qemu",
+      "configurePreset": "m33-qemu"
+    },
+    {
+      "name": "run-m33-qemu",
+      "configurePreset": "m33-qemu",
+      "targets": [
+        "run"
+      ]
+    }
+  ]
+}
