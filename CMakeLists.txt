@@ -301,3 +301,12 @@ if(DEFINED ASP3_RUN_COMMAND)
         COMMENT "Running ${ASP3_TARGET}"
     )
 endif()
+
+#
+#  ターゲット固有の実行・デバッグターゲット（openocd/gdb/swd-run等）
+#  target.cmake が ASP3_TARGET_RUN_CMAKE を定義した場合に取り込む
+#  （aspターゲット定義後にincludeする必要があるためここで行う）
+#
+if(DEFINED ASP3_TARGET_RUN_CMAKE)
+    include(${ASP3_TARGET_RUN_CMAKE})
+endif()

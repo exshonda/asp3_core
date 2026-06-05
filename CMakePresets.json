@@ -54,10 +54,10 @@
       "name": "pico2-m33",
       "inherits": "_base",
       "displayName": "Raspberry Pi PICO2 (Cortex-M33)",
-      "description": "Pico：PICO_PLATFORMで選択（エントリ.cmakeがASP3_TARGETへ対応付け）",
+      "description": "非Pico-SDK：ベアメタル移植（ASP3_TARGET直接指定）。実機書込みはOpenOCD（--target run）",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
       "cacheVariables": {
-        "PICO_BOARD": "pico2",
-        "PICO_PLATFORM": "rp2350-arm-s"
+        "ASP3_TARGET": "raspberrypi_pico2_gcc"
       }
     },
     {

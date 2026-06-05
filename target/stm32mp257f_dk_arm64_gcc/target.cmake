@@ -81,3 +81,8 @@ list(APPEND ASP3_SYSSVC_TARGET_C_FILES
 #  チップ依存部のインクルード
 #
 include(${ASP3_ROOT_DIR}/arch/arm64_gcc/stm32mp2/chip.cmake)
+
+#
+#  実機実行・デバッグターゲット（swd-run/osdebug等．aspターゲット定義後に取込み）
+#
+set(ASP3_TARGET_RUN_CMAKE ${TARGETDIR}/run.cmake)

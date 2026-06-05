@@ -192,8 +192,8 @@ timeout 10 qemu-system-arm -machine mps2-an521 -nographic \
 | mps2_an521_gcc | ○（make run対応） | ○（preset: m33-qemu，runターゲット対応） |
 | linux_gcc | ○ | ○（preset: posix，runターゲット対応） |
 | zybo_z7_gcc | ○ | ○（preset: zybo-qemu，runターゲット対応） |
-| raspberrypi_pico2_gcc | ○ | 未対応（pico-sdk 必須．preset: pico2-m33 は予約） |
-| stm32mp257f_dk_arm64_gcc | ○（リンクは aarch64-none-elf 環境） | ○（preset: stm32mp257-a35．リンク・実機は aarch64-none-elf 環境） |
+| raspberrypi_pico2_gcc | ○ | ○（preset: pico2-m33．`--target run`=OpenOCD書込み，gdb/console等も対応） |
+| stm32mp257f_dk_arm64_gcc | ○（リンクは aarch64-none-elf 環境） | ○（preset: stm32mp257-a35．swd-run/osdebug/console等も対応．リンク・実機は aarch64-none-elf 環境） |
 | dummy_gcc（cfgテスト用） | ○ | 未定 |
 
 `cmake --build --preset run-m33-qemu` のように buildPresets（run-posix / run-m33-qemu /
