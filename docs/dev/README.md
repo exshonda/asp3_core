@@ -14,7 +14,7 @@
 
 | 項目 | ファイル | 状態 |
 |---|---|---|
-| TECSレス | `tecs-less.md` | 実施中 |
+| TECSレス | `tecs-less.md` | 完了 |
 | cfgのPython化 | `cfg-python.md` | 計画中 |
 | CMake対応 | `cmake.md` | 計画中 |
 | ファイルの削除 | `file-cleanup.md` | 計画中 |

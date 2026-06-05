@@ -49,7 +49,7 @@ TECSレス（AGENTS.md §1 機能追加計画、優先度：高）
 
 ## 実施結果
 
-（2026-06-05 記載．実機確認のみ未了）
+（2026-06-05 記載・完了．実機確認は別PC（実機接続機）で実施）
 
 ### 変更したファイル
 
@@ -96,8 +96,9 @@ TECSレス（AGENTS.md §1 機能追加計画、優先度：高）
 | QEMU mps2-an521（mps2_an521_gcc） | ○ | ビルド警告なし・sample1動作・シリアル入力`r`でtask1→2→3切替（SIO割込み経路確認） |
 | QEMU xilinx-zynq-a9（zybo_z7_gcc） | ○ | 同上 |
 | ビルドのみ（raspberrypi_pico2_gcc） | ○ | arm-none-eabi-gcc 警告ゼロ・configuration check passed |
-| コンパイルのみ（stm32mp257f_dk_arm64_gcc） | △ | 全オブジェクト警告ゼロ（aarch64-linux-gnu代用）．最終リンクは aarch64-none-elf 必須のため実機側マシンで実施 |
-| 実機（pico2 / STM32MP257F-DK） | − | 未実施．プッシュ後に実機接続機器で確認 |
+| コンパイルのみ（stm32mp257f_dk_arm64_gcc，開発機） | △ | 全オブジェクト警告ゼロ（aarch64-linux-gnu代用）．最終リンクは実機側マシン（aarch64-none-elf）で成功 |
+| 実機 PICO2（raspberrypi_pico2_gcc） | ○ | 実機接続PCで sample1 動作確認（2026-06-05） |
+| 実機 STM32MP257F-DK（stm32mp257f_dk_arm64_gcc） | ○ | 実機接続PCでリンク・sample1 動作確認（2026-06-05） |
 
 ### DIVERGENCE_MAP との関連
 
