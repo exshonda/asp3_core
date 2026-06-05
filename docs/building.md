@@ -191,10 +191,13 @@ timeout 10 qemu-system-arm -machine mps2-an521 -nographic \
 | ターゲット | Makefile版 | CMake版 |
 |---|---|---|
 | mps2_an521_gcc | ○（make run対応） | ○（preset: m33-qemu，runターゲット対応） |
-| linux_gcc | ○ | 対応予定（preset: posix） |
-| zybo_z7_gcc | ○ | 対応予定 |
-| raspberrypi_pico2_gcc | ○ | 対応予定（pico-sdk 必須） |
-| stm32mp257f_dk_arm64_gcc | ○（リンクは aarch64-none-elf 環境） | 対応予定 |
+| linux_gcc | ○ | ○（preset: posix，runターゲット対応） |
+| zybo_z7_gcc | ○ | ○（preset: zybo-qemu，runターゲット対応） |
+| raspberrypi_pico2_gcc | ○ | 未対応（pico-sdk 必須．preset: pico2-m33 は予約） |
+| stm32mp257f_dk_arm64_gcc | ○（リンクは aarch64-none-elf 環境） | ○（preset: stm32mp257-a35．リンク・実機は aarch64-none-elf 環境） |
 | ct11mpcore_gcc／gr_peach_gcc／dummy_gcc | ○ | 未定 |
+
+`cmake --build --preset run-m33-qemu` のように buildPresets（run-posix / run-m33-qemu /
+run-zybo-qemu）でルートから1コマンド実行もできる。
 
 CMake対応の進捗は `docs/dev/cmake.md` を参照。

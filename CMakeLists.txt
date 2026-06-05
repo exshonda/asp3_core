@@ -151,9 +151,12 @@ add_custom_command(
 #
 #  cfg1_outのビルド（静的APIパラメータの値の取り出し用）
 #
-add_executable(${CFG1_OUT} ${CFG1_OUT_FILE})
+#  ASP3_START_FILES（start.S等）はライブラリ外で先頭にリンクする
+#  （Makefile版のSTART_OBJSに相当．arm_gcc系で使用）
+add_executable(${CFG1_OUT} ${ASP3_START_FILES} ${CFG1_OUT_FILE})
 target_include_directories(${CFG1_OUT}
     PRIVATE ${ASP3_INCLUDE_DIRS} ${ASP3_APP_INCLUDE_DIRS}
+    PRIVATE ${ASP3_ROOT_DIR}/kernel    # ASP3_START_FILES（start.S）用
 )
 target_compile_definitions(${CFG1_OUT} PRIVATE ${ASP3_COMPILE_DEFS})
 target_compile_options(${CFG1_OUT} PRIVATE ${ASP3_COMPILE_OPTIONS})
@@ -180,17 +183,22 @@ add_custom_command(
 
 #
 #  パス2（-O）：offset.h の生成
+#  （offset.hを使わないターゲット（POSIX等）ではスキップ）
 #
-add_custom_command(
-    OUTPUT ${OFFSET_H_FILE}
-    WORKING_DIRECTORY ${CFG_GEN_DIR}
-    COMMAND ${PYTHON_EXE} ${CFG_PY} --pass 2 -O --kernel asp
-            ${CFG_INCLUDE_DIRS} ${CFG_OFFSET_TRB_FILES}
-            --rom-symbol ${CFG1_OUT_SYMS_FILE} --rom-image ${CFG1_OUT_SREC_FILE}
-    DEPENDS ${CFG_PY} ${ASP3_OFFSET_TRB_FILES}
-            ${CFG1_OUT_SYMS_FILE} ${CFG1_OUT_SREC_FILE} ${CFG1_OUT_DB_FILE}
-    COMMENT "Running cfg pass 2 to generate offset.h"
-)
+if(ASP3_OFFSET_TRB_FILES)
+    add_custom_command(
+        OUTPUT ${OFFSET_H_FILE}
+        WORKING_DIRECTORY ${CFG_GEN_DIR}
+        COMMAND ${PYTHON_EXE} ${CFG_PY} --pass 2 -O --kernel asp
+                ${CFG_INCLUDE_DIRS} ${CFG_OFFSET_TRB_FILES}
+                --rom-symbol ${CFG1_OUT_SYMS_FILE} --rom-image ${CFG1_OUT_SREC_FILE}
+        DEPENDS ${CFG_PY} ${ASP3_OFFSET_TRB_FILES}
+                ${CFG1_OUT_SYMS_FILE} ${CFG1_OUT_SREC_FILE} ${CFG1_OUT_DB_FILE}
+        COMMENT "Running cfg pass 2 to generate offset.h"
+    )
+else()
+    set(OFFSET_H_FILE "")
+endif()
 
 #
 #  パス2：kernel_cfg.c/h の生成
@@ -271,9 +279,13 @@ endfunction()
 #  サンプルアプリケーション（asp）
 #
 add_executable(asp
+    ${ASP3_START_FILES}
     ${ASP3_APPLDIR}/${ASP3_APPLNAME}.c
 )
 asp3_add_syssvc(asp)
+target_include_directories(asp
+    PRIVATE ${ASP3_ROOT_DIR}/kernel    # ASP3_START_FILES（start.S）用
+)
 target_link_libraries(asp PRIVATE asp3 ${ASP3_LINK_LIBS})
 target_link_options(asp PRIVATE ${ASP3_LINK_OPTIONS})
 asp3_cfg_check(asp)
