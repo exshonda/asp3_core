@@ -170,3 +170,19 @@ ct11mpcore/gr_peach/dummy/stm32mp257f_dk）で、Ruby版とPython版の
 - cfgエンジン・`kernel/*.py`（kernel/への新規追加）・arch/targetテンプレート・
   `configure.rb`/Makefile類の乖離行を記録（最終確認バージョン cfg 1.7.1）
 - CFG_SPEC_MAP節（`docs/asp3_derivative_plan.md` §8.1）の対応表も更新
+
+## 削除対象ファイル（「ファイルの削除」項目で実施）
+
+Python化の完了に伴い不要となるRuby版：
+
+- エンジン：`cfg/cfg.rb`・`cfg/pass1.rb`・`cfg/pass2.rb`・`cfg/GenFile.rb`・`cfg/SRecord.rb`
+- 生成テンプレート（`.trb`）一式：
+  - `kernel/*.trb`（14本）
+  - `arch/arm_m_gcc/common/core_{kernel,offset,check}.trb`・`core_{kernel,offset}_v6m.trb`
+    （v6m系は`.py`未変換のまま削除．必要になった場合は上流から取得して変換）
+  - `arch/arm_gcc/common/core_{kernel,offset,check}.trb`・`arch/arm_gcc/zynq7000/chip_kernel.trb`・
+    `arch/arm_gcc/rza1/chip_kernel.trb`
+  - `arch/arm64_gcc/common/core_{kernel,offset,check}.trb`・`gic_kernel.trb`・
+    `arch/arm64_gcc/stm32mp2/chip_kernel.trb`
+  - `arch/posix_gcc/posix_{kernel,check}.trb`
+  - `target/*/target_{kernel,check}.trb`・`target/dummy_gcc/target_offset.trb`

@@ -104,3 +104,32 @@ TECSレス（AGENTS.md §1 機能追加計画、優先度：高）
 
 - `configure.rb`・`target/zybo_z7_gcc/`・`arch/arm_gcc/zynq7000/xuartps.[ch]`・各非TECS化・`target/linux_gcc/`＋`arch/posix_gcc/`取込みを `DIVERGENCE_MAP.md` に記録済み
 - `syssvc/syslog.c` の行を実態（構造化ログ未実施・上流non_tecs由来）に修正
+
+## 削除対象ファイル（「ファイルの削除」項目で実施）
+
+TECSレス化の完了に伴い不要となるTECS関連ファイル：
+
+- `tecsgen/` 一式（TECSジェネレータ．Ruby 72ファイル）
+- `tecs_kernel/` 一式（TECS用カーネルヘッダ・`kernel.cdl`）
+- `syssvc/` のTECS版コンポーネント：
+  `tBanner.cdl`・`tBannerMain.c`・`tHistogram.{c,h,cdl}`・`tHistogramAdapter.{c,cdl}`・
+  `tLogTask.cdl`・`tLogTaskMain.c`・`tPutLogSIOPort.{c,cdl}`・`tSerialAdapter.{c,cdl}`・
+  `tSerialPort.cdl`・`tSerialPortMain.c`・`tSysLog.{c,cdl}`・`tSysLogAdapter.{c,cdl}`・
+  `tTestService.{c,cdl}`・`tTestServiceAdapter.{c,cdl}`
+- arch のTECSセル：
+  - `arch/arm_m_gcc/rp2350/tUsart.{c,cdl}`
+  - `arch/arm_gcc/common/tUartPL011.{c,cdl}`
+  - `arch/arm_gcc/zynq7000/tSIOPortZynq7000.cdl`・`tSIOPortZynq7000Main_inline.h`・`tXUartPs.{c,cdl}`
+  - `arch/arm64_gcc/stm32mp2/tUsart.{c,cdl}`
+  - `arch/posix_gcc/posix.cdl`・`posix_aio.cdl`・`tPutLogPosix.{c,cdl}`・`tSIOPortPosix.cdl`・
+    `tSIOPortPosixAIO.cdl`・`tSIOPortPosixAIOMain.c`・`tSIOPortPosixMain.c`・
+    `tecs_aiocb.h`・`tecs_termios.h`
+  - `arch/tracelog/tTraceLog.cdl`
+- target のTECS組上げ記述（全ターゲットの `target.cdl`・`tSIOPort*.cdl`・
+  `tSIOPortTargetMain_inline.h`・mps2の `tUsart.{c,cdl}`）
+- TECS用アプリ・テスト記述：`sample/sample1.cdl`・`sample/tSample2.cdl`（＋tSample2関連）・
+  `test/test_pf.cdl`・`test/test_pf_bitkernel.cdl`・`test/perf_pf.cdl`
+- `extension/non_tecs/` 一式（本体側へ展開済みのため重複）
+
+※ `configure.{rb,py}`・`sample/Makefile` のTECS関連オプション（`-t`/`-C`/`-G`等）の
+整理はmake版の扱い（cmake.md参照）と合わせて行う。

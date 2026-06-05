@@ -110,3 +110,13 @@ cfgのPython化（`cfg-python.md`）の後続作業。
 
 - ビルド・テストフローはPythonのみで完結（Ruby不要）になった。Ruby版・`tecsgen/`の削除は「ファイルの削除」項目で実施
 - testcfg/testexecの実行にはTARGET_OPTIONSの作成が必要（testcfg.py冒頭コメント参照）
+
+## 削除対象ファイル（「ファイルの削除」項目で実施）
+
+Python化の完了に伴い不要となるRuby版：
+
+- `configure.rb`
+- `test/testexec.rb`
+- `test_cfg/testcfg.rb`
+- `utils/genrename.rb`・`utils/applyrename.rb`・`utils/gentest.rb`
+- `utils/makerelease.rb`（MANIFEST廃止（file-cleanup.md）に伴い `makerelease.py` も削除）
