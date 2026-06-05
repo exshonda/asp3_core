@@ -5,24 +5,38 @@
   ],
   "configurePresets": [
     {
-      "name": "a64-qemu",
+      "name": "zcu102_arm64_gcc",
       "inherits": "_base",
-      "displayName": "Cortex-A53 / QEMU (xlnx-zcu102)",
-      "description": "非Pico：ASP3_TARGET直接指定。ハードなし・ARMv8-A確認用（aarch64-none-elf無しの環境は -DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu- を付与）",
+      "displayName": "ZCU102 (Cortex-A53, real board)",
+      "description": "実機ZCU102用（STG初期化あり・実行手段は今後整備）",
       "toolchainFile": "${sourceDir}/cmake/toolchain-a35.cmake",
       "cacheVariables": {
-        "ASP3_TARGET": "zcu102_arm64_gcc"
+        "ASP3_TARGET": "zcu102_arm64_gcc",
+        "ZCU102_QEMU": "OFF"
+      }
+    },
+    {
+      "name": "zcu102_arm64_gcc-qemu",
+      "inherits": "zcu102_arm64_gcc",
+      "displayName": "ZCU102 / QEMU (xlnx-zcu102)",
+      "description": "QEMU実行用（aarch64-none-elf無しの環境は -DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu- を付与）",
+      "cacheVariables": {
+        "ZCU102_QEMU": "ON"
       }
     }
   ],
   "buildPresets": [
     {
-      "name": "a64-qemu",
-      "configurePreset": "a64-qemu"
+      "name": "zcu102_arm64_gcc",
+      "configurePreset": "zcu102_arm64_gcc"
     },
     {
-      "name": "run-a64-qemu",
-      "configurePreset": "a64-qemu",
+      "name": "zcu102_arm64_gcc-qemu",
+      "configurePreset": "zcu102_arm64_gcc-qemu"
+    },
+    {
+      "name": "run-zcu102_arm64_gcc-qemu",
+      "configurePreset": "zcu102_arm64_gcc-qemu",
       "targets": [
         "run"
       ]

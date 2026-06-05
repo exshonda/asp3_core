@@ -23,8 +23,8 @@
 
 ```bash
 # 最速の動作確認（ハードなし）
-cmake --preset posix -B build/posix && cmake --build build/posix
-./build/posix/asp --tap
+cmake --preset linux_gcc -B build/linux_gcc && cmake --build build/linux_gcc
+./build/linux_gcc/asp --tap
 ```
 
 詳細なビルド・テスト・マージ・移植手順はすべて AGENTS.md を参照。

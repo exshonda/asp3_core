@@ -5,10 +5,10 @@
   ],
   "configurePresets": [
     {
-      "name": "stm32mp257-a35",
+      "name": "stm32mp257f_dk_arm64_gcc",
       "inherits": "_base",
       "displayName": "STM32MP257F-DK (Cortex-A35)",
-      "description": "非Pico：ASP3_TARGET直接指定。ARMv8-Aベアメタル実機",
+      "description": "ARMv8-Aベアメタル実機",
       "toolchainFile": "${sourceDir}/cmake/toolchain-a35.cmake",
       "cacheVariables": {
         "ASP3_TARGET": "stm32mp257f_dk_arm64_gcc"
@@ -17,8 +17,8 @@
   ],
   "buildPresets": [
     {
-      "name": "stm32mp257-a35",
-      "configurePreset": "stm32mp257-a35"
+      "name": "stm32mp257f_dk_arm64_gcc",
+      "configurePreset": "stm32mp257f_dk_arm64_gcc"
     }
   ]
 }

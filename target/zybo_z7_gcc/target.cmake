@@ -30,11 +30,21 @@ list(APPEND ASP3_INCLUDE_DIRS
 )
 
 #
+#  QEMU／実機の切り替え（既定：実機．QEMU時は TOPPERS_USE_QEMU を定義し，
+#  ext_ker でセミホスティングによりQEMUを終了させる）
+#
+option(ZYBO_QEMU "Build for QEMU xilinx-zynq-a9 (OFF: real Zybo Z7 board)" OFF)
+
+#
 #  コンパイル・リンクオプション（Makefile.targetと同一）
 #
 list(APPEND ASP3_COMPILE_DEFS
     USE_ARM_FPU_ALWAYS
 )
+
+if(ZYBO_QEMU)
+    list(APPEND ASP3_COMPILE_DEFS TOPPERS_USE_QEMU)
+endif()
 
 list(APPEND ASP3_COMPILE_OPTIONS
     -mfpu=vfpv3-d16
@@ -71,11 +81,13 @@ list(APPEND ASP3_SYSSVC_TARGET_C_FILES
 include(${ASP3_ROOT_DIR}/arch/arm_gcc/zynq7000/chip.cmake)
 
 #
-#  QEMUによる実行（cmake --build <dir> --target run）
+#  QEMUによる実行（cmake --build <dir> --target run．QEMUビルド時のみ）
 #  UART1（コンソール）が2本目の-serialに接続される
 #
-set(ASP3_RUN_COMMAND
-    qemu-system-arm -M xilinx-zynq-a9 -semihosting -nographic
-    -serial /dev/null -serial mon:stdio
-    -kernel $<TARGET_FILE:asp>
-)
+if(ZYBO_QEMU)
+    set(ASP3_RUN_COMMAND
+        qemu-system-arm -M xilinx-zynq-a9 -semihosting -nographic
+        -serial /dev/null -serial mon:stdio
+        -kernel $<TARGET_FILE:asp>
+    )
+endif()

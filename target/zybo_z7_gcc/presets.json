@@ -5,24 +5,38 @@
   ],
   "configurePresets": [
     {
-      "name": "zybo-qemu",
+      "name": "zybo_z7_gcc",
       "inherits": "_base",
-      "displayName": "Cortex-A9 / QEMU (xilinx-zynq-a9)",
-      "description": "非Pico：ASP3_TARGET直接指定。ハードなし・ARMv7-A確認用",
+      "displayName": "Zybo Z7 (Cortex-A9, real board)",
+      "description": "実機Zybo Z7用（実行はxilinx_sdk/jtag.tcl）",
       "toolchainFile": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
       "cacheVariables": {
-        "ASP3_TARGET": "zybo_z7_gcc"
+        "ASP3_TARGET": "zybo_z7_gcc",
+        "ZYBO_QEMU": "OFF"
+      }
+    },
+    {
+      "name": "zybo_z7_gcc-qemu",
+      "inherits": "zybo_z7_gcc",
+      "displayName": "Zybo Z7 / QEMU (xilinx-zynq-a9)",
+      "description": "QEMU実行用（TOPPERS_USE_QEMU定義＝ext_kerでQEMU終了）",
+      "cacheVariables": {
+        "ZYBO_QEMU": "ON"
       }
     }
   ],
   "buildPresets": [
     {
-      "name": "zybo-qemu",
-      "configurePreset": "zybo-qemu"
+      "name": "zybo_z7_gcc",
+      "configurePreset": "zybo_z7_gcc"
     },
     {
-      "name": "run-zybo-qemu",
-      "configurePreset": "zybo-qemu",
+      "name": "zybo_z7_gcc-qemu",
+      "configurePreset": "zybo_z7_gcc-qemu"
+    },
+    {
+      "name": "run-zybo_z7_gcc-qemu",
+      "configurePreset": "zybo_z7_gcc-qemu",
       "targets": [
         "run"
       ]

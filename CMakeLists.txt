@@ -5,9 +5,9 @@
 #  スタンドアロンビルド（サンプルアプリ asp）として構成したもの．
 #
 #  使い方（例）：
-#    cmake --preset m33-qemu -B build/m33-qemu
-#    cmake --build build/m33-qemu
-#    cmake --build build/m33-qemu --target run    # QEMU実行
+#    cmake --preset mps2_an521_gcc -B build/mps2_an521_gcc
+#    cmake --build build/mps2_an521_gcc
+#    cmake --build build/mps2_an521_gcc --target run    # QEMU実行
 #
 cmake_minimum_required(VERSION 3.16)
 

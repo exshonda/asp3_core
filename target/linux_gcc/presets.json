@@ -5,10 +5,10 @@
   ],
   "configurePresets": [
     {
-      "name": "posix",
+      "name": "linux_gcc",
       "inherits": "_base",
       "displayName": "POSIX CLI (host simulation)",
-      "description": "非Pico：ASP3_TARGET直接指定。ハードなし・最速確認/TAP用",
+      "description": "ホストシミュレーション。ハードなし・最速確認/TAP用",
       "cacheVariables": {
         "ASP3_TARGET": "linux_gcc"
       }
@@ -16,12 +16,12 @@
   ],
   "buildPresets": [
     {
-      "name": "posix",
-      "configurePreset": "posix"
+      "name": "linux_gcc",
+      "configurePreset": "linux_gcc"
     },
     {
-      "name": "run-posix",
-      "configurePreset": "posix",
+      "name": "run-linux_gcc",
+      "configurePreset": "linux_gcc",
       "targets": [
         "run"
       ]
@@ -29,8 +29,8 @@
   ],
   "testPresets": [
     {
-      "name": "posix",
-      "configurePreset": "posix",
+      "name": "linux_gcc",
+      "configurePreset": "linux_gcc",
       "output": {
         "outputOnFailure": true
       }

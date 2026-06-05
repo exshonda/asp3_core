@@ -15,10 +15,10 @@ arm 依存部の実差分から抽出した変換規則で arm64 依存部を新
 ## ビルド・実行（クイック）
 
 ```bash
-cmake --preset stm32mp257-a35 -B build/stm32mp257-a35   # 非TECS（TECSは廃止済み）
-cmake --build build/stm32mp257-a35     # -> asp.elf（コンパイラ警告ゼロであること）
-ninja -C build/stm32mp257-a35 swd-run  # 実機実行（FSBL/minimal_boot 入り SD で起動済みのこと）
-ninja -C build/stm32mp257-a35 console  # / osdebug / swd-debug / openocd / gdb
+cmake --preset stm32mp257f_dk_arm64_gcc -B build/stm32mp257f_dk_arm64_gcc   # 非TECS（TECSは廃止済み）
+cmake --build build/stm32mp257f_dk_arm64_gcc     # -> asp.elf（コンパイラ警告ゼロであること）
+ninja -C build/stm32mp257f_dk_arm64_gcc swd-run  # 実機実行（FSBL/minimal_boot 入り SD で起動済みのこと）
+ninja -C build/stm32mp257f_dk_arm64_gcc console  # / osdebug / swd-debug / openocd / gdb
 ```
 
 （Makefile版ビルドは廃止．aarch64-none-elf が無い開発機では
