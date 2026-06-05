@@ -49,4 +49,57 @@ TECSレス（AGENTS.md §1 機能追加計画、優先度：高）
 
 ## 実施結果
 
-（完了時に記載）
+（2026-06-05 記載．実機確認のみ未了）
+
+### 変更したファイル
+
+| ファイル | 変更内容概要 |
+|---|---|
+| `configure.rb` | 非TECSビルドをデフォルト化（`OMIT_TECS`初期設定・共通syssvcオブジェクト自動付与・`banner.o`含む）．TECS構成は引数 `OMIT_TECS=`（空値）で選択 |
+| `syssvc/serial.h`・`syssvc/syslog.h` | non_tecs展開による上書き（`TOPPERS_OMIT_TECS`条件ディレクティブ付き，上流ファイル） |
+| `sample/sample1.cfg` | 同上（非TECS用INCLUDEに切替わる条件ディレクティブ） |
+| `arch/arm_gcc/common/uart_pl011.h`・`arch/arm_gcc/rza1/scif.h`・`arch/simtimer/sim_timer_cntl.h` | 同上（non_tecs展開による上書き） |
+| `target/ct11mpcore_gcc/`・`target/dummy_gcc/`・`target/gr_peach_gcc/` | 同上（`target_kernel_impl.c`・`target_syssvc.h`の上書き＋`target_serial.*`追加） |
+| `target/mps2_an521_gcc/` | 非TECS化：`target_syssvc.h`（SIO/割込み設定）・`target_kernel_impl.c`（sio初期化・低レベル出力）・`Makefile.target`（OMIT_TECS時オブジェクト追加） |
+| `target/zybo_z7_gcc/` | 非TECS化：同上＋`MANIFEST`更新（**上流ZYBOパッケージ由来**） |
+| `arch/arm_gcc/zynq7000/xuartps.h`・`MANIFEST` | 非TECSドライバAPI追加 |
+| `target/stm32mp257f_dk_arm64_gcc/`・`arch/arm64_gcc/stm32mp2/` | 非TECS化：同上＋`MANIFEST`・`PORTING_ASP3_STM32MP2.md`・`CLAUDE.md`更新 |
+| `target/raspberrypi_pico2_gcc/`・`arch/arm_m_gcc/rp2350/` | 非TECS化：`target_syssvc.h`・`Makefile.chip`・`MANIFEST`・`PORTING.md`更新 |
+| `target/linux_gcc/Makefile.target` | OMIT_TECS時に`posix_serial.o`追加 |
+| `DIVERGENCE_MAP.md`・`.gitignore`・`docs/dev/README.md` | 台帳記録・obj/除外・状態更新 |
+
+### 追加したファイル
+
+- non_tecs展開（上流由来）：`syssvc/{syslog,banner,serial,serial_cfg,logtask,histogram,test_svc}.c`＋各`.cfg/.h`，`arch/posix_gcc/posix_serial.*`・`posix_sigio.*`，`arch/arm_gcc/common/uart_pl011.c`，`arch/arm_gcc/rza1/{chip_serial,scif}.*`，`target/{linux_gcc,macos_xcode}/`（非TECS3点），各target/の`target_serial.*`，`doc/non_tecs.txt`
+- 上流SVN取込み（3.7.2）：`arch/posix_gcc/`（カーネル実装部一式），`target/linux_gcc/`（完全版．3.7.2 tarball未収録のため`asp3_3.7.zip`＝同一バージョンのSVN作業コピーから取込み）
+- 新規作成（非TECS SIOドライバ）：
+  - `target/mps2_an521_gcc/cmsdk_uart.{c,h}`・`target_serial.{c,h,cfg}`
+  - `arch/arm_gcc/zynq7000/xuartps.c`，`target/zybo_z7_gcc/target_serial.{c,h,cfg}`
+  - `arch/arm64_gcc/stm32mp2/stm32usart.c`，`target/stm32mp257f_dk_arm64_gcc/target_serial.{c,h,cfg}`
+  - `arch/arm_m_gcc/rp2350/rp2350_uart.{c,h}`・`chip_serial.{c,h,cfg}`，`target/raspberrypi_pico2_gcc/target_serial.{h,cfg}`
+
+### 削除したファイル
+
+なし（TECS版ファイルは残置．条件ディレクティブで共存．削除は別項目「ファイルの削除」で実施）
+
+### Git情報
+
+- ベースコミット：`d8c0b7e`（Import gen files＝ASP3 3.7.2取込み直後）
+- 関連コミット範囲：`6d3604e`〜`2c8f9f0`（docs 1・upstream取込み2・configure.rb 2・ターゲット4）
+- ファイルリスト再現コマンド例：`git diff --stat d8c0b7e HEAD -- syssvc arch target configure.rb`
+
+### 検証結果
+
+| テスト | 実施 | 結果 |
+|---|---|---|
+| POSIX（linux_gcc, obj/obj_linux） | ○ | ビルド警告なし・sample1動作（バナー・logtask・task1周期実行） |
+| QEMU mps2-an521（mps2_an521_gcc） | ○ | ビルド警告なし・sample1動作・シリアル入力`r`でtask1→2→3切替（SIO割込み経路確認） |
+| QEMU xilinx-zynq-a9（zybo_z7_gcc） | ○ | 同上 |
+| ビルドのみ（raspberrypi_pico2_gcc） | ○ | arm-none-eabi-gcc 警告ゼロ・configuration check passed |
+| コンパイルのみ（stm32mp257f_dk_arm64_gcc） | △ | 全オブジェクト警告ゼロ（aarch64-linux-gnu代用）．最終リンクは aarch64-none-elf 必須のため実機側マシンで実施 |
+| 実機（pico2 / STM32MP257F-DK） | − | 未実施．プッシュ後に実機接続機器で確認 |
+
+### DIVERGENCE_MAP との関連
+
+- `configure.rb`・`target/zybo_z7_gcc/`・`arch/arm_gcc/zynq7000/xuartps.[ch]`・各非TECS化・`target/linux_gcc/`＋`arch/posix_gcc/`取込みを `DIVERGENCE_MAP.md` に記録済み
+- `syssvc/syslog.c` の行を実態（構造化ログ未実施・上流non_tecs由来）に修正

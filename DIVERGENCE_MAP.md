@@ -16,7 +16,13 @@
 | `syssvc/serial.c` | 上流 `non_tecs` 由来 | TECSレス版を上流拡張から採用 | `extension/non_tecs/syssvc` の更新に追従 | syssvc(EXTENDED) | 3.7.0 |
 | `syssvc/logtask.c` | 上流 `non_tecs` 由来 | 同上 | 同上 | syssvc(EXTENDED) | 3.7.0 |
 | `syssvc/banner.c` | 上流 `non_tecs` 由来 | 同上 | 同上 | syssvc(EXTENDED) | 3.7.0 |
-| `syssvc/syslog.c` | `non_tecs` 由来＋構造化ログ追加 | TECSレス版に構造化ログ（`T=,EV=`）を付加 | **構造化ログ部分が局所改変・要確認** | syssvc(DIVERGED) | 3.7.0 |
+| `syssvc/syslog.c` | 上流 `non_tecs` 由来（構造化ログ追加は計画中） | TECSレス版を採用（`T=,EV=`構造化ログは未実施） | `extension/non_tecs/syssvc` の更新に追従 | syssvc(EXTENDED) | 3.7.2 |
+| `target/zybo_z7_gcc/`（非TECS化） | 改変＋新規追加 | TECSレス化（`target_serial.{c,h,cfg}`新規・`target_syssvc.h`/`target_kernel_impl.c`/`Makefile.target`/`MANIFEST`改変） | **上流ZYBOターゲットパッケージ由来のため上流更新時要確認** | target | 3.7.2 |
+| `arch/arm_gcc/zynq7000/xuartps.[ch]` | `xuartps.c`新規・`xuartps.h`改変（非TECSドライバAPI追加）・`MANIFEST`改変 | 非TECS版SIOドライバ | 上流zynq7000依存部の`xuartps.h`変更時に要確認 | arch | 3.7.2 |
+| `target/mps2_an521_gcc/`（非TECS化） | 新規追加（`cmsdk_uart.[ch]`・`target_serial.{c,h,cfg}`）＋改変 | TECSレス化 | （ターゲット自体がNEW・上流衝突なし） | target(NEW) | — |
+| `target/stm32mp257f_dk_arm64_gcc/`・`arch/arm64_gcc/stm32mp2/`（非TECS化） | 新規追加（`stm32usart.c`・`target_serial.{c,h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING_ASP3_STM32MP2.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
+| `target/raspberrypi_pico2_gcc/`・`arch/arm_m_gcc/rp2350/`（非TECS化） | 新規追加（`rp2350_uart.[ch]`・`chip_serial.{c,h,cfg}`・`target_serial.{h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
+| `target/linux_gcc/`・`arch/posix_gcc/` | 上流SVN（3.7.2）から取込み＋`Makefile.target`改変 | POSIXシミュレーション環境（3.7.2 tarball未収録のため別途取込み） | 上流posix_gccパッケージの更新に追従 | target/arch | 3.7.2 |
 | `syssvc/qemu_exit.c` | 新規追加 | QEMUセミホスティング終了 | （上流に存在せず・衝突なし） | syssvc(NEW) | — |
 | `cfg/cfg.py`・`pass1.py`・`pass2.py` | Ruby→Python移植（エンジン） | コンフィギュレータのPython化 | **上流cfg.rb系の挙動変更時はテキスト差分不可・手動再反映（CFG_SPEC_MAP参照）** | cfg | cfg 1.7.0 |
 | `kernel/kernel_api.def` | 上流同形式（変更なし〜微修正） | 静的API定義（api-table） | 上流と同形式のためテキストマージ可能 | cfg(PRISTINE寄り) | 3.7.0 |
@@ -27,7 +33,6 @@
 | `cmake/` 一式 | 新規追加 | ツールチェーン・CMakeモジュール | （上流に存在せず・衝突なし） | build(NEW) | — |
 | `arch/riscv_gcc/` | 新規追加 | RP2350 RISC-V対応 | 上流がRISC-V対応を追加した場合は統合検討 | arch(NEW) | — |
 | `target/mps2_an521_gcc/` | 新規追加 | QEMU Cortex-M33ターゲット | （上流に存在せず・衝突なし） | target(NEW) | — |
-| `target/linux_gcc/` | 改変（上流linux_gccベース） | CLIターゲット・TAP対応 | 上流linux_gcc変更時に要確認 | target | 3.7.0 |
 | `target/rp2350-arm-s_pico_sdk/` | 新規追加 | asp3_pico_sdkから移植 | （上流に存在せず・衝突なし） | target(NEW) | — |
 | `target/rp2350-riscv_pico_sdk/` | 新規追加 | RP2350 RISC-V | （上流に存在せず・衝突なし） | target(NEW) | — |
 | `target/stm32mp257f_dk_arm64_gcc/` | 新規追加 | stm32_vscode_aspから移植 | （上流に存在せず・衝突なし） | target(NEW) | — |
