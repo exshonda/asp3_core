@@ -493,8 +493,8 @@ ok 6 - alarm_handler
 
 ```bash
 # POSIXで同じテストを実行して結果を比較
-cmake --build build/linux_gcc --target test_porting
-diff <(./build/linux_gcc/asp_test --tap) <(./serial_capture.py /dev/ttyUSB0)
+cmake --build build/linux --target test_porting
+diff <(./build/linux/asp_test --tap) <(./serial_capture.py /dev/ttyUSB0)
 ```
 
 ---

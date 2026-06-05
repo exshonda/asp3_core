@@ -5,7 +5,7 @@
   ],
   "configurePresets": [
     {
-      "name": "zcu102_arm64_gcc",
+      "name": "zcu102_arm64",
       "inherits": "_base",
       "displayName": "ZCU102 (Cortex-A53, real board)",
       "description": "実機ZCU102用（STG初期化あり・実行手段は今後整備）",
@@ -16,8 +16,8 @@
       }
     },
     {
-      "name": "zcu102_arm64_gcc-qemu",
-      "inherits": "zcu102_arm64_gcc",
+      "name": "zcu102_arm64-qemu",
+      "inherits": "zcu102_arm64",
       "displayName": "ZCU102 / QEMU (xlnx-zcu102)",
       "description": "QEMU実行用（aarch64-none-elf無しの環境は -DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu- を付与）",
       "cacheVariables": {
@@ -27,16 +27,16 @@
   ],
   "buildPresets": [
     {
-      "name": "zcu102_arm64_gcc",
-      "configurePreset": "zcu102_arm64_gcc"
+      "name": "zcu102_arm64",
+      "configurePreset": "zcu102_arm64"
     },
     {
-      "name": "zcu102_arm64_gcc-qemu",
-      "configurePreset": "zcu102_arm64_gcc-qemu"
+      "name": "zcu102_arm64-qemu",
+      "configurePreset": "zcu102_arm64-qemu"
     },
     {
-      "name": "run-zcu102_arm64_gcc-qemu",
-      "configurePreset": "zcu102_arm64_gcc-qemu",
+      "name": "run-zcu102_arm64-qemu",
+      "configurePreset": "zcu102_arm64-qemu",
       "targets": [
         "run"
       ]

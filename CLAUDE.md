@@ -23,8 +23,8 @@
 
 ```bash
 # 最速の動作確認（ハードなし）
-cmake --preset linux_gcc -B build/linux_gcc && cmake --build build/linux_gcc
-./build/linux_gcc/asp --tap
+cmake --preset linux -B build/linux && cmake --build build/linux
+./build/linux/asp --tap
 ```
 
 詳細なビルド・テスト・マージ・移植手順はすべて AGENTS.md を参照。

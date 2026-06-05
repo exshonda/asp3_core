@@ -5,7 +5,7 @@
   ],
   "configurePresets": [
     {
-      "name": "zybo_z7_gcc",
+      "name": "zybo_z7",
       "inherits": "_base",
       "displayName": "Zybo Z7 (Cortex-A9, real board)",
       "description": "実機Zybo Z7用（実行はxilinx_sdk/jtag.tcl）",
@@ -16,8 +16,8 @@
       }
     },
     {
-      "name": "zybo_z7_gcc-qemu",
-      "inherits": "zybo_z7_gcc",
+      "name": "zybo_z7-qemu",
+      "inherits": "zybo_z7",
       "displayName": "Zybo Z7 / QEMU (xilinx-zynq-a9)",
       "description": "QEMU実行用（TOPPERS_USE_QEMU定義＝ext_kerでQEMU終了）",
       "cacheVariables": {
@@ -27,16 +27,16 @@
   ],
   "buildPresets": [
     {
-      "name": "zybo_z7_gcc",
-      "configurePreset": "zybo_z7_gcc"
+      "name": "zybo_z7",
+      "configurePreset": "zybo_z7"
     },
     {
-      "name": "zybo_z7_gcc-qemu",
-      "configurePreset": "zybo_z7_gcc-qemu"
+      "name": "zybo_z7-qemu",
+      "configurePreset": "zybo_z7-qemu"
     },
     {
-      "name": "run-zybo_z7_gcc-qemu",
-      "configurePreset": "zybo_z7_gcc-qemu",
+      "name": "run-zybo_z7-qemu",
+      "configurePreset": "zybo_z7-qemu",
       "targets": [
         "run"
       ]

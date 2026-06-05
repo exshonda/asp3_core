@@ -5,7 +5,7 @@
   ],
   "configurePresets": [
     {
-      "name": "mps2_an521_gcc",
+      "name": "mps2_an521",
       "inherits": "_base",
       "displayName": "Cortex-M33 / QEMU (mps2-an521)",
       "description": "QEMU専用ターゲット。ハードなし・ARMv8-M確認用",
@@ -17,12 +17,12 @@
   ],
   "buildPresets": [
     {
-      "name": "mps2_an521_gcc",
-      "configurePreset": "mps2_an521_gcc"
+      "name": "mps2_an521",
+      "configurePreset": "mps2_an521"
     },
     {
-      "name": "run-mps2_an521_gcc",
-      "configurePreset": "mps2_an521_gcc",
+      "name": "run-mps2_an521",
+      "configurePreset": "mps2_an521",
       "targets": [
         "run"
       ]

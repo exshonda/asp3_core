@@ -11,9 +11,9 @@ GNU Arm Embedded ツールチェイン（`arm-none-eabi-gcc`）と QEMU
 （`qemu-system-arm`，11.0 以降）が必要である．
 
 ```sh
-cmake --preset mps2_an521_gcc -B build/mps2_an521_gcc
-cmake --build build/mps2_an521_gcc
-ninja -C build/mps2_an521_gcc run   # QEMU(mps2-an521) で実行．UART0 が標準入出力に接続される
+cmake --preset mps2_an521 -B build/mps2_an521
+cmake --build build/mps2_an521
+ninja -C build/mps2_an521 run   # QEMU(mps2-an521) で実行．UART0 が標準入出力に接続される
 ```
 
 `run` ターゲットは次を実行する（終了は Ctrl-A X）：
@@ -97,7 +97,7 @@ SSE-200 のメモリマップ（`hw/arm/armsse.c`）に基づく．
 - `TARGET_OPTIONS`（1 行目＝CMake の configure 引数）：
 
   ```
-  --preset mps2_an521_gcc
+  --preset mps2_an521
   ```
 
 - `TARGET_RUN`（実行コマンド．QEMU で起動し，テスト終了時に

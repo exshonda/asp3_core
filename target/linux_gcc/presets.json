@@ -5,7 +5,7 @@
   ],
   "configurePresets": [
     {
-      "name": "linux_gcc",
+      "name": "linux",
       "inherits": "_base",
       "displayName": "POSIX CLI (host simulation)",
       "description": "ホストシミュレーション。ハードなし・最速確認/TAP用",
@@ -16,12 +16,12 @@
   ],
   "buildPresets": [
     {
-      "name": "linux_gcc",
-      "configurePreset": "linux_gcc"
+      "name": "linux",
+      "configurePreset": "linux"
     },
     {
-      "name": "run-linux_gcc",
-      "configurePreset": "linux_gcc",
+      "name": "run-linux",
+      "configurePreset": "linux",
       "targets": [
         "run"
       ]
@@ -29,8 +29,8 @@
   ],
   "testPresets": [
     {
-      "name": "linux_gcc",
-      "configurePreset": "linux_gcc",
+      "name": "linux",
+      "configurePreset": "linux",
       "output": {
         "outputOnFailure": true
       }

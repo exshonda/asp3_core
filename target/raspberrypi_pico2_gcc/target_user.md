@@ -233,13 +233,13 @@ sudo usermod -aG plugdev "$USER"     # 再ログインで有効
 
 **(1) ビルドディレクトリの生成**
 ```bash
-cmake --preset raspberrypi_pico2_gcc -B build/raspberrypi_pico2_gcc
+cmake --preset raspberrypi_pico2 -B build/raspberrypi_pico2
 ```
 > ツールチェイン（arm-none-eabi）に PATH を通しておくこと．
 
 **(2) ビルド**
 ```bash
-cmake --build build/raspberrypi_pico2_gcc    # -> asp.elf を生成
+cmake --build build/raspberrypi_pico2    # -> asp.elf を生成
 ```
 リンク時に `--print-memory-usage` で FLASH/RAM 使用量が表示される（sample1 で FLASH 約 23KB /
 RAM 約 14KB）．
@@ -247,8 +247,8 @@ RAM 約 14KB）．
 ### 3. フラッシュへの書き込みと実行
 
 ```bash
-ninja -C build/raspberrypi_pico2_gcc run      # OpenOCD で書き込み（program verify reset）→ そのまま実行開始
-ninja -C build/raspberrypi_pico2_gcc console  # 別端末: シリアルコンソールを開く（出力確認・キー入力用）
+ninja -C build/raspberrypi_pico2 run      # OpenOCD で書き込み（program verify reset）→ そのまま実行開始
+ninja -C build/raspberrypi_pico2 console  # 別端末: シリアルコンソールを開く（出力確認・キー入力用）
 ```
 
 **期待される出力（sample1）**:
@@ -265,7 +265,7 @@ task1 is running (002).   |
 ### 4. SWD（OpenOCD + GDB）によるデバッグ
 
 OpenOCD と gdb を起動できる CMake ターゲット（`target/raspberrypi_pico2_gcc/run.cmake`）を
-用意している（`ninja -C build/raspberrypi_pico2_gcc <ターゲット>` で実行）:
+用意している（`ninja -C build/raspberrypi_pico2 <ターゲット>` で実行）:
 
 | ターゲット | 動作 | OpenOCD |
 |---|---|---|
@@ -276,19 +276,19 @@ OpenOCD と gdb を起動できる CMake ターゲット（`target/raspberrypi_p
 | `console`   | UART コンソール(UART0)を開く（別端末で使う） | （触らない） |
 
 ```bash
-ninja -C build/raspberrypi_pico2_gcc console    # 端末C: シリアルコンソールを開いておく（出力を見る）
-ninja -C build/raspberrypi_pico2_gcc run        # 単に動かすだけ（最も手軽．gdb 不要）
-ninja -C build/raspberrypi_pico2_gcc swd-debug  # 1 端末でソースデバッグ（break 設定後 continue）
+ninja -C build/raspberrypi_pico2 console    # 端末C: シリアルコンソールを開いておく（出力を見る）
+ninja -C build/raspberrypi_pico2 run        # 単に動かすだけ（最も手軽．gdb 不要）
+ninja -C build/raspberrypi_pico2 swd-debug  # 1 端末でソースデバッグ（break 設定後 continue）
 
 # 2 端末に分けたい場合（OpenOCD を起動しっぱなしにして gdb を繰り返したいとき）
-ninja -C build/raspberrypi_pico2_gcc openocd    # 端末1: OpenOCD を起動して放置（gdb サーバ :3333）
-ninja -C build/raspberrypi_pico2_gcc gdb        # 端末2: gdb を起動（再ビルド後はこれを再実行するだけ）
+ninja -C build/raspberrypi_pico2 openocd    # 端末1: OpenOCD を起動して放置（gdb サーバ :3333）
+ninja -C build/raspberrypi_pico2 gdb        # 端末2: gdb を起動（再ビルド後はこれを再実行するだけ）
 ```
 - `swd-debug.gdb` は `:3333` に接続し，**reset init → load（フラッシュ書き込み）→ reset init**
   までを行い **halt のまま待機**する．`break` 設定後に `continue` で bootROM から実行を開始する．
 - 上書き可能なキャッシュ変数: `OCD_IF`/`OCD_TGT`/`OCD_SPEED`，
   `TTY`（既定 `/dev/ttyACM0`），`BAUD`（既定 `115200`）．
-  例: `cmake -B build/raspberrypi_pico2_gcc -DTTY=/dev/ttyACM1`
+  例: `cmake -B build/raspberrypi_pico2 -DTTY=/dev/ttyACM1`
 
 手動で同等のことを行う場合:
 ```bash

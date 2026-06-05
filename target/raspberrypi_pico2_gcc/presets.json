@@ -5,7 +5,7 @@
   ],
   "configurePresets": [
     {
-      "name": "raspberrypi_pico2_gcc",
+      "name": "raspberrypi_pico2",
       "inherits": "_base",
       "displayName": "Raspberry Pi PICO2 (Cortex-M33)",
       "description": "ベアメタル移植。実機書込みはOpenOCD（--target run）",
@@ -27,8 +27,8 @@
   ],
   "buildPresets": [
     {
-      "name": "raspberrypi_pico2_gcc",
-      "configurePreset": "raspberrypi_pico2_gcc"
+      "name": "raspberrypi_pico2",
+      "configurePreset": "raspberrypi_pico2"
     },
     {
       "name": "rp2350-riscv_pico_sdk",

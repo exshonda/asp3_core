@@ -5,7 +5,7 @@
   ],
   "configurePresets": [
     {
-      "name": "stm32mp257f_dk_arm64_gcc",
+      "name": "stm32mp257f_dk_arm64",
       "inherits": "_base",
       "displayName": "STM32MP257F-DK (Cortex-A35)",
       "description": "ARMv8-Aベアメタル実機",
@@ -17,8 +17,8 @@
   ],
   "buildPresets": [
     {
-      "name": "stm32mp257f_dk_arm64_gcc",
-      "configurePreset": "stm32mp257f_dk_arm64_gcc"
+      "name": "stm32mp257f_dk_arm64",
+      "configurePreset": "stm32mp257f_dk_arm64"
     }
   ]
 }
