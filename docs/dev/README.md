@@ -15,7 +15,8 @@
 | 項目 | ファイル | 状態 |
 |---|---|---|
 | TECSレス | `tecs-less.md` | 完了 |
-| cfgのPython化 | `cfg-python.md` | 計画中 |
+| cfgのPython化 | `cfg-python.md` | 完了（実機側でのstm32確認のみ残） |
+| .rbツールの.py化 | `rb-tools-python.md` | 計画中 |
 | CMake対応 | `cmake.md` | 計画中 |
 | ファイルの削除 | `file-cleanup.md` | 計画中 |
 | QEMUターゲット | `qemu-target.md` | 計画中 |

@@ -12,7 +12,9 @@
 
 | ファイル / ディレクトリ | 変更種別 | 理由 | 上流変更時のリスク | 担当レイヤ | 最終確認バージョン |
 |---|---|---|---|---|---|
-| `configure.rb` | 改変 | 非TECSビルドをデフォルト化（`OMIT_TECS`初期設定＋共通syssvcオブジェクトの自動付与） | 上流configure.rb変更時に要確認（変更箇所は【asp3_core変更】コメントでマーク） | build | 3.7.2 |
+| `configure.rb` | 改変 | 非TECSビルドをデフォルト化（`OMIT_TECS`初期設定＋共通syssvcオブジェクトの自動付与）・CFGデフォルトをPython版cfgに変更 | 上流configure.rb変更時に要確認（変更箇所は【asp3_core変更】コメントでマーク） | build | 3.7.2 |
+| `sample/Makefile`・`arch/*/common/Makefile.core`・`target/{dummy_gcc,simtimer_ct11mpcore_gcc}/Makefile.target` | 改変 | 生成テンプレート参照を`.trb`→`.py`に切替 | 上流Makefile変更時に要確認（【asp3_core変更】コメント） | build | 3.7.2 |
+| `target/{ct11mpcore,gr_peach,dummy}_gcc/Makefile.target` | 改変 | OMIT_TECS時の非TECS SIOオブジェクト追加 | 上流ターゲットパッケージ更新時に要確認 | target | 3.7.2 |
 | `syssvc/serial.c` | 上流 `non_tecs` 由来 | TECSレス版を上流拡張から採用 | `extension/non_tecs/syssvc` の更新に追従 | syssvc(EXTENDED) | 3.7.0 |
 | `syssvc/logtask.c` | 上流 `non_tecs` 由来 | 同上 | 同上 | syssvc(EXTENDED) | 3.7.0 |
 | `syssvc/banner.c` | 上流 `non_tecs` 由来 | 同上 | 同上 | syssvc(EXTENDED) | 3.7.0 |
@@ -24,10 +26,11 @@
 | `target/raspberrypi_pico2_gcc/`・`arch/arm_m_gcc/rp2350/`（非TECS化） | 新規追加（`rp2350_uart.[ch]`・`chip_serial.{c,h,cfg}`・`target_serial.{h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
 | `target/linux_gcc/`・`arch/posix_gcc/` | 上流SVN（3.7.2）から取込み＋`Makefile.target`改変 | POSIXシミュレーション環境（3.7.2 tarball未収録のため別途取込み） | 上流posix_gccパッケージの更新に追従 | target/arch | 3.7.2 |
 | `syssvc/qemu_exit.c` | 新規追加 | QEMUセミホスティング終了 | （上流に存在せず・衝突なし） | syssvc(NEW) | — |
-| `cfg/cfg.py`・`pass1.py`・`pass2.py` | Ruby→Python移植（エンジン） | コンフィギュレータのPython化 | **上流cfg.rb系の挙動変更時はテキスト差分不可・手動再反映（CFG_SPEC_MAP参照）** | cfg | cfg 1.7.0 |
+| `cfg/cfg.py`・`pass1.py`・`pass2.py`・`gen_file.py`・`srecord.py` | Ruby→Python移植（エンジン，asp3_fsp由来＋1.7.1差分反映） | コンフィギュレータのPython化（Ruby版は残置） | **上流cfg.rb系の挙動変更時はテキスト差分不可・手動再反映（CFG_SPEC_MAP参照）** | cfg | cfg 1.7.1 |
+| `kernel/*.py`（kernel.py・kernel_check.py・genoffset.py＋オブジェクト別11本） | 旧`kernel/*.trb`→Python移植（新規追加・既存.trbは未変更） | 生成テンプレートのPython化（kernel/への新規ファイル追加） | **上流kernel/*.trb変更時は対応.pyへ手動再反映** | kernel(テンプレート追加) | 3.7.2 |
 | `kernel/kernel_api.def` | 上流同形式（変更なし〜微修正） | 静的API定義（api-table） | 上流と同形式のためテキストマージ可能 | cfg(PRISTINE寄り) | 3.7.0 |
-| `arch/*/common/core_offset.py` 他 `*.py` 生成テンプレート | 旧`.trb`→Python移植 | offset.h・kernel_cfg生成テンプレートのPython化 | **上流の対応`.trb`変更時はテキスト差分不可・手動再反映** | cfg(テンプレート) | 3.7.0 |
-| `target/*/target_kernel.py`・`target_check.py` | 旧`.trb`→Python移植 | pass2/pass3テンプレートのPython化 | 新規ターゲットでは新規作成（衝突なし） | target(テンプレート) | — |
+| `arch/*/*.py` 生成テンプレート（core_kernel/core_check/core_offset/gic/chip） | 旧`.trb`→Python移植（arm_m/arm_gcc/arm64_gcc/posix各系列．v6m系は未変換） | offset.h・kernel_cfg生成テンプレートのPython化 | **上流の対応`.trb`変更時はテキスト差分不可・手動再反映** | cfg(テンプレート) | 3.7.2 |
+| `target/*/target_kernel.py`・`target_check.py`（全9ターゲット＋dummyのtarget_offset.py） | 旧`.trb`→Python移植 | pass2/pass3テンプレートのPython化 | 上流由来ターゲットは上流.trb変更時に対応.pyへ手動再反映 | target(テンプレート) | 3.7.2 |
 | `Makefile` 系 | CMakeへ置換 | ビルドシステム近代化 | 上流Makefile変更は参照のみ・取り込まない | build | 3.7.0 |
 | `CMakeLists.txt` | 新規追加 | CMakeビルド | （上流に存在せず・衝突なし） | build(NEW) | — |
 | `cmake/` 一式 | 新規追加 | ツールチェーン・CMakeモジュール | （上流に存在せず・衝突なし） | build(NEW) | — |

@@ -304,9 +304,15 @@ api-tableを解釈してコード生成する汎用エンジン。**ここが「
 
 | 上流（Ruby） | 移植版（Python） | 役割 | 最終確認バージョン |
 |---|---|---|---|
-| `cfg.rb` | `cfg.py` | エントリ・多パス制御 | cfg 1.7.0 |
-| `pass1.rb` | `pass1.py` | api-table読込・構文解析 | cfg 1.7.0 |
-| `pass2.rb` | `pass2.py` | コード生成 | cfg 1.7.0 |
+| `cfg.rb` | `cfg.py` | エントリ・多パス制御 | cfg 1.7.1 |
+| `pass1.rb` | `pass1.py` | api-table読込・構文解析 | cfg 1.7.1 |
+| `pass2.rb` | `pass2.py` | コード生成 | cfg 1.7.1 |
+| `GenFile.rb` | `gen_file.py` | 生成ファイル管理 | cfg 1.7.1 |
+| `SRecord.rb` | `srecord.py` | Sレコード読込 | cfg 1.7.1 |
+
+加えて，生成テンプレート（`kernel/*.trb`・`arch/*/*.trb`・`target/*/target_*.trb`）の
+Python版（`.py`）を併設している（移植元: asp3_fsp，2026-06-05導入）。
+上流の`.trb`変更時は対応する`.py`へ手動再反映する（`DIVERGENCE_MAP.md`参照）。
 
 新バージョンで上流cfgが変わった場合：静的APIの追加なら `kernel_api.def` の差分で済む。  
 エンジンの挙動変更（cfg.rb系）なら、上記対応表と「最終確認バージョン」で移植版の更新箇所を特定する。

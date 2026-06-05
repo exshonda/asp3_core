@@ -29,6 +29,7 @@ TOPPERS/ASP3カーネルを上流追従しながら、各社SDK（Raspberry Pi P
 |---|---|---|
 | TECSレス | syssvcをプレーンCで実装。tecsgenへの依存を除去。AI向けにコードの間接層が消え追いやすくなる | 高 |
 | cfgのPython化 | RubyベースのコンフィギュレータをPythonで再実装。宣言的スペック（データ駆動）設計推奨 | 高 |
+| .rbツールの.py化 | RubyのツールをPythonに書き換える | 高 |
 | CMake対応 | CMakeListsおよびasp3_pico_sdk.cmakeで実装済み | 高 |
 | ファイルの削除 | 不要なファイルを削除 | 高 |
 | QEMUターゲット | mps2-an521（Cortex-M33）、virt（RISC-V / ARMv8-A） | 高 |
