@@ -40,7 +40,7 @@
 #	各行（最初の行が0）に記述するビルドオプション：
 #		0		機能テストプログラム
 #		1		性能評価プログラム
-#		2		タイマドライバシミュレータを用いたテストプログラム
+#		2		（予約．旧：タイマドライバシミュレータ用）
 #		3		FPUを使用するテストプログラム（ARM向け）
 #
 # 【ターゲット毎の実行方法】
@@ -101,8 +101,6 @@ TEST_SPEC = {
     # オーバランハンドラ機能拡張パッケージの機能テストプログラム
     "ovrhdr1":  {"SRC": "test_ovrhdr1"},
     "ovrhdr2":  {"SRC": "test_ovrhdr2"},
-    "ovrhdr3":  {"TARGET": 2, "SRC": "simt_ovrhdr3",
-                 "DEFS": "-DHRT_CONFIG1 -DSIMTIM_TEST"},
     "ovrhdr4":  {"SRC": "test_ovrhdr4"},
 
     # 制約タスク拡張パッケージの機能テストプログラム
@@ -123,39 +121,6 @@ TEST_SPEC = {
     "inherit6": {"SRC": "test_inherit6", "CDL": "test_pf_bitkernel"},
     "inherit7": {"SRC": "test_inherit7", "CDL": "test_pf_bitkernel"},
 
-    # タイマドライバシミュレータのテストプログラム
-    "simtimer1": {"TARGET": 2, "SRC": "simt_simtimer1",
-                  "DEFS": "-DHRT_CONFIG1 -DSIMTIM_TEST"},
-
-    # システム時刻管理機能テストプログラム
-    "systim1": {"TARGET": 2, "SRC": "simt_systim1",
-                "DEFS": "-DHRT_CONFIG1 -DSIMTIM_TEST"},
-    "systim2": {"TARGET": 2, "SRC": "simt_systim2",
-                "DEFS": "-DHRT_CONFIG1 -DSIMTIM_TEST"},
-    "systim3": {"TARGET": 2, "SRC": "simt_systim3",
-                "DEFS": "-DHRT_CONFIG1 -DSIMTIM_TEST"},
-    "systim4": {"TARGET": 2, "SRC": "simt_systim4",
-                "DEFS": "-DHRT_CONFIG2 -DSIMTIM_TEST"},
-    "systim1_64hrt": {"TARGET": 2, "SRC": "simt_systim1_64hrt",
-                      "CFG": "simt_systim1", "DEFS": "-DHRT_CONFIG3 -DSIMTIM_TEST"},
-    "systim2_64hrt": {"TARGET": 2, "SRC": "simt_systim2_64hrt",
-                      "CFG": "simt_systim2", "DEFS": "-DHRT_CONFIG3 -DSIMTIM_TEST"},
-    "systim3_64hrt": {"TARGET": 2, "SRC": "simt_systim3_64hrt",
-                      "CFG": "simt_systim3", "DEFS": "-DHRT_CONFIG3 -DSIMTIM_TEST"},
-
-    # ドリフト調整機能拡張パッケージのシステム時刻管理機能テストプログラム
-    "drift1":        {"TARGET": 2, "SRC": "simt_drift1",
-                      "DEFS": "-DHRT_CONFIG1 -DSIMTIM_TEST"},
-    "drift1_64hrt":  {"TARGET": 2, "SRC": "simt_drift1_64hrt",
-                      "CFG": "simt_drift1", "DEFS": "-DHRT_CONFIG3 -DSIMTIM_TEST"},
-    "drift1_64ops":  {"TARGET": 2, "SRC": "simt_drift1",
-                      "DEFS": "-DHRT_CONFIG1 -DSIMTIM_TEST -DUSE_64BIT_OPS"},
-    "systim1_64ops": {"TARGET": 2, "SRC": "simt_systim1",
-                      "DEFS": "-DHRT_CONFIG1 -DSIMTIM_TEST -DUSE_64BIT_OPS"},
-    "systim2_64ops": {"TARGET": 2, "SRC": "simt_systim2",
-                      "DEFS": "-DHRT_CONFIG1 -DSIMTIM_TEST -DUSE_64BIT_OPS"},
-    "systim3_64ops": {"TARGET": 2, "SRC": "simt_systim3",
-                      "DEFS": "-DHRT_CONFIG1 -DSIMTIM_TEST -DUSE_64BIT_OPS"},
 
     # 性能評価プログラム
     "perf0": {"TARGET": 1, "CDL": "perf_pf", "NK_DEFS": "-DHIST_INVALIDATE_CACHE"},

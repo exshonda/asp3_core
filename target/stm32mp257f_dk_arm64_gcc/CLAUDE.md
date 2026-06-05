@@ -64,5 +64,4 @@ make console / make osdebug
 
 - `target_user.md` は TOPPERS スタイル句読点（「，」「．」）．
 - 設計に影響する変更は PORTING_ASP3_STM32MP2.md に記録．
-- 新規ファイルは MANIFEST に追記．
 - FMP3 ツリー（`fmp3_3.3_svn`）は参照のみ（本移植から改変しない）．

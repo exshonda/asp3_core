@@ -260,9 +260,7 @@ def main():
     tempmakefile = tempmakefile or srcdir + "/sample/Makefile"
     tecsdir = tecsdir or "$(SRCDIR)/tecsgen"
     #
-    #  【asp3_core変更】コンフィギュレータのデフォルトをPython版（cfg.py）
-    #  とする．Ruby版を使用する場合は -g "ruby $(SRCDIR)/cfg/cfg.rb" を指定
-    #  する（その場合は生成テンプレートも.trbを指定すること）．
+    #  【asp3_core変更】コンフィギュレータはPython版（cfg.py）．
     #  -B はバイトコードキャッシュ（__pycache__）の出力を抑止する．
     #
     cfg = cfg or "python3 -B $(SRCDIR)/cfg/cfg.py"

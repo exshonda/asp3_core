@@ -53,7 +53,6 @@ make
 | `-O "-DXXX"` | マクロ定義の追加 |
 | `-L <dir>` | ビルド済み libkernel.a のディレクトリ（カーネル再ビルドを省略） |
 | `OMIT_DEFAULT_SYSSVC` | syssvc自動付与の抑止 |
-| `-g "ruby $(SRCDIR)/cfg/cfg.rb"` | Ruby版cfgに切替（make に `TARGET_KERNEL_TRB='$(TARGETDIR)/target_kernel.trb'` 等の `.trb` 指定も必要） |
 
 ### 部分ビルド（デバッグ時）
 
@@ -195,7 +194,7 @@ timeout 10 qemu-system-arm -machine mps2-an521 -nographic \
 | zybo_z7_gcc | ○ | ○（preset: zybo-qemu，runターゲット対応） |
 | raspberrypi_pico2_gcc | ○ | 未対応（pico-sdk 必須．preset: pico2-m33 は予約） |
 | stm32mp257f_dk_arm64_gcc | ○（リンクは aarch64-none-elf 環境） | ○（preset: stm32mp257-a35．リンク・実機は aarch64-none-elf 環境） |
-| ct11mpcore_gcc／gr_peach_gcc／dummy_gcc | ○ | 未定 |
+| dummy_gcc（cfgテスト用） | ○ | 未定 |
 
 `cmake --build --preset run-m33-qemu` のように buildPresets（run-posix / run-m33-qemu /
 run-zybo-qemu）でルートから1コマンド実行もできる。

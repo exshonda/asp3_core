@@ -42,7 +42,7 @@
 |---|---|---|
 | 提1 | `utils/makerelease.rb`・`utils/makerelease.py` | MANIFEST廃止により機能しなくなる（リリースはgit/CIで行う） |
 | 提2 | `test/simt_*.c`（8本）＋ `test/testexec.py` の simt系・ct11/gr_peach系エントリ | `arch/simtimer/` 削除によりタイマドライバシミュレータ系テストが実行不能になるため一体で整理 |
-| 提3 | `target/zybo_z7_gcc/xilinx_sdk/` | Xilinx SDK（Vivado）プロジェクト資材。本リポジトリの開発フロー（QEMU/SWD）では未使用 |
+| ~~提3~~ | ~~`target/zybo_z7_gcc/xilinx_sdk/`~~ | **取り下げ**：`jtag.tcl` が実機実行で使用中のため残置 |
 | 提4 | `sample/Makefile.bak`等のバックアップ・`*.bak` 類（あれば） | 生成残骸 |
 | 対象外 | `doc/`（上流テキスト仕様書） | 「ドキュメントMarkdown化」項目でMarkdown版に置換後に削除判断（今回は残置） |
 | 対象外 | `extension/`（non_tecs以外：messagebuf/ovrhdr/subprio等） | 拡張パッケージ導入時に使用する可能性があるため残置（non_tecsのみ削除） |
