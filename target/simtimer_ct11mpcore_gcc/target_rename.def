@@ -1,0 +1,31 @@
+# target_kernel_impl.c
+arm_tnum_memory_area
+arm_memory_area
+target_initialize
+target_exit
+
+# target_timer.c
+simtim_target_raise_hrt_int
+simtim_target_raise_ovr_int
+simtim_target_clear_ovr_int
+
+# sim_timer.c
+target_timer_initialize
+target_timer_terminate
+target_hrt_get_current
+target_hrt_set_event
+target_hrt_clear_event
+target_hrt_raise_event
+target_hrt_handler
+target_ovrtimer_start
+target_ovrtimer_stop
+target_ovrtimer_get_current
+target_ovrtimer_handler
+target_custom_idle
+simtim_advance
+simtim_add
+hook_hrt_set_event
+hook_hrt_clear_event
+hook_hrt_raise_event
+
+INCLUDE "core"

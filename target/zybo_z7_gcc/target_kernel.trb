@@ -1,0 +1,11 @@
+# -*- coding: utf-8 -*-
+#
+#		パス2の生成スクリプトのターゲット依存部
+#
+#  $Id: target_kernel.trb 1074 2018-11-25 01:32:04Z ertl-hiro $
+#
+
+#
+#  生成スクリプトのチップ依存部
+#
+IncludeTrb("chip_kernel.trb")

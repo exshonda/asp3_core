@@ -1,0 +1,14 @@
+TARGET_ARCH_ARM,__TARGET_ARCH_ARM
+USE_ARM_FPU_ALWAYS,true,bool,defined(USE_ARM_FPU_ALWAYS),false
+USE_ARM_FPU_SELECTIVE,true,bool,defined(USE_ARM_FPU_SELECTIVE),false
+USE_ARM_FPU_D32,true,bool,defined(USE_ARM_FPU_D32),false
+USE_INTCFG_TABLE,true,bool,defined(USE_INTCFG_TABLE),false
+TA_FPU
+TMAX_INTNO
+TMAX_INHNO
+TMAX_EXCNO
+sizeof_TCB,sizeof(TCB)
+offsetof_TCB_p_tinib,"offsetof(TCB,p_tinib)"
+offsetof_TCB_sp,"offsetof(TCB,tskctxb.sp)"
+offsetof_TCB_pc,"offsetof(TCB,tskctxb.pc)"
+offsetof_T_EXCINF_cpsr,"offsetof(T_EXCINF,cpsr)"

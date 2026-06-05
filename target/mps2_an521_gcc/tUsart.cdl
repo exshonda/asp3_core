@@ -1,0 +1,31 @@
+/*
+ *  TOPPERS/ASP Kernel
+ *      Toyohashi Open Platform for Embedded Real-Time Systems/
+ *      Advanced Standard Profile Kernel
+ *
+ *  Copyright (C) 2015 by Ushio Laboratory
+ *              Graduate School of Engineering Science, Osaka Univ., JAPAN
+ *  Copyright (C) 2015,2016,2026 by Embedded and Real-Time Systems Laboratory
+ *              Graduate School of Information Science, Nagoya Univ., JAPAN
+ *
+ *  上記著作権者は，本ソフトウェアを TOPPERS ライセンス（条件は他のソー
+ *  スファイルの先頭コメントを参照）の下で利用することを許諾する．本ソフ
+ *  トウェアは無保証で提供される．
+ *
+ */
+
+/*
+ *  CMSDK APB UART 用 簡易 SIO ドライバのコンポーネント記述
+ */
+
+celltype tUsart {
+    entry sSIOPort eSIOPort;
+    call  siSIOCBR ciSIOCBR;
+
+    entry siHandlerBody eiISR;
+
+    attr {
+        uint32_t base;  /* UART レジスタのベースアドレス */
+        uint32_t index; /* UART のインデックス */
+    };
+};

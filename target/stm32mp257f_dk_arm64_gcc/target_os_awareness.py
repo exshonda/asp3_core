@@ -1,0 +1,25 @@
+# Target (STM32MP257F-DK) awareness helpers for gdb OS-awareness (ASP3).
+#
+# 役割: ターゲット（ボード）依存の知識。本ボードはチップ(STM32MP2)の機能をそのまま使い，
+#       現時点でボード固有の追加項目は無いため，chip_os_awareness の API を再エクスポートする。
+#
+# chip_os_awareness.py は arch/arm64_gcc/stm32mp2 にあるため，本ファイルからの相対パスで
+# sys.path に追加してから import する。os_awareness.py はこの target_os_awareness を
+# （存在すれば）import して，割込みの許可/禁止状態の表示に用いる。
+
+import os
+import sys
+
+# 下位層(chip/core)の import で .pyc を生成させない（ソースツリーに __pycache__ を残さない）。
+# os_awareness.py を経由せず本モジュールを直接 import した場合への防御。
+sys.dont_write_bytecode = True
+
+sys.path.insert(0, os.path.normpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../arch/arm64_gcc/stm32mp2")))
+
+import chip_os_awareness
+
+# ボード固有の追加は今回なし。チップ層の API をそのまま公開する。
+int_enabled = chip_os_awareness.int_enabled
+int_pending = chip_os_awareness.int_pending
+inh_handler = chip_os_awareness.inh_handler

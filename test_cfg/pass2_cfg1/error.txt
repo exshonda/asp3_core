@@ -1,0 +1,23 @@
+../../test_cfg/pass2_cfg1.cfg:11: error: E_OBJ: tskid `TASK1' is duplicated in CRE_TSK
+../../test_cfg/pass2_cfg1.cfg:20: error: E_OBJ: semid `SEM1' is duplicated in CRE_SEM
+../../test_cfg/pass2_cfg1.cfg:21: error: E_OBJ: semid `TASK1' is duplicated in CRE_SEM
+../../test_cfg/pass2_cfg1.cfg:25: error: E_OBJ: flgid `FLG1' is duplicated in CRE_FLG
+../../test_cfg/pass2_cfg1.cfg:26: error: E_OBJ: flgid `TASK1' is duplicated in CRE_FLG
+../../test_cfg/pass2_cfg1.cfg:30: error: E_OBJ: dtqid `DTQ1' is duplicated in CRE_DTQ
+../../test_cfg/pass2_cfg1.cfg:31: error: E_OBJ: dtqid `TASK1' is duplicated in CRE_DTQ
+../../test_cfg/pass2_cfg1.cfg:35: error: E_OBJ: pdqid `PDQ1' is duplicated in CRE_PDQ
+../../test_cfg/pass2_cfg1.cfg:36: error: E_OBJ: pdqid `TASK1' is duplicated in CRE_PDQ
+../../test_cfg/pass2_cfg1.cfg:40: error: E_OBJ: mtxid `MTX1' is duplicated in CRE_MTX
+../../test_cfg/pass2_cfg1.cfg:41: error: E_OBJ: mtxid `TASK1' is duplicated in CRE_MTX
+../../test_cfg/pass2_cfg1.cfg:45: error: E_OBJ: mpfid `MPF1' is duplicated in CRE_MPF
+../../test_cfg/pass2_cfg1.cfg:46: error: E_OBJ: mpfid `TASK1' is duplicated in CRE_MPF
+../../test_cfg/pass2_cfg1.cfg:50: error: E_OBJ: cycid `CYC1' is duplicated in CRE_CYC
+../../test_cfg/pass2_cfg1.cfg:51: error: E_OBJ: cycid `TASK1' is duplicated in CRE_CYC
+../../test_cfg/pass2_cfg1.cfg:55: error: E_OBJ: almid `ALM1' is duplicated in CRE_ALM
+../../test_cfg/pass2_cfg1.cfg:56: error: E_OBJ: almid `TASK1' is duplicated in CRE_ALM
+../../test_cfg/pass2_cfg1.cfg:60: error: E_OBJ: isrid `ISR1' is duplicated in CRE_ISR
+../../test_cfg/pass2_cfg1.cfg:61: error: E_OBJ: isrid `TASK1' is duplicated in CRE_ISR
+../../test_cfg/pass2_cfg1.cfg:65: error: E_OBJ: inhno `7' is duplicated in DEF_INH
+../../test_cfg/pass2_cfg1.cfg:69: error: E_OBJ: intno `4' is duplicated in CFG_INT
+../../test_cfg/pass2_cfg1.cfg:76: error: E_OBJ: excno `1' is duplicated in DEF_EXC
+make: *** [kernel_cfg.timestamp] Error 1

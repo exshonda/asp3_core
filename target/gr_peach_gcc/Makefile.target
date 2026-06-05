@@ -1,0 +1,80 @@
+#
+#		Makefile のターゲット依存部（GR-PEACH用）
+#
+#  $Id: Makefile.target 1811 2023-04-11 08:16:06Z ertl-hiro $
+# 
+
+#
+#  システム名，チップ名，コア名，開発環境名の定義
+#
+SYS = gr_peach
+CHIP = rza1
+CORE = arm
+TOOL = gcc
+
+#
+#  実行形態
+#
+#  フラッシュメモリ（ROM）に書き込むか，RAMにロードして実行するかを選択
+#  する．
+#
+#EXECUTE_ON = ROM
+EXECUTE_ON = RAM
+
+#
+#  ブートローダの組込み
+#
+ifeq ($(EXECUTE_ON),ROM)
+	SYSSVC_COBJS := $(SYSSVC_COBJS) sf_boot.o
+endif
+
+#
+#  FPUサポートとABI
+#
+#  FPUを使用する場合は，USE_ARM_FPU_ALWAYSまたはUSE_ARM_FPU_SELECTIVE
+#  をマクロ定義する．
+#  USE_ARM_FPU_ALWAYSの場合には，FPUを使用する場合に最適化されたABIを
+#  用いるのが良いため，-mfloat-abi=hardオプションを付ける．また，使用
+#  するFPUを指定するために，-mfpu=vfpv3-d16オプションを付ける．
+#  USE_ARM_FPU_SELECTIVEの場合には，FPUを使用しない場合と互換のABIを用
+#  いる必要があるため，-mfloat-abi=softfpを付ける．-mfpu=vfpv3-d16オプ
+#  ションは，FPUを使用する処理単位をコンパイルする場合にのみ付けること
+#  が必要である．
+#
+#COPTS := $(COPTS) -DUSE_ARM_FPU_ALWAYS -mfpu=vfpv3-d16 -mfloat-abi=hard
+#COPTS := $(COPTS) -DUSE_ARM_FPU_SELECTIVE -mfloat-abi=softfp
+
+#
+#  コンパイルオプション
+#
+INCLUDES := $(INCLUDES) -I$(TARGETDIR)
+COPTS := $(COPTS) -mlittle-endian
+LDFLAGS := $(LDFLAGS) -mlittle-endian
+
+#
+#  カーネルに関する定義
+#
+#  target_start.oをKERNEL_ASMOBJSに追加すると，start.oの中にある
+#  hardware_init_hookのweak定義のために，リンクされない．そのため，
+#  START_OBJSに追加している．
+#
+KERNEL_DIRS := $(KERNEL_DIRS) $(TARGETDIR)
+KERNEL_COBJS := $(KERNEL_COBJS) target_kernel_impl.o
+KERNEL_ASMOBJS := $(KERNEL_ASMOBJS)
+START_OBJS := target_start.o
+
+#
+#  コンパイルオプションとリンカスクリプトの定義
+#
+ifeq ($(EXECUTE_ON),ROM)
+	CDEFS := $(CDEFS) -DTOPPERS_EXECUTE_ON_ROM
+	LDSCRIPT = $(TARGETDIR)/gr_peach_rom.ld
+else
+	CDEFS := $(CDEFS) -DTOPPERS_EXECUTE_ON_RAM
+	LDSCRIPT = $(TARGETDIR)/gr_peach_ram.ld
+endif
+
+#
+#  チップ依存部
+#
+include $(SRCDIR)/arch/$(CORE)_$(TOOL)/$(CHIP)/Makefile.chip

@@ -1,0 +1,196 @@
+#
+#		Makefile のターゲット依存部 (STM32MP257F-DK用)
+#
+#  STM32MP257F-DK (Cortex-A35 / GICv2 / ARM generic timer).
+#  TF-A(BAREMETAL_IMAGE_LOADER) により EL3 セキュアで起動され，BL31/PSCI
+#  ランタイムは存在しない．start.S が EL3 から セキュア EL1 へドロップし，
+#  カーネルはセキュア EL1 で動作する（ATF/SafeG は使用しない）．
+#
+
+#
+#  システム名，チップ名，コア名，開発環境名の定義
+#
+SYS = stm32mp257f_dk
+CHIP = stm32mp2
+CORE = arm64
+TOOL = gcc
+
+#
+#  FPUサポート
+#    FPUを使用する場合はUSE_ARM64_FPUをマクロ定義する．
+#
+CDEFS := $(CDEFS) -DUSE_ARM64_FPU
+
+#
+#  コンパイルオプション
+#
+INCLUDES := $(INCLUDES) -I$(TARGETDIR)
+COPTS := $(COPTS) -mlittle-endian
+LDFLAGS := $(LDFLAGS) -mlittle-endian -Wl,--build-id=none
+CDEFS := $(CDEFS)
+CFG1_OUT_LDFLAGS := -nostdlib $(CFG1_OUT_LDFLAGS)
+
+#
+#  ダンプするセクションの指定
+#
+DUMPOPTS := $(DUMPOPTS) -j .text -j .rodata
+
+#
+# シリアルポートに関する設定
+#   既定は ST-LINK 仮想COM(USART2)．GPIOヘッダ(USART6)を使う場合は
+#   USE_UART6 を定義する．
+#
+#CDEFS := $(CDEFS) -DUSE_UART6
+
+#
+#  カーネルに関する定義
+#
+KERNEL_DIRS := $(KERNEL_DIRS) $(CHIPDIR) $(TARGETDIR)
+KERNEL_COBJS := $(KERNEL_COBJS) target_kernel_impl.o
+
+#
+#  リンカスクリプトの定義
+#
+LDSCRIPT = $(TARGETDIR)/stm32mp257f_dk.ld
+
+#
+#  本ターゲットはTECS構成のみをサポートする（configure.rb に -w を付けないこと）
+#
+
+#
+#  GNU開発環境のターゲットアーキテクチャの定義
+#
+GCC_TARGET = aarch64-none-elf
+
+#
+#  セキュリティ状態（セキュア EL1 で動作）
+#
+CDEFS := $(CDEFS) -DTOPPERS_TZ_S
+
+#
+#  メモリアドレスの設定
+#    text : 0x88001000（DDR. 先頭ページ 0x88000000-0x88001000 は FSBL/minimal_boot
+#           が使用しており SWD で resume すると即例外になるため，2ページ目以降に置く）
+#    data : 0x90000000（DDR の RAM 領域）
+#
+TEXT_START_ADDRESS = 0x0088001000
+DATA_START_ADDRESS = 0x0090000000
+
+CDEFS := $(CDEFS) -DTOPPERS_MEM_ADDR=$(TEXT_START_ADDRESS)
+CDEFS := $(CDEFS) -DTOPPERS_MEM_SIZE=0x0040000000
+CDEFS := $(CDEFS) -DTOPPERS_32BIT_ABOVE_ADDR	#MMU 64bitアドレス空間対応
+
+#
+#  チップ依存部
+#
+include $(SRCDIR)/arch/$(CORE)_$(TOOL)/$(CHIP)/Makefile.chip
+
+#
+#  SWD デバッグ支援ターゲット（OpenOCD / GDB）
+#
+#  別端末で 2 つに分けて使う対のルール:
+#    make openocd    : OpenOCD だけを起動する（前面．Ctrl-C で終了）
+#    make gdb        : gdb だけを起動しロード＆デバッグする（OpenOCD は別端末で起動済みのこと）
+#
+#  1 つの端末で完結させるルール:
+#    make swd-run    : OpenOCD だけでロード＆実行する（gdb 不要．完了すると OpenOCD も終了）
+#    make swd-debug  : OpenOCD を自動起動し gdb でロード＆デバッグする（gdb 終了で OpenOCD も終了）
+#                      （= make openocd + make gdb を 1 端末で行うもの．resume せず halt で待機）
+#
+#  OS Awareness（ASP3 のタスク状態を gdb から可視化）:
+#    make osdebug    : OpenOCD を自動起動し gdb-multiarch でロード＆デバッグ＋OS-awareness を読込む
+#                      （stask/atask コマンドが使える．gdb 終了で OpenOCD も終了）
+#
+#  シリアルコンソール:
+#    make console    : UART コンソール(USART2)を開く（picocom/minicom/cu を自動選択）
+#
+#  いずれもビルドディレクトリ(<OBJ>)で実行する（事前に make でビルド済みであること）．
+#  上書き可能な変数: ELF（既定 $(OBJNAME)）, ENTRY_PC（既定: ELF のエントリポイント）, EN_CA35_1（既定 0）,
+#                    TTY（既定 /dev/ttyACM0）, BAUD（既定 115200）, OSGDB（既定 gdb-multiarch）.
+#
+GDB        = $(GCC_TARGET_PREFIX)gdb
+OSGDB     ?= gdb-multiarch
+OPENOCD    = openocd
+OCD_DIR    = $(TARGETDIR)/openocd
+GDB_SCRIPT = $(TARGETDIR)/swd-debug.gdb
+AWARENESS  = $(TARGETDIR)/gdb_os_aware/os_awareness.py
+ELF       ?= $(OBJNAME)
+#  実行開始番地はELFのエントリポイント（リンカスクリプトのENTRY(start)）から
+#  取得する（本ターゲットではTEXT_START_ADDRESSと一致するが，ELFを正とする）．
+ENTRY_PC  ?= $(shell $(GCC_TARGET_PREFIX)readelf -h $(ELF) | sed -n 's/.*Entry point address:\s*//p')
+EN_CA35_1 ?= 0
+TTY       ?= /dev/ttyACM0
+BAUD      ?= 115200
+OCD_OPTS   = -c "set EN_CA35_1 $(EN_CA35_1)" -f openocd.cfg
+
+.PHONY: openocd gdb swd-run swd-debug osdebug console
+
+#  OpenOCD を単体起動（前面．Ctrl-C で終了）．別端末の make gdb と対で使う
+openocd:
+	cd $(OCD_DIR) && $(OPENOCD) $(OCD_OPTS)
+
+#  gdb を単体起動しロード＆デバッグ（OpenOCD は別端末の make openocd で起動済みのこと）
+#    swd-debug.gdb が :3333 へ接続し reset run → examine/halt → load → PC 設定 → halt で待機する
+gdb: all
+	$(GDB) $(abspath $(ELF)) -x $(GDB_SCRIPT)
+
+#  OpenOCD だけでロード＆実行（gdb を使わない一発実行）
+#    reset run → DDR 初期化・landing pad 停止 → examine/halt → load → PC 設定 → resume → shutdown.
+#    resume 後 shutdown で OpenOCD を抜けるが，CPU はそのまま実行を継続する．
+swd-run: all
+	cd $(OCD_DIR) && $(OPENOCD) $(OCD_OPTS) \
+	  -c "init" \
+	  -c "reset run" \
+	  -c "sleep 6000" \
+	  -c "stm32mp25x.a35_0 arp_examine" \
+	  -c "sleep 500" \
+	  -c "stm32mp25x.a35_0 arp_halt" \
+	  -c "sleep 500" \
+	  -c "stm32mp25x.a35_0 arp_poll" \
+	  -c "load_image $(abspath $(ELF))" \
+	  -c "reg pc $(ENTRY_PC)" \
+	  -c "resume" \
+	  -c "shutdown"
+
+#  OpenOCD をバックグラウンド起動 → gdb でロード＆デバッグ → gdb 終了で OpenOCD も終了
+#    （make openocd + make gdb を 1 端末にまとめたもの）
+swd-debug: all
+	@echo "[swd-debug] starting OpenOCD in background (log: $(CURDIR)/openocd-bg.log)"
+	@( cd $(OCD_DIR) && exec $(OPENOCD) $(OCD_OPTS) ) > openocd-bg.log 2>&1 & \
+	OCD_PID=$$!; \
+	trap 'kill $$OCD_PID 2>/dev/null' EXIT INT TERM; \
+	sleep 2; \
+	$(GDB) $(abspath $(ELF)) -x $(GDB_SCRIPT)
+
+#  OS Awareness: OpenOCD 自動起動 → gdb-multiarch でロード＆デバッグ＋os_awareness.py 読込
+#    （aarch64-none-elf-gdb は Python 非対応のため gdb-multiarch を使う）
+#    起動後は entry で halt 状態．`continue` で ASP3 を走らせ，Ctrl-C で halt して `atask` で確認．
+#    `stask` は静的情報なので halt/実行どちらでも可．
+osdebug: all
+	@command -v $(OSGDB) >/dev/null 2>&1 || { echo "$(OSGDB) not found (sudo apt-get install -y gdb-multiarch)"; exit 1; }
+	@echo "[osdebug] starting OpenOCD in background (log: $(CURDIR)/openocd-bg.log)"
+	@echo "[osdebug] in gdb: continue -> (run) -> Ctrl-C -> atask / stask"
+	@( cd $(OCD_DIR) && exec $(OPENOCD) $(OCD_OPTS) ) > openocd-bg.log 2>&1 & \
+	OCD_PID=$$!; \
+	trap 'kill $$OCD_PID 2>/dev/null' EXIT INT TERM; \
+	sleep 2; \
+	$(OSGDB) $(abspath $(ELF)) -x $(GDB_SCRIPT) \
+	  -ex "python import sys; sys.path.insert(0, '$(abspath $(TARGETDIR))')" \
+	  -ex "source $(AWARENESS)"
+
+#  シリアルコンソール(USART2 / ST-LINK 仮想 COM)を開く（115200 8N1）
+#    利用可能な端末ソフト(picocom → minicom → cu)を自動選択する．TTY/BAUD で上書き可．
+console:
+	@if command -v picocom >/dev/null 2>&1; then \
+	  echo "[console] picocom -b $(BAUD) $(TTY) (exit: Ctrl-A Ctrl-X)"; \
+	  picocom -b $(BAUD) $(TTY); \
+	elif command -v minicom >/dev/null 2>&1; then \
+	  echo "[console] minicom -b $(BAUD) -D $(TTY) (exit: Ctrl-A X)"; \
+	  minicom -b $(BAUD) -D $(TTY); \
+	elif command -v cu >/dev/null 2>&1; then \
+	  echo "[console] cu -l $(TTY) -s $(BAUD) (exit: ~.)"; \
+	  cu -l $(TTY) -s $(BAUD); \
+	else \
+	  echo "install one of picocom / minicom / cu (e.g. sudo apt-get install -y picocom)"; \
+	  exit 1; \
+	fi

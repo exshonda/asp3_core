@@ -1,0 +1,2 @@
+../../test_cfg/pass1_cfg1.cfg:11: error: preprocessor directive must not be within static API
+make: *** [cfg1_out.timestamp] Error 1

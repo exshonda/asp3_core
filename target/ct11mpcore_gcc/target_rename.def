@@ -1,0 +1,15 @@
+# target_kernel_impl.c
+arm_tnum_memory_area
+arm_memory_area
+target_initialize
+target_exit
+
+# target_timer.c
+target_ovrtimer_initialize
+target_ovrtimer_terminate
+target_ovrtimer_start
+target_ovrtimer_stop
+target_ovrtimer_get_current
+target_ovrtimer_handler
+
+INCLUDE "core"

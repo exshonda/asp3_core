@@ -1,0 +1,17 @@
+# 現在ベースとしている上流TOPPERS/ASP3のバージョン情報
+# 新バージョンをマージするたびに更新すること
+
+ASP3_UPSTREAM_VERSION = 3.7.2
+ASP3_UPSTREAM_SOURCE  = https://www.toppers.jp/download.cgi/asp3-3.7.2.tar.gz
+ASP3_UPSTREAM_COMMIT  = (tarball配布のためコミットハッシュなし)
+ASP3_LAST_MERGED      = 2026-06-05
+
+ASP3_UPSTREAM_VERSION = 3.7.2
+ASP3_UPSTREAM_SOURCE  = https://www.toppers.jp/download.cgi/asp3_zybo_z7_gcc-20260520.zip
+ASP3_UPSTREAM_COMMIT  = (ZIP配布のためコミットハッシュなし)
+ASP3_LAST_MERGED      = 2026-06-05
+
+ASP3_UPSTREAM_VERSION = 3.7.2
+ASP3_UPSTREAM_SOURCE  = svn管理のARM64依存部，ARM-M依存部，RP2350依存部，MPS2_AN521依存部，RASPBERRYPI_PICO2依存部，STM32MP257F_DK_ARM64依存部
+ASP3_UPSTREAM_COMMIT  = (tarball配布のためコミットハッシュなし)
+ASP3_LAST_MERGED      = 2026-06-05

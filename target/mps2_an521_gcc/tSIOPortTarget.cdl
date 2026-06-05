@@ -1,0 +1,116 @@
+/*
+ *  TOPPERS/ASP Kernel
+ *      Toyohashi Open Platform for Embedded Real-Time Systems/
+ *      Advanced Standard Profile Kernel
+ *
+ *  Copyright (C) 2015 by Ushio Laboratory
+ *              Graduate School of Engineering Science, Osaka Univ., JAPAN
+ *  Copyright (C) 2015,2016,2026 by Embedded and Real-Time Systems Laboratory
+ *              Graduate School of Information Science, Nagoya Univ., JAPAN
+ *
+ *  上記著作権者は，本ソフトウェアを TOPPERS ライセンス（条件は他のソー
+ *  スファイルの先頭コメントを参照）の下で利用することを許諾する．本ソフ
+ *  トウェアは無保証で提供される．
+ *
+ */
+
+/*
+ *  シリアルインタフェースドライバのターゲット依存部のコンポーネント記述
+ */
+
+/*
+ *  ボードに関する定義
+ */
+import_C("mps2_an521.h");
+
+/*
+ *  CMSDK APB UART 用 簡易 SIO ドライバ
+ */
+import("tUsart.cdl");
+
+/*
+ *  シリアルインタフェースドライバとSIOドライバを接続する部分のセルタイプ
+ */
+celltype tSIOPortTargetMain {
+    /*
+     *  シリアルインタフェースドライバとの結合
+     */
+    [inline]   entry    sSIOPort    eSIOPort;
+    [optional] call     siSIOCBR    ciSIOCBR;
+
+    /*
+     *  SIOドライバとの結合
+     */
+    call              sSIOPort    cSIOPort;
+    [inline] entry    siSIOCBR    eiSIOCBR;
+
+    /*
+     *  割込み要求ライン操作のための結合
+     */
+    call    sInterruptRequest    cInterruptRequest;
+};
+
+/*
+ *  シリアルインタフェースドライバのターゲット依存部（複合コンポーネント）
+ */
+[active]
+composite tSIOPortTarget {
+    /*
+     *  シリアルインタフェースドライバとの結合
+     */
+    entry              sSIOPort    eSIOPort;
+    [optional] call    siSIOCBR    ciSIOCBR;
+
+    /*
+     *  属性の定義
+     */
+    attr {
+        uint32_t base;                   /* ベースアドレス */
+        uint32_t index;                  /* UART インデックス */
+        INTNO    interruptNumber;        /* 割込み番号（combined） */
+        PRI      isrPriority = 1;        /* ISR 優先度 */
+        PRI      interruptPriority = -2; /* 割込み優先度 */
+    };
+
+    /*
+     *  SIO ドライバ
+     */
+    cell tUsart Usart {
+        base     = composite.base;
+        index    = composite.index;
+        ciSIOCBR = SIOPortMain.eiSIOCBR;
+    };
+
+    /*
+     *  シリアルインタフェースドライバのターゲット依存部の本体
+     */
+    cell tSIOPortTargetMain SIOPortMain {
+        ciSIOCBR          => composite.ciSIOCBR;
+        cSIOPort          = Usart.eSIOPort;
+        cInterruptRequest = InterruptRequest.eInterruptRequest;
+    };
+    composite.eSIOPort => SIOPortMain.eSIOPort;
+
+    /*
+     *  SIO の割込みサービスルーチンと割込み要求ライン（combined 割込み）
+     */
+    cell tISR ISRInstance {
+        interruptNumber = composite.interruptNumber;
+        isrPriority     = composite.isrPriority;
+        ciISRBody       = Usart.eiISR;
+    };
+    cell tInterruptRequest InterruptRequest {
+        interruptNumber   = composite.interruptNumber;
+        interruptPriority = composite.interruptPriority;
+    };
+};
+
+/*
+ *  シリアルインタフェースドライバのターゲット依存部のプロトタイプ
+ */
+[prototype]
+cell tSIOPortTarget SIOPortTarget1 {
+    base            = C_EXP("MPS2_AN521_UART0_BASE");
+    index           = C_EXP("0");
+    interruptNumber = C_EXP("MPS2_AN521_UART0_COMBINED_IRQn + 16");
+};

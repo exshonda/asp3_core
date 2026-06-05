@@ -1,0 +1,27 @@
+# -*- coding: utf-8 -*-
+#
+#		オフセットファイル生成用Rubyテンプレート（ARM用）
+#
+#  $Id: core_offset.trb 215 2020-02-17 05:45:15Z ertl-honda $
+#
+
+#
+#  ターゲット非依存部のインクルード
+#
+IncludeTrb("kernel/genoffset.trb")
+
+#
+#  フィールドのオフセットの定義の生成
+#
+$offsetH.append(<<EOS)
+#define TCB_p_tinib		#{$offsetof_TCB_p_tinib}
+#define TCB_sp			#{$offsetof_TCB_sp}
+#define TCB_pc			#{$offsetof_TCB_pc}
+#define TINIB_exinf		#{$offsetof_TINIB_exinf}
+#define TINIB_task		#{$offsetof_TINIB_task}
+#define TINIB_stksz		#{$offsetof_TINIB_stksz}
+#define TINIB_stk		#{$offsetof_TINIB_stk}
+#define T_EXCINF_pstate	#{$offsetof_T_EXCINF_pstate}
+#define EXC_FRAME_pstate	#{$offsetof_EXC_FRAME_pstate}
+#define EXC_FRAME       #{$sizeof_EXC_FRAME}
+EOS
