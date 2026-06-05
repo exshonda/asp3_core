@@ -251,13 +251,18 @@ $applname ||= "sample1"
 $cfgfile ||= $applname + ".cfg"
 $cdlfile ||= $applname + ".cdl"
 $applobjs.unshift($applname + ".o") if !$option_t
-$bannerobj ||= $vartable.has_key?("OMIT_TECS") ? "banner.o" : "tBannerMain.o"
+#
+#  【asp3_core変更】OMIT_TECSの判定を値の有無で行う（デフォルトで
+#  OMIT_TECS=trueのため，TECS構成にする場合は引数で OMIT_TECS= と
+#  空値を指定する）．
+#
+$bannerobj ||= ($vartable["OMIT_TECS"] != "") ? "banner.o" : "tBannerMain.o"
 #
 #  【asp3_core変更】非TECS時は共通の非TECS版システムサービスのオブジェ
 #  クトファイルをデフォルトでSYSSVCOBJSに含める（-Sオプションの指定は
 #  ターゲット依存のSIOドライバ等の追加分のみで足りる）．
 #
-if $vartable.has_key?("OMIT_TECS")
+if $vartable["OMIT_TECS"] != ""
   $syssvcobjs = ["syslog.o", "banner.o", "serial.o", "serial_cfg.o",
 									"logtask.o"] | $syssvcobjs
 end

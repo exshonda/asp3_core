@@ -46,10 +46,20 @@
 
 /*
  *  システムログの低レベル出力のための初期化
- *
+ */
+#ifndef TOPPERS_OMIT_TECS
+
+/*
  *  セルタイプtPutLogSIOPort内に実装されている関数を直接呼び出す．
  */
 extern void	tPutLogSIOPort_initialize(void);
+
+#else /* TOPPERS_OMIT_TECS */
+
+extern void	sio_initialize(EXINF exinf);
+extern void	target_fput_initialize(void);
+
+#endif /* TOPPERS_OMIT_TECS */
 
 /*
  *  タイマの周波数を保持する変数
@@ -206,7 +216,12 @@ target_initialize(void)
 	/*
 	 *  バナー表示，低レベル出力用にUARTを初期化
 	 */
+#ifndef TOPPERS_OMIT_TECS
 	tPutLogSIOPort_initialize();
+#else /* TOPPERS_OMIT_TECS */
+	sio_initialize(0);
+	target_fput_initialize();
+#endif /* TOPPERS_OMIT_TECS */
 }
 
 /*
@@ -235,3 +250,53 @@ target_exit(void)
 
 	while (true) ;
 }
+
+#ifdef TOPPERS_OMIT_TECS
+/*
+ *		システムログの低レベル出力（非TECS版専用）
+ */
+
+#include "target_syssvc.h"
+#include "target_serial.h"
+
+/*
+ *  低レベル出力用のSIOポート管理ブロック
+ */
+static SIOPCB	*p_siopcb_target_fput;
+
+/*
+ *  SIOポートの初期化
+ */
+void
+target_fput_initialize(void)
+{
+	p_siopcb_target_fput = stm32usart_opn_por(SIOPID_FPUT, 0);
+}
+
+/*
+ *  SIOポートへのポーリング出力
+ */
+static void
+stm32mp257f_dk_uart_fput(char c)
+{
+	/*
+	 *  送信できるまでポーリング
+	 */
+	while (!(stm32usart_snd_chr(p_siopcb_target_fput, c))) {
+		sil_dly_nse(100);
+	}
+}
+
+/*
+ *  SIOポートへの文字出力
+ */
+void
+target_fput_log(char c)
+{
+	if (c == '\n') {
+		stm32mp257f_dk_uart_fput('\r');
+	}
+	stm32mp257f_dk_uart_fput(c);
+}
+
+#endif /* TOPPERS_OMIT_TECS */

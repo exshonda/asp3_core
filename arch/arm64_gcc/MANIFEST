@@ -49,6 +49,7 @@ stm32mp2/chip_unrename.h
 stm32mp2/Makefile.chip
 stm32mp2/PORTING_ASP3_STM32MP2.md
 stm32mp2/stm32mp2.h
+stm32mp2/stm32usart.c
 stm32mp2/stm32usart.h
 stm32mp2/tUsart.c
 stm32mp2/tUsart.cdl

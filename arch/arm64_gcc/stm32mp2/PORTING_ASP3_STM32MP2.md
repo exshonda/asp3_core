@@ -222,3 +222,30 @@ UsageFault が HardFault にエスカレートするアーキ仕様により cpu
   同一値（12/10）へ修正済み（FMP3 側 `PORTING_STM32MP2.md`「ランタイムテストの実施」参照）．
 - 性能評価（perf0〜5）・タイマドライバシミュレータ系（simt_*）・拡張パッケージ系の
   テストは未実施（rp2350 と同じく機能テスト 36 件のみ）．
+
+## 非 TECS 対応の再導入（2026-06-05 追記）
+
+asp3_core の機能追加計画「TECSレス」（AGENTS.md §1）に伴い，非 TECS 構成の
+サポートを再導入した．2026-06-04 に廃止した FMP3 由来の `nt_syssvc/` 構成
+とは異なり，**上流 ASP3 の `extension/non_tecs/` 版システムサービス**
+（syssvc/syslog.c 等）を用いる．configure.rb は非 TECS がデフォルトと
+なった（OMIT_TECS 初期設定・共通 syssvc オブジェクト自動付与）．
+
+- 新規ファイル:
+  - `arch/arm64_gcc/stm32mp2/stm32usart.c` — 非 TECS 版 USART SIO ドライバ．
+    tUsart.c のロジックを uart_pl011.c（上流非 TECS ドライバ）の構造で実装．
+    TF-A 初期化済み前提・再初期化しない方針は tUsart.c と同一．
+    ドライバ API 宣言は `stm32usart.h` に TOPPERS_OMIT_TECS ガードで追加．
+  - `target/.../target_serial.{c,h,cfg}` — sio_* インタフェース
+    （ct11mpcore_gcc の非 TECS 版を規範．USART2 / INTNO 147）．
+- 変更: `target_syssvc.h`（OMIT_TECS 時の TARGET_NAME・SIO 設定），
+  `target_kernel_impl.c`（OMIT_TECS 時 sio_initialize＋target_fput_log），
+  `Makefile.target`（OMIT_TECS 時 SYSSVC_COBJS に target_serial.o stm32usart.o）．
+- TECS 構成は引き続きビルド可能（条件ディレクティブで共存）．
+
+### 検証（2026-06-05）
+
+- 非 TECS 構成: 全オブジェクトのコンパイルをコンパイラ警告ゼロで確認
+  （aarch64-none-elf 未導入マシンのため aarch64-linux-gnu で代用．
+  glibc 静的リンクがベアメタル非対応のため最終リンクは不可）．
+  **リンクと実機動作確認は aarch64-none-elf のあるマシンで実施すること．**

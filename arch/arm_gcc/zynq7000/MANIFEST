@@ -16,6 +16,7 @@ chip_unrename.h
 tSIOPortZynq7000.cdl
 tSIOPortZynq7000Main_inline.h
 tXUartPs.c
+xuartps.c
 tXUartPs.cdl
 xuartps.h
 zynq7000.h

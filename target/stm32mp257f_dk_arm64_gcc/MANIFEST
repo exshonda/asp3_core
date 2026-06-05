@@ -38,5 +38,8 @@ target_timer.cfg
 target_timer.h
 target_unrename.h
 target_user.md
+target_serial.c
+target_serial.cfg
+target_serial.h
 tSIOPortTarget.cdl
 tSIOPortTargetMain_inline.h

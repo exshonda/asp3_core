@@ -83,4 +83,129 @@
 /* ICR ビット */
 #define USART_ICR_ORECF		(1U << 3)	/* オーバーランクリア */
 
+#ifdef TOPPERS_OMIT_TECS
+/*
+ *		STM32 USART用 簡易SIOドライバ（非TECS版専用）
+ */
+#include <sil.h>
+
+/*
+ *  SIOポート数の定義
+ */
+#define TNUM_SIOP		1		/* サポートするSIOポートの数 */
+
+/*
+ *  コールバックルーチンの識別番号
+ */
+#define SIO_RDY_SND		1U		/* 送信可能コールバック */
+#define SIO_RDY_RCV		2U		/* 受信通知コールバック */
+
+#ifndef TOPPERS_MACRO_ONLY
+
+/*
+ *  SIOポート管理ブロックの定義
+ */
+typedef struct sio_port_control_block	SIOPCB;
+
+/*
+ *  プリミティブな送信／受信関数
+ */
+
+/*
+ *  受信バッファに文字があるか？
+ */
+Inline bool_t
+stm32usart_getready(uintptr_t base)
+{
+	return((sil_rew_mem(USART_ISR(base)) & USART_ISR_RXNE) != 0U);
+}
+
+/*
+ *  送信バッファに空きがあるか？
+ */
+Inline bool_t
+stm32usart_putready(uintptr_t base)
+{
+	return((sil_rew_mem(USART_ISR(base)) & USART_ISR_TXE) != 0U);
+}
+
+/*
+ *  受信した文字の取出し
+ */
+Inline char
+stm32usart_getchar(uintptr_t base)
+{
+	return((char)(sil_rew_mem(USART_RDR(base)) & 0xffU));
+}
+
+/*
+ *  送信する文字の書込み
+ */
+Inline void
+stm32usart_putchar(uintptr_t base, char c)
+{
+	sil_wrw_mem(USART_TDR(base), (uint32_t) c);
+}
+
+/*
+ *  シリアルインタフェースドライバに提供する機能
+ */
+
+/*
+ *  SIOドライバの初期化
+ */
+extern void		stm32usart_initialize(void);
+
+/*
+ *  SIOドライバの終了処理
+ */
+extern void		stm32usart_terminate(void);
+
+/*
+ *  SIOの割込みサービスルーチン
+ */
+extern void		stm32usart_isr(ID siopid);
+
+/*
+ *  SIOポートのオープン
+ */
+extern SIOPCB	*stm32usart_opn_por(ID siopid, EXINF exinf);
+
+/*
+ *  SIOポートのクローズ
+ */
+extern void		stm32usart_cls_por(SIOPCB *siopcb);
+
+/*
+ *  SIOポートへの文字送信
+ */
+extern bool_t	stm32usart_snd_chr(SIOPCB *siopcb, char c);
+
+/*
+ *  SIOポートからの文字受信
+ */
+extern int_t	stm32usart_rcv_chr(SIOPCB *siopcb);
+
+/*
+ *  SIOポートからのコールバックの許可
+ */
+extern void		stm32usart_ena_cbr(SIOPCB *siopcb, uint_t cbrtn);
+
+/*
+ *  SIOポートからのコールバックの禁止
+ */
+extern void		stm32usart_dis_cbr(SIOPCB *siopcb, uint_t cbrtn);
+
+/*
+ *  SIOポートからの送信可能コールバック
+ */
+extern void		stm32usart_irdy_snd(EXINF exinf);
+
+/*
+ *  SIOポートからの受信通知コールバック
+ */
+extern void		stm32usart_irdy_rcv(EXINF exinf);
+
+#endif /* TOPPERS_MACRO_ONLY */
+#endif /* TOPPERS_OMIT_TECS */
 #endif /* TOPPERS_STM32_USART_H */

@@ -16,7 +16,7 @@ arm 依存部の実差分から抽出した変換規則で arm64 依存部を新
 
 ```bash
 mkdir <OBJ> && cd <OBJ>
-ruby <ASP3>/configure.rb -T stm32mp257f_dk_arm64_gcc   # TECS構成（既定）。非TECSは -w + -S（target_user.md 参照）
+ruby <ASP3>/configure.rb -T stm32mp257f_dk_arm64_gcc   # 非TECS構成（asp3_coreの既定）。TECS版も条件ディレクティブで共存
 make            # -> asp（コンパイラ警告ゼロであること）
 make swd-run    # 実機実行（FSBL/minimal_boot 入り SD で起動済みのこと）
 make console / make osdebug
@@ -34,11 +34,14 @@ make console / make osdebug
 - **EL3/EL2 フック**（`target_el3_initialize` 等）は ASP3 arm に無い本依存部固有
   の仕様（STM32MP2 のブートに必須）．`enable_smp()`（CPUECTLR.SMPEN）も
   シングルコアで必須（キャッシュ）．
-- **TECS 構成のみサポート**（2026-06-04〜．-w は非サポート）: SIO ドライバは
-  `tUsart` セル（chip 依存部，TF-A 初期化済み前提で再初期化しない）＋
-  `tSIOPortTarget.cdl`/`target.cdl`．tecsgen は `__int128` を解釈できない
-  ため `core_kernel.h` に `#ifndef TECSGEN` ガードあり．
-  `stm32usart.h` はレジスタ定義のみ（tUsart が使用）．
+- **非 TECS 構成を再サポート**（2026-06-05〜．asp3_core の TECSレス化に伴う）:
+  非 TECS の SIO ドライバは `stm32usart.{c,h}`（chip 依存部，TF-A 初期化済み
+  前提で再初期化しない）＋ `target_serial.{c,h,cfg}`．上流 `extension/non_tecs`
+  版 syssvc を使用．TECS 構成（`tUsart` セル＋ `tSIOPortTarget.cdl`/`target.cdl`）
+  も条件ディレクティブで共存．tecsgen は `__int128` を解釈できないため
+  `core_kernel.h` に `#ifndef TECSGEN` ガードあり．
+  経緯: 2026-06-04 に FMP3 由来の非 TECS 構成（nt_syssvc）を廃止→
+  2026-06-05 に上流 non_tecs 版で再導入（PORTING_ASP3_STM32MP2.md 参照）．
 - **MMU は静的テーブルのみ**（`arm64_memory_area[]` weak）．
 - sample1 の入力テスト時は `a`（act_tsk）→ **`r`（rot_rdq）** が必要
   （同優先度タスクは r 無しでは切り替わらない）．
