@@ -258,7 +258,8 @@ $bannerobj ||= $vartable.has_key?("OMIT_TECS") ? "banner.o" : "tBannerMain.o"
 #  ターゲット依存のSIOドライバ等の追加分のみで足りる）．
 #
 if $vartable.has_key?("OMIT_TECS")
-  $syssvcobjs = ["syslog.o", "serial.o", "serial_cfg.o", "logtask.o"] | $syssvcobjs
+  $syssvcobjs = ["syslog.o", "banner.o", "serial.o", "serial_cfg.o",
+									"logtask.o"] | $syssvcobjs
 end
 if $srcdir.nil?
   # ソースディレクトリ名を取り出す

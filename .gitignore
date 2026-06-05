@@ -29,3 +29,6 @@ results_*.xml
 # OS
 .DS_Store
 Thumbs.db
+
+# Makefileビルドの作業ディレクトリ
+obj/
