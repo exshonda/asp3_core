@@ -118,10 +118,20 @@ const uint_t arm_tnum_memory_area
 
 /*
  *  システムログの低レベル出力のための初期化
- *
+ */
+#ifndef TOPPERS_OMIT_TECS
+
+/*
  *  セルタイプtPutLogSIOPort内に実装されている関数を直接呼び出す．
  */
 extern void	tPutLogSIOPort_initialize(void);
+
+#else /* TOPPERS_OMIT_TECS */
+
+extern void	sio_initialize(EXINF exinf);
+extern void	target_fput_initialize(void);
+
+#endif /* TOPPERS_OMIT_TECS */
 
 /*
  *  ハードウェアの初期化
@@ -172,6 +182,9 @@ target_initialize(void)
 	 */
 #ifndef TOPPERS_OMIT_TECS
 	tPutLogSIOPort_initialize();
+#else /* TOPPERS_OMIT_TECS */
+	sio_initialize(0);
+	target_fput_initialize();
 #endif /* TOPPERS_OMIT_TECS */
 }
 
@@ -206,9 +219,59 @@ target_exit(void)
 	/*
 	 *  QEMUを終了させる．
 	 */
-	Asm("ldr r1, =#0x20026\n\t"		/* ADP_Stopped_ApplicationExit */ 
+	Asm("ldr r1, =#0x20026\n\t"		/* ADP_Stopped_ApplicationExit */
 		"mov r0, #0x18\n\t"			/* angel_SWIreason_ReportException */
 		"svc 0x00123456");
 #endif
 	while (true) ;
 }
+
+#ifdef TOPPERS_OMIT_TECS
+/*
+ *		システムログの低レベル出力（非TECS版専用）
+ */
+
+#include "target_syssvc.h"
+#include "target_serial.h"
+
+/*
+ *  低レベル出力用のSIOポート管理ブロック
+ */
+static SIOPCB	*p_siopcb_target_fput;
+
+/*
+ *  SIOポートの初期化
+ */
+void
+target_fput_initialize(void)
+{
+	p_siopcb_target_fput = xuartps_opn_por(SIOPID_FPUT, 0);
+}
+
+/*
+ *  SIOポートへのポーリング出力
+ */
+static void
+zybo_z7_uart_fput(char c)
+{
+	/*
+	 *  送信できるまでポーリング
+	 */
+	while (!(xuartps_snd_chr(p_siopcb_target_fput, c))) {
+		sil_dly_nse(100);
+	}
+}
+
+/*
+ *  SIOポートへの文字出力
+ */
+void
+target_fput_log(char c)
+{
+	if (c == '\n') {
+		zybo_z7_uart_fput('\r');
+	}
+	zybo_z7_uart_fput(c);
+}
+
+#endif /* TOPPERS_OMIT_TECS */

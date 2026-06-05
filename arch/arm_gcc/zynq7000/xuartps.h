@@ -97,4 +97,129 @@
 #define XUARTPS_SR_TXEMPTY		UINT_C(0x0008)	/* 送信FIFOエンプティ */
 #define XUARTPS_SR_RXEMPTY		UINT_C(0x0002)	/* 受信FIFOエンプティ */
 
+#ifdef TOPPERS_OMIT_TECS
+/*
+ *		XUartPs用 簡易SIOドライバ（非TECS版専用）
+ */
+#include <sil.h>
+
+/*
+ *  SIOポート数の定義
+ */
+#define TNUM_SIOP		1		/* サポートするSIOポートの数 */
+
+/*
+ *  コールバックルーチンの識別番号
+ */
+#define SIO_RDY_SND		1U		/* 送信可能コールバック */
+#define SIO_RDY_RCV		2U		/* 受信通知コールバック */
+
+#ifndef TOPPERS_MACRO_ONLY
+
+/*
+ *  SIOポート管理ブロックの定義
+ */
+typedef struct sio_port_control_block	SIOPCB;
+
+/*
+ *  プリミティブな送信／受信関数
+ */
+
+/*
+ *  受信バッファに文字があるか？
+ */
+Inline bool_t
+xuartps_getready(uintptr_t base)
+{
+	return((sil_rew_mem(XUARTPS_SR(base)) & XUARTPS_SR_RXEMPTY) == 0U);
+}
+
+/*
+ *  送信バッファに空きがあるか？
+ */
+Inline bool_t
+xuartps_putready(uintptr_t base)
+{
+	return((sil_rew_mem(XUARTPS_SR(base)) & XUARTPS_SR_TXFULL) == 0U);
+}
+
+/*
+ *  受信した文字の取出し
+ */
+Inline char
+xuartps_getchar(uintptr_t base)
+{
+	return((char) sil_rew_mem(XUARTPS_FIFO(base)));
+}
+
+/*
+ *  送信する文字の書込み
+ */
+Inline void
+xuartps_putchar(uintptr_t base, char c)
+{
+	sil_wrw_mem(XUARTPS_FIFO(base), (uint32_t) c);
+}
+
+/*
+ *  シリアルインタフェースドライバに提供する機能
+ */
+
+/*
+ *  SIOドライバの初期化
+ */
+extern void		xuartps_initialize(void);
+
+/*
+ *  SIOドライバの終了処理
+ */
+extern void		xuartps_terminate(void);
+
+/*
+ *  SIOの割込みサービスルーチン
+ */
+extern void		xuartps_isr(ID siopid);
+
+/*
+ *  SIOポートのオープン
+ */
+extern SIOPCB	*xuartps_opn_por(ID siopid, EXINF exinf);
+
+/*
+ *  SIOポートのクローズ
+ */
+extern void		xuartps_cls_por(SIOPCB *siopcb);
+
+/*
+ *  SIOポートへの文字送信
+ */
+extern bool_t	xuartps_snd_chr(SIOPCB *siopcb, char c);
+
+/*
+ *  SIOポートからの文字受信
+ */
+extern int_t	xuartps_rcv_chr(SIOPCB *siopcb);
+
+/*
+ *  SIOポートからのコールバックの許可
+ */
+extern void		xuartps_ena_cbr(SIOPCB *siopcb, uint_t cbrtn);
+
+/*
+ *  SIOポートからのコールバックの禁止
+ */
+extern void		xuartps_dis_cbr(SIOPCB *siopcb, uint_t cbrtn);
+
+/*
+ *  SIOポートからの送信可能コールバック
+ */
+extern void		xuartps_irdy_snd(EXINF exinf);
+
+/*
+ *  SIOポートからの受信通知コールバック
+ */
+extern void		xuartps_irdy_rcv(EXINF exinf);
+
+#endif /* TOPPERS_MACRO_ONLY */
+#endif /* TOPPERS_OMIT_TECS */
 #endif /* TOPPERS_XUARTPS_H */
