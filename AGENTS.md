@@ -21,6 +21,39 @@ TOPPERS/ASP3カーネルを上流追従しながら、各社SDK（Raspberry Pi P
 | ライセンス | TOPPERSライセンス（改変版である旨を明示。「TOPPERS/」名は規則第4条＝運営委員会承認マター） |
 | 対象ターゲット | ARMv8-M(Cortex-M33) / ARMv8-A(Cortex-A35) / RISC-V(Hazard3) ＋ POSIX / QEMU |
 
+### 機能追加計画
+
+上流ASP3に対して本リポジトリで追加・変更する機能（詳細・経緯は `docs/asp3_derivative_plan.md` §3 を参照）。
+
+| 項目 | 内容 | 優先度 |
+|---|---|---|
+| TECSレス | syssvcをプレーンCで実装。tecsgenへの依存を除去。AI向けにコードの間接層が消え追いやすくなる | 高 |
+| cfgのPython化 | RubyベースのコンフィギュレータをPythonで再実装。宣言的スペック（データ駆動）設計推奨 | 高 |
+| CMake対応 | CMakeListsおよびasp3_pico_sdk.cmakeで実装済み | 高 |
+| ファイルの削除 | 不要なファイルを削除 | 高 |
+| QEMUターゲット | mps2-an521（Cortex-M33）、virt（RISC-V / ARMv8-A） | 高 |
+| CLIターゲット | POSIX sim。エージェントのbuild→run→testループ用 | 高 |
+| CI整備 | GitHub Actions：全ターゲットbuild＋POSIX/QEMUテスト実行 | 高 |
+| ドキュメントMarkdown化 | 統合仕様書・APIリファレンスをMarkdown化（RAG対応） | 中 |
+| skillパッケージ | build/flash/debug/cfg生成skill（別リポジトリ） | 中 |
+
+### 機能追加の実施ルール
+
+> 目的：変更点を明らかにし、他のTOPPERS系RTOSで同様の作業をする際の参考とすること。
+
+- 機能追加項目ごとに `docs/dev/<項目スラッグ>.md` を作成する。ファイル名は英小文字ケバブケース（例：`tecs-less.md`、`cfg-python.md`）とし、`docs/dev/README.md` の索引表で上記「機能追加計画」の項目名と対応付ける。
+- 各.mdの構成は **項目／内容／実施プラン／実施結果** とする。
+  - **実施プランは着手前に書き、実施結果は完了時に書く**（セッションを跨ぐ作業の再開点を兼ねる）。
+  - 実施結果には以下を含める：
+    - 変更したファイルのリストと各変更内容の概要
+    - 追加・削除したファイル
+    - Git情報：ベースコミット・関連コミット範囲・ファイルリストを再現するコマンド例（例：`git diff --stat upstream main -- <paths>`）
+    - 検証結果：テストの実施範囲（POSIX / QEMU / 実機）と結果
+- `docs/dev/README.md` には次を置く：
+  - 索引表（項目名・ファイル・状態〔計画中／実施中／完了〕）
+  - 各.mdのテンプレート
+- `DIVERGENCE_MAP.md` との役割分担：DIVERGENCE_MAPは**ファイル単位**の上流乖離台帳、`docs/dev/` は**機能単位**の経緯・手順書。PRISTINE領域（`kernel/` 等）に変更が及んだ項目は相互にリンクする。
+
 ---
 
 ## 2. ⚠️ 禁則事項（作業前に必読・最重要）
@@ -302,6 +335,7 @@ scope: target / syssvc / cfg / cmake / upstream / ci
 | ビルド・テスト方法 | 本ファイル §4 |
 | 新ターゲット移植 | `docs/porting/PORTING_GUIDE.md` + `target_spec.yaml` |
 | 既存実装の参照 | `docs/porting/IMPL_INDEX.md` |
+| 機能追加の実施記録・経緯 | `docs/dev/README.md` + 本ファイル §1「機能追加の実施ルール」 |
 | 上流マージ | `DIVERGENCE_MAP.md` + `UPSTREAM_PRISTINE.txt` + 本ファイル §10 |
 | cfg仕様の追従 | `docs/asp3_derivative_plan.md`（CFG_SPEC_MAP節） |
 | API仕様 | `docs/api/` |

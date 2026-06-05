@@ -58,27 +58,17 @@
 
 ## 3. 機能追加計画
 
-### 実装済み
-
-| 項目 | 内容 |
-|---|---|
-| TECSレス | syssvcをプレーンCで実装。tecsgenへの依存を除去。AI向けにコードの間接層が消え追いやすくなる |
-| cfgのPython化 | RubyベースのコンフィギュレータをPythonで再実装。宣言的スペック（データ駆動）設計推奨 |
-| CMake対応 | CMakeListsおよびasp3_pico_sdk.cmakeで実装済み |
-| ARMv8-M移植 | Cortex-M33 / RP2350（PICO2）ベアメタル動作確認済み |
-| ARMv8-A移植 | Cortex-A35 / STM32MP257F-DKベアメタル移植済み |
-| OS awareness | GDB Pythonスクリプトによるタスク一覧・スタック・状態表示 |
-
-### 計画中
-
 | 項目 | 内容 | 優先度 |
 |---|---|---|
+| TECSレス | syssvcをプレーンCで実装。tecsgenへの依存を除去。AI向けにコードの間接層が消え追いやすくなる | 高 |
+| cfgのPython化 | RubyベースのコンフィギュレータをPythonで再実装。宣言的スペック（データ駆動）設計推奨 | 高 |
+| CMake対応 | CMakeListsおよびasp3_pico_sdk.cmakeで実装済み | 高 |
+| ファイルの削除 | 不要なファイルを削除 | 高 |
 | QEMUターゲット | mps2-an521（Cortex-M33）、virt（RISC-V / ARMv8-A） | 高 |
 | CLIターゲット | POSIX sim。エージェントのbuild→run→testループ用 | 高 |
 | CI整備 | GitHub Actions：全ターゲットbuild＋POSIX/QEMUテスト実行 | 高 |
 | ドキュメントMarkdown化 | 統合仕様書・APIリファレンスをMarkdown化（RAG対応） | 中 |
 | skillパッケージ | build/flash/debug/cfg生成skill（別リポジトリ） | 中 |
-| 動的生成 | **要検討**。ASP3の静的設計方針との整合に注意。実装する場合は明確な別拡張として分離 | 低 |
 
 ---
 
