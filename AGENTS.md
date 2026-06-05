@@ -32,7 +32,8 @@ TOPPERS/ASP3カーネルを上流追従しながら、各社SDK（Raspberry Pi P
 | .rbツールの.py化 | RubyのツールをPythonに書き換える | 高 |
 | CMake対応 | CMakeListsおよびasp3_pico_sdk.cmakeで実装済み | 高 |
 | ファイルの削除 | 不要なファイルを削除 | 高 |
-| QEMUターゲット | mps2-an521（Cortex-M33）、virt（RISC-V / ARMv8-A） | 高 |
+| QEMUターゲット(ARMv8-A) |  | 高 |
+| QEMUターゲット(RISC-V) |  | 高 |
 | CLIターゲット | POSIX sim。エージェントのbuild→run→testループ用 | 高 |
 | CI整備 | GitHub Actions：全ターゲットbuild＋POSIX/QEMUテスト実行 | 高 |
 | ドキュメントMarkdown化 | 統合仕様書・APIリファレンスをMarkdown化（RAG対応） | 中 |
