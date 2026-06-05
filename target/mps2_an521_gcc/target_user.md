@@ -11,17 +11,16 @@ GNU Arm Embedded ツールチェイン（`arm-none-eabi-gcc`）と QEMU
 （`qemu-system-arm`，11.0 以降）が必要である．
 
 ```sh
-mkdir OBJ && cd OBJ
-ruby ../configure.rb -T mps2_an521_gcc
-make
-make run            # QEMU(mps2-an521) で実行．UART0 が標準入出力に接続される
+cmake --preset m33-qemu -B build/m33-qemu
+cmake --build build/m33-qemu
+ninja -C build/m33-qemu run   # QEMU(mps2-an521) で実行．UART0 が標準入出力に接続される
 ```
 
-`make run` は次を実行する（終了は Ctrl-A X）：
+`run` ターゲットは次を実行する（終了は Ctrl-A X）：
 
 ```
 qemu-system-arm -machine mps2-an521 -nographic \
-    -semihosting-config enable=on,target=native -kernel asp
+    -semihosting-config enable=on,target=native -kernel asp.elf
 ```
 
 サンプルプログラムの対話コマンド（`a`,`A`,`1`〜`3`,`d`,`t` 等）は，標準入力
@@ -30,15 +29,15 @@ qemu-system-arm -machine mps2-an521 -nographic \
 ## 設計上の要点
 
 ### コア / 開発環境
-- プロセッサコア：Cortex-M33（`CORE_TYPE = CORTEX_M33`，ARMv8-M）．
-- リセット後は Secure ステートで起動するため `ENABLE_TRUSTZONE = 1`．
-- チップ依存部は持たない（`CHIP` を空とし `Makefile.core` を直接インクルー
-  ド）．チップ層が提供していた定義（`TMIN_INTPRI`，`TBITW_IPRI`，
+- プロセッサコア：Cortex-M33（ARMv8-M）．
+- リセット後は Secure ステートで起動するため `TOPPERS_ENABLE_TRUSTZONE` を定義．
+- チップ依存部は持たない（`target.cmake` がコア共通の `arch.cmake` を直接イン
+  クルード）．チップ層が提供していた定義（`TMIN_INTPRI`，`TBITW_IPRI`，
   エンディアン，`sil_orw` 等のビット操作，CMSIS 相当のレジスタ定義）は
   ボード依存部（`target_*.h`，`mps2_an521.h`）に取り込んでいる．
 
 ### FPU
-- **使用しない（`FPU_USAGE` を空に設定）**．QEMU の SSE-200 では，QEMU が
+- **使用しない（FPU関連の定義・コンパイルオプションを設定しない）**．QEMU の SSE-200 では，QEMU が
   実行するコア（CPU0）に FPU が実装されていない
   （`hw/arm/armsse.c` の `sse200_properties`：`CPU0_FPU = false`，CPU1 のみ
   FPU を持つ）．このため CPACR の CP10/CP11 を有効化しても無視され，FP 命令
@@ -59,7 +58,7 @@ SSE-200 のメモリマップ（`hw/arm/armsse.c`）に基づく．
 - `RAM   0x38000000, 4MB`：ボード SSRAM（`0x28000000` のエイリアス）．
 
 ### 高分解能タイマ（HRT）
-- **SysTick によるイベント駆動 HRT**（`KERNEL_TIMER = TIM`，
+- **SysTick によるイベント駆動 HRT**（`USE_TIM_AS_HRT` を定義，
   `target_timer.[hc]`）．次のタイムイベントまでの相対時間を SysTick のリロー
   ド値に設定し，区間終端（0 到達）で割込みを発生させる．これにより，タイム
   イベントの無い時刻に `signal_time()` が呼ばれることがない（周期ティック方
@@ -81,46 +80,43 @@ SSE-200 のメモリマップ（`hw/arm/armsse.c`）に基づく．
 - `target_hrt_get_current`/`set_event`/`raise_event` は，システムサービスや
   カーネルが局所的に `_kernel_` プレフィクスへリネームして参照するため，
   ヘッダではインライン関数（薄い転送）とし，実体は `target_timer.c` に置く．
-- 周期ティック方式（`KERNEL_TIMER = SYSTICK`，コア依存部の `core_timer`）も
+- 周期ティック方式（`USE_TIM_AS_HRT` を外しコア依存部の `core_timer` を使用）も
   選択可能だが，タイムイベントの無いティックでも `signal_time()` が呼ばれる．
 
 ### シリアル（CMSDK APB UART）
-- UART0（`0x40200000`）を使用する（`tUsart.[c]`，`tSIOPortTarget.cdl`）．
+- UART0（`0x40200000`）を使用する（`cmsdk_uart.[ch]`，`target_serial.[ch]`）．
 - 送受信割込みは rx / tx / combined の 3 本があり（`hw/arm/mps2-tz.c` の
   `make_uart`），combined 割込み（NVIC IRQ 42）1 本で送受信を処理する．
 
 ## テストプログラムの実行
 
-`test/testexec.rb` を用いて，テスト毎のディレクトリ（`OBJ-<名前>`）を作って
+`test/testexec.py` を用いて，テスト毎のディレクトリ（`TEST-<名前>`）を作って
 ビルド・実行できる．本ターゲット用に，実行ディレクトリ（例：`TEST/`）へ次の
 2 ファイルを用意する．
 
-- `TARGET_OPTIONS`（各行がテスト種別ごとのビルドオプション．0 行目＝機能テスト，
-  1 行目＝性能評価）：
+- `TARGET_OPTIONS`（1 行目＝CMake の configure 引数）：
 
   ```
-  -T mps2_an521_gcc
-  -T mps2_an521_gcc
+  --preset m33-qemu
   ```
 
 - `TARGET_RUN`（実行コマンド．QEMU で起動し，テスト終了時に
   セミホスティングで QEMU が終了する）：
 
   ```
-  timeout 30 qemu-system-arm -machine mps2-an521 -nographic -semihosting-config enable=on,target=native -kernel asp
+  timeout 30 qemu-system-arm -machine mps2-an521 -nographic -semihosting-config enable=on,target=native -kernel asp.elf
   ```
 
 実行例（`TEST/` で）：
 
 ```sh
-ruby ../test/testexec.rb build kernel0     # カーネルライブラリ KERNELLIB0 を構築
-ruby ../test/testexec.rb task1 sem1 tmevt1 # 指定テストを構築・実行
-ruby ../test/testexec.rb all               # 全テスト
+python3 ../test/testexec.py task1 sem1 tmevt1 # 指定テストを構築・実行
+python3 ../test/testexec.py all               # 全テスト
 ```
 
 テスト終了（`ext_ker`）で QEMU を終了させるため，`target_exit()` は
 `TOPPERS_USE_QEMU` 定義時にセミホスティング `SYS_EXIT` を発行する
-（`Makefile.target` で既定定義）．
+（`target.cmake` で既定定義）．
 
 ## 動作確認
 

@@ -28,7 +28,7 @@ ASP3 へ移植したもの．設計・移植の詳細は `arch/arm64_gcc/stm32mp
 
 ### デバッグ環境
 - **OpenOCD 0.12.0 + aarch64-none-elf-gdb**（ST-LINK V3 経由の SWD）で動作確認．
-- OS-awareness（後述の `make osdebug`）には **gdb-multiarch** を使用する．
+- OS-awareness（後述の `osdebug` ターゲット）には **gdb-multiarch** を使用する．
 
 ### 実行環境
 - TF-A の **FSBL(BL2)** が PLL/LPDDR4 等を初期化し，本カーネルを EL3 で起動する
@@ -39,9 +39,9 @@ ASP3 へ移植したもの．設計・移植の詳細は `arch/arm64_gcc/stm32mp
 
 ## カーネルのコンフィギュレーション
 
-- **TECS 構成のみをサポートする**（`configure.rb` に `-w` を付けないこと）．
-  システムサービス（tSysLog/tSerialPort/tLogTask/tBanner）と SIO ドライバ
-  （tUsart — STM32MP2 用，チップ依存部に同梱）は TECS セルで供給される．
+- **非 TECS 構成**（asp3_core では TECS は廃止済み）．システムサービスは
+  プレーンC版 syssvc（syslog/serial/logtask/banner），SIO ドライバは
+  `stm32usart.[ch]`（STM32MP2 用，チップ依存部に同梱）＋ `target_serial.[ch]`．
 - 高分解能タイマは 32bit（`USE_64BIT_HRTCNT` 不使用）．`TCYC_HRTCNT` は定義せず，
   `TSTEP_HRTCNT=1U`，`HRTCNT_BOUND=4000000002U`．
 
@@ -72,7 +72,7 @@ CPU ロック（IRQ マスク）モデルと整合する．
 ### メモリ配置
 | 領域 | アドレス | 備考 |
 |---|---|---|
-| TEXT（コード/rodata, ROM） | `0x88001000`（SWD 既定）／`0x88000000`（SD 直接ブート） | `Makefile.target` の `TEXT_START_ADDRESS`．`.data` の初期値も ROM 側に置き `start.S` が RAM へコピーする |
+| TEXT（コード/rodata, ROM） | `0x88001000`（SWD 既定）／`0x88000000`（SD 直接ブート） | `target.cmake` の `TEXT_START_ADDRESS`．`.data` の初期値も ROM 側に置き `start.S` が RAM へコピーする |
 | DATA / BSS / スタック / ヒープ | `0x90000000`– | `DATA_START_ADDRESS`．`.bss` 内に `.stack*` を含む |
 | 利用可能メモリサイズ | `0x4000_0000`（1GB） | `TOPPERS_MEM_SIZE` |
 
@@ -202,7 +202,7 @@ DDR にロードして **EL3 セキュア**で起動する（PSCI/BL31 は無い
 
 #### 1.1 動作確認環境
 - OS: **Ubuntu 24.04 LTS** / kernel 6.17 系で動作確認．
-- 必要ツール: クロスコンパイラ，Ruby（コンフィギュレータ・tecsgen 用），
+- 必要ツール: クロスコンパイラ，CMake＋Ninja，Python 3（コンフィギュレータ用），
   （SWD デバッグ時のみ）OpenOCD・GDB．
 
 #### 1.2 クロスコンパイラ（aarch64-none-elf-gcc）
@@ -212,19 +212,17 @@ export PATH=/usr/local/tools/arm-gnu-toolchain-14.3.rel1-x86_64-aarch64-none-elf
 aarch64-none-elf-gcc --version
 ```
 
-#### 1.3 コンフィギュレータ・tecsgen 実行用 Ruby
+#### 1.3 ビルドツール（CMake／Ninja／Python 3）
 ```bash
-sudo apt-get install -y ruby     # 未導入なら
-ruby --version                   # 2.x / 3.x
+sudo apt-get install -y cmake ninja-build python3     # 未導入なら
 ```
-tecsgen は `<ASP3>/tecsgen/` に同梱されており，別途のインストールは不要．
 
 #### 1.4 （SWD デバッグ時のみ）OpenOCD + GDB
 ```bash
 sudo apt-get install -y openocd        # 0.12.0 で動作確認
 openocd --version
 aarch64-none-elf-gdb --version         # クロスツールチェイン同梱
-sudo apt-get install -y gdb-multiarch  # OS-awareness（make osdebug）を使う場合
+sudo apt-get install -y gdb-multiarch  # OS-awareness（osdebug ターゲット）を使う場合
 ```
 
 #### 1.5 ボード接続とパーミッション設定
@@ -252,33 +250,27 @@ sudo usermod -aG plugdev "$USER"     # 再ログインで有効
 
 ### 2. ASP3 のビルド
 
-サンプルアプリ `sample1` を例に説明する．TECS 構成のみをサポートするため，
-`configure.rb` に **`-w` を付けない**こと．
+サンプルアプリ `sample1` を例に説明する．
 
 **(1) ビルドディレクトリの生成**
 ```bash
-mkdir <OBJ>          # 例: obj_sample1
-cd <OBJ>
-ruby <ASP3>/configure.rb -T stm32mp257f_dk_arm64_gcc
+cmake --preset stm32mp257-a35 -B build/stm32mp257-a35
 ```
 
 **(2) ビルド**
 ```bash
-cd <OBJ>
-make             # tecsgen → cfg → コンパイル．-> asp (ELF) を生成
+cmake --build build/stm32mp257-a35    # cfg → コンパイル．-> asp.elf を生成
 ```
-SD 直接ブート用のバイナリが必要な場合は `make asp.bin` で生成できる．
+SD 直接ブート用のバイナリが必要な場合は
+`aarch64-none-elf-objcopy -O binary asp.elf asp.bin` で生成できる．
 
-> 補足: 本パッケージにはビルド済みディレクトリ `<ASP3>/obj_stm32mp2` が同梱されて
-> おり，そのまま `make` してもよい．
-
-**メモリ配置の注意**: `Makefile.target` の `TEXT_START_ADDRESS` / `DATA_START_ADDRESS`
+**メモリ配置の注意**: `target.cmake` の `TEXT_START_ADDRESS` / `DATA_START_ADDRESS`
 で決まる．
 - SWD 実行用（既定）: `TEXT=0x88001000` / `DATA=0x90000000`
   （先頭ページ 0x88000000–0x88001000 は FSBL が使うため 2 ページ目以降に置く）．
 - SD 直接ブート用: FSBL は FIP ペイロードを **0x88000000 にロードし 0x88000000 へ
-  entry** する．SD ブートする場合は `Makefile.target` の
-  `TEXT_START_ADDRESS=0x0088000000` に変更して再ビルドする．
+  entry** する．SD ブートする場合は `target.cmake` の
+  `TEXT_START_ADDRESS` を `0x0088000000` に変更して再ビルドする．
 
 ### 3. TF-A（FSBL）の取得とビルド
 
@@ -391,48 +383,48 @@ SD をボードに挿してリセットし，コンソール（115200 8N1, `/dev
 
 ASP3 は SWD 実行用に **`TEXT_START=0x88001000`（既定）** でビルドしておくこと．
 
-**(0) make による実行（推奨）**
-ビルドディレクトリ(`<OBJ>`)で，OpenOCD と gdb を起動できる make ターゲットを用意している
-（`<OBJ>` で `make` 済みであること）:
+**(0) CMake ターゲットによる実行（推奨）**
+OpenOCD と gdb を起動できる CMake ターゲット（`target/stm32mp257f_dk_arm64_gcc/run.cmake`）
+を用意している（`ninja -C build/stm32mp257-a35 <ターゲット>` で実行）:
 
-| コマンド | 動作 | OpenOCD |
+| ターゲット | 動作 | OpenOCD |
 |---|---|---|
-| `make swd-run`   | **gdb を使わず** OpenOCD だけでロード＆実行（reset→load→PC設定→resume→shutdown） | 完了で自動終了 |
-| `make swd-debug` | OpenOCD を自動起動し gdb（`swd-debug.gdb`）でロード＆デバッグ（1 端末で完結） | **gdb 終了で自動終了** |
-| `make openocd`   | OpenOCD だけを前面起動（別端末の `make gdb` と対で使う） | Ctrl-C で終了 |
-| `make gdb`       | gdb だけを起動しロード＆デバッグ（OpenOCD は別端末で起動済みのこと） | （触らない） |
-| `make console`   | UART コンソール(USART2)を開く（出力確認・キー入力用．別端末で使う） | （触らない） |
-| `make osdebug`   | OpenOCD 自動起動＋`gdb-multiarch` で OS-awareness（タスク/同期オブジェクト等を可視化）を読み込む | **gdb 終了で自動終了** |
+| `swd-run`   | **gdb を使わず** OpenOCD だけでロード＆実行（reset→load→PC設定→resume→shutdown） | 完了で自動終了 |
+| `swd-debug` | OpenOCD を自動起動し gdb（`swd-debug.gdb`）でロード＆デバッグ（1 端末で完結） | **gdb 終了で自動終了** |
+| `openocd`   | OpenOCD だけを前面起動（別端末の `gdb` と対で使う） | Ctrl-C で終了 |
+| `gdb`       | gdb だけを起動しロード＆デバッグ（OpenOCD は別端末で起動済みのこと） | （触らない） |
+| `console`   | UART コンソール(USART2)を開く（出力確認・キー入力用．別端末で使う） | （触らない） |
+| `osdebug`   | OpenOCD 自動起動＋`gdb-multiarch` で OS-awareness（タスク/同期オブジェクト等を可視化）を読み込む | **gdb 終了で自動終了** |
 
 ```bash
-cd <OBJ>
-make console        # 端末C: シリアルコンソールを開いておく（出力を見る）
-make swd-run        # 単に動かすだけ（最も手軽．gdb 不要）
-make swd-debug      # 1 端末でソースデバッグ（break 設定後 continue）
+ninja -C build/stm32mp257-a35 console    # 端末C: シリアルコンソールを開いておく（出力を見る）
+ninja -C build/stm32mp257-a35 swd-run    # 単に動かすだけ（最も手軽．gdb 不要）
+ninja -C build/stm32mp257-a35 swd-debug  # 1 端末でソースデバッグ（break 設定後 continue）
 
 # 2 端末に分けたい場合（OpenOCD を起動しっぱなしにして gdb を繰り返したいとき）
-make openocd        # 端末1: OpenOCD を起動して放置
-make gdb            # 端末2: gdb を起動（再ビルド後はこれを再実行するだけ）
+ninja -C build/stm32mp257-a35 openocd    # 端末1: OpenOCD を起動して放置
+ninja -C build/stm32mp257-a35 gdb        # 端末2: gdb を起動（再ビルド後はこれを再実行するだけ）
 ```
-- `make console` は `picocom`／`minicom`／`cu` を自動選択して開く（115200 8N1）．
-  ポートやボーレートは `make console TTY=/dev/ttyACM1 BAUD=115200` のように上書き
-  できる．アプリの UART 出力確認とキー入力（sample1 のタスク操作等）に使う．
+- `console` は `picocom`／`minicom`／`cu` を自動選択して開く（115200 8N1）．
+  ポートやボーレートはキャッシュ変数 `TTY`／`BAUD`（`cmake -B build/stm32mp257-a35
+  -DTTY=/dev/ttyACM1` 等）で上書きできる．アプリの UART 出力確認とキー入力
+  （sample1 のタスク操作等）に使う．
 - 用途は **動かすだけなら `swd-run`，デバッグするなら `swd-debug`** の 2 択でよい．
   `swd-debug` で起動して `continue`（または `monitor resume`）すれば「ロードして実行」
   と同じ状態になる．
-- `make swd-debug` ＝ `make openocd` + `make gdb` を 1 端末にまとめたもの．OpenOCD を
-  バックグラウンドで起動し（ログは `<OBJ>/openocd-bg.log`），gdb が終了すると `trap`
+- `swd-debug` ＝ `openocd` + `gdb` を 1 端末にまとめたもの．OpenOCD を
+  バックグラウンドで起動し（ログは `openocd-bg.log`），gdb が終了すると `trap`
   で OpenOCD も停止する．
-- 上書き可能な変数: `ELF`（既定 `asp`），`ENTRY_PC`（既定は **ELF のエントリポイント
-  から自動取得**．本ターゲットの固定リンカスクリプトは `ENTRY(start)` を指定して
-  おり `TEXT_START_ADDRESS` と一致するが，ELF を正とする）．
-- **`make osdebug`** は OS-awareness（ASP3 のタスク・同期/通信オブジェクト・割込み等を
+- `ENTRY_PC` は **ELF のエントリポイントから自動取得**する（本ターゲットの固定
+  リンカスクリプトは `ENTRY(start)` を指定しており `TEXT_START_ADDRESS` と一致
+  するが，ELF を正とする）．
+- **`osdebug`** は OS-awareness（ASP3 のタスク・同期/通信オブジェクト・割込み等を
   gdb から可視化する `stask`/`atask`/`sem`/… コマンド）を読み込んで起動する．
   `gdb-multiarch`（Python 対応）が必要．詳細は本依存部の `gdb_os_aware/README.md`
   を参照．
 
-以下 (1)〜(2) は上記を手動で行う場合の手順（仕組みの説明）である．`make openocd` が
-(1)，`make gdb` が (2) に対応する．
+以下 (1)〜(2) は上記を手動で行う場合の手順（仕組みの説明）である．`openocd` ターゲットが
+(1)，`gdb` ターゲットが (2) に対応する．
 
 **(1) OpenOCD 起動**（同梱の `openocd/` で実行．未使用の a35_1 を examine させない
 ため `EN_CA35_1 0` を付ける）:
@@ -489,8 +481,8 @@ task1 is running (001).   |
 > ⚠️ この章は手順のみ記載で**現状未検証**である（動作確認は 5 章の SWD で実施）．
 > ASP3 を SD から直接起動する．landing pad（`minimal_boot`）は不要．
 
-`asp.bin` は 2 章で **`TEXT_START_ADDRESS=0x0088000000` でビルドし `make asp.bin`**
-したものを使う．
+`asp.bin` は 2 章で **`TEXT_START_ADDRESS=0x0088000000` でビルドし objcopy で
+バイナリ化**したもの（`aarch64-none-elf-objcopy -O binary asp.elf asp.bin`）を使う．
 
 **(1) パーティション作成・FSBL 書き込み**: 4 章 (2)(3) と同じ
 （SD 直接ブートでは IWDG1 は有効でもよいが，その場合アプリ側で 32 秒以内の
@@ -501,7 +493,7 @@ task1 is running (001).   |
 cd <TFA>
 tools/fiptool/fiptool --verbose create \
   --ddr-fw drivers/st/ddr/phy/firmware/bin/stm32mp2/lpddr4_pmu_train.bin \
-  --bm-fw  <OBJ>/asp.bin \
+  --bm-fw  <ASP3>/build/stm32mp257-a35/asp.bin \
   build/stm32mp2/release/fip.bin
 sudo dd if=build/stm32mp2/release/fip.bin of=/dev/sdX5 bs=1M conv=fsync
 sync
@@ -621,7 +613,7 @@ gdb: monitor resume                   → OpenOCD: a35_0実行 → ASP3起動
 ## OS-awareness（gdb からのカーネル状態の可視化）
 
 本ターゲット依存部の `gdb_os_aware/` に，gdb（Python）から ASP3 のカーネル状態を
-表示するスクリプトを同梱している．ビルドディレクトリで `make osdebug` を実行すると，
+表示するスクリプトを同梱している．`ninja -C build/stm32mp257-a35 osdebug` を実行すると，
 OpenOCD と `gdb-multiarch` を起動して読み込む．
 
 - コマンド: `stask`（タスク静的情報）/ `atask`（タスク動的情報＋レディキュー＋
@@ -636,23 +628,24 @@ OpenOCD と `gdb-multiarch` を起動して読み込む．
 
 ## 注意事項・既知の事項
 
-- **TECS 構成のみをサポートする**．`configure.rb` に `-w`（TECS オミット）を
-  付けてはならない（非 TECS 用のシステムサービスは同梱していない）．
+- **非 TECS 構成**（asp3_core では TECS は廃止済み．システムサービスはプレーンC版
+  syssvc を使用する）．
 - **コンソール UART(USART2)** は TF-A が 115200 8N1 で初期化済み．本 SIO ドライバ
-  （`tUsart` セル）は BRR 等を再設定せず TE/RE/UE の確認とエラークリアのみ行う．
-- **USART6 について**: 現状の TECS セル（`tSIOPortTarget.cdl`）は USART2 固定で
-  あり，USART6 は**未対応・実機未検証**．使うには `tSIOPortTarget.cdl` の属性
-  （`baseAddress`/`interruptNumber`）変更に加え，クロック供給・ピンマルチプレクサ・
+  （`stm32usart.[ch]`）は BRR 等を再設定せず TE/RE/UE の確認とエラークリアのみ行う．
+- **USART6 について**: 現状の SIO ドライバ構成（`target_serial.[ch]`）は USART2 固定で
+  あり，USART6 は**未対応・実機未検証**．使うにはポート定義
+  （ベースアドレス／割込み番号）の変更に加え，クロック供給・ピンマルチプレクサ・
   ボーレートの設定を別途追加する必要がある．
 - **割込み配送**: セキュア(Group0)割込みは GICv2 で **IRQ 配送**（`gicc_init` の
   `FIQEN=0`）．FIQ 配送のままだと，ハンドラが GIC ack 前に FIQ を再許可して同一
   割込みが暴走再入する．
 - **共通部への変更**: 本移植に伴う `arch/arm64_gcc/common` 以外への変更は，
   `core_kernel.h` の `TOPPERS_STK_T`（`__int128`）を `#ifndef TECSGEN` で
-  ガードした 1 点のみ（tecsgen の C パーサが `__int128` を解釈できないため．
-  生成コードには影響しない）．
+  ガードした 1 点のみ（当時同梱していた tecsgen の C パーサが `__int128` を
+  解釈できなかったため．生成コードには影響しない）．
 - **SD ブートと SWD で TEXT アドレスが異なる**: SD ブートは `TEXT_START=0x88000000`，
-  SWD は `0x88001000`．用途に応じて `Makefile.target` を設定して再ビルドすること．
+  SWD は `0x88001000`．用途に応じて `target.cmake` の `TEXT_START_ADDRESS` を設定して
+  再ビルドすること．
 - **同梱 OpenOCD 設定の改変**: `openocd/target/stm32mp25x.cfg`（GPL-2.0-or-later,
   ST 由来）は本ターゲット向けに改変している（`_handshake_with_wrapper` を no-op 化し，
   reset/examine イベントの各手順を `catch` で包む）．これによりベアメタル FSBL でも

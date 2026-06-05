@@ -12,9 +12,6 @@
 
 | ファイル / ディレクトリ | 変更種別 | 理由 | 上流変更時のリスク | 担当レイヤ | 最終確認バージョン |
 |---|---|---|---|---|---|
-| `configure.rb` | 改変 | 非TECSビルドをデフォルト化（`OMIT_TECS`初期設定＋共通syssvcオブジェクトの自動付与）・CFGデフォルトをPython版cfgに変更 | 上流configure.rb変更時に要確認（変更箇所は【asp3_core変更】コメントでマーク） | build | 3.7.2 |
-| `sample/Makefile`・`arch/*/common/Makefile.core`・`target/{dummy_gcc,simtimer_ct11mpcore_gcc}/Makefile.target` | 改変 | 生成テンプレート参照を`.trb`→`.py`に切替 | 上流Makefile変更時に要確認（【asp3_core変更】コメント） | build | 3.7.2 |
-| `target/{ct11mpcore,gr_peach,dummy}_gcc/Makefile.target` | 改変 | OMIT_TECS時の非TECS SIOオブジェクト追加 | 上流ターゲットパッケージ更新時に要確認 | target | 3.7.2 |
 | `syssvc/serial.c` | 上流 `non_tecs` 由来 | TECSレス版を上流拡張から採用 | `extension/non_tecs/syssvc` の更新に追従 | syssvc(EXTENDED) | 3.7.0 |
 | `syssvc/logtask.c` | 上流 `non_tecs` 由来 | 同上 | 同上 | syssvc(EXTENDED) | 3.7.0 |
 | `syssvc/banner.c` | 上流 `non_tecs` 由来 | 同上 | 同上 | syssvc(EXTENDED) | 3.7.0 |
@@ -24,15 +21,14 @@
 | `target/mps2_an521_gcc/`（非TECS化） | 新規追加（`cmsdk_uart.[ch]`・`target_serial.{c,h,cfg}`）＋改変 | TECSレス化 | （ターゲット自体がNEW・上流衝突なし） | target(NEW) | — |
 | `target/stm32mp257f_dk_arm64_gcc/`・`arch/arm64_gcc/stm32mp2/`（非TECS化） | 新規追加（`stm32usart.c`・`target_serial.{c,h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING_ASP3_STM32MP2.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
 | `target/raspberrypi_pico2_gcc/`・`arch/arm_m_gcc/rp2350/`（非TECS化） | 新規追加（`rp2350_uart.[ch]`・`chip_serial.{c,h,cfg}`・`target_serial.{h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
-| `target/linux_gcc/`・`arch/posix_gcc/` | 上流SVN（3.7.2）から取込み＋`Makefile.target`改変 | POSIXシミュレーション環境（3.7.2 tarball未収録のため別途取込み） | 上流posix_gccパッケージの更新に追従 | target/arch | 3.7.2 |
+| `target/linux_gcc/`・`arch/posix_gcc/` | 上流SVN（3.7.2）から取込み | POSIXシミュレーション環境（3.7.2 tarball未収録のため別途取込み） | 上流posix_gccパッケージの更新に追従 | target/arch | 3.7.2 |
 | `syssvc/qemu_exit.c` | 新規追加 | QEMUセミホスティング終了 | （上流に存在せず・衝突なし） | syssvc(NEW) | — |
 | `cfg/cfg.py`・`pass1.py`・`pass2.py`・`gen_file.py`・`srecord.py` | Ruby→Python移植（エンジン，asp3_fsp由来＋1.7.1差分反映） | コンフィギュレータのPython化（Ruby版は残置） | **上流cfg.rb系の挙動変更時はテキスト差分不可・手動再反映（CFG_SPEC_MAP参照）** | cfg | cfg 1.7.1 |
-| `configure.py`・`test/testexec.py`・`test_cfg/testcfg.py`・`utils/{genrename,applyrename,gentest,makerelease}.py` | Ruby→Python移植（.rbツール群．Ruby版は残置） | ビルド・テスト・開発フローからRuby依存を除去 | **上流.rbツール変更時は対応.pyへ手動再反映** | build/test | 3.7.2 |
+| `test/testexec.py`・`test_cfg/testcfg.py`・`utils/{genrename,applyrename,gentest}.py` | Ruby→Python移植（.rbツール群）＋テストランナはCMakeベース化 | ビルド・テスト・開発フローからRuby依存を除去 | **上流.rbツール変更時は対応.pyへ手動再反映** | build/test | 3.7.2 |
 | `kernel/*.py`（kernel.py・kernel_check.py・genoffset.py＋オブジェクト別11本） | 旧`kernel/*.trb`→Python移植（新規追加・既存.trbは未変更） | 生成テンプレートのPython化（kernel/への新規ファイル追加） | **上流kernel/*.trb変更時は対応.pyへ手動再反映** | kernel(テンプレート追加) | 3.7.2 |
 | `kernel/kernel_api.def` | 上流同形式（変更なし〜微修正） | 静的API定義（api-table） | 上流と同形式のためテキストマージ可能 | cfg(PRISTINE寄り) | 3.7.0 |
 | `arch/*/*.py` 生成テンプレート（core_kernel/core_check/core_offset/gic/chip） | 旧`.trb`→Python移植（arm_m/arm_gcc/arm64_gcc/posix各系列．v6m系は未変換） | offset.h・kernel_cfg生成テンプレートのPython化 | **上流の対応`.trb`変更時はテキスト差分不可・手動再反映** | cfg(テンプレート) | 3.7.2 |
 | `target/*/target_kernel.py`・`target_check.py`（全9ターゲット＋dummyのtarget_offset.py） | 旧`.trb`→Python移植 | pass2/pass3テンプレートのPython化 | 上流由来ターゲットは上流.trb変更時に対応.pyへ手動再反映 | target(テンプレート) | 3.7.2 |
-| `Makefile` 系 | CMakeへ置換 | ビルドシステム近代化 | 上流Makefile変更は参照のみ・取り込まない | build | 3.7.0 |
 | `CMakeLists.txt` | 新規追加 | CMakeビルド | （上流に存在せず・衝突なし） | build(NEW) | — |
 | `cmake/` 一式 | 新規追加 | ツールチェーンファイル（arm-none-eabi/a35） | （上流に存在せず・衝突なし） | build(NEW) | — |
 | `asp3_core.cmake`・`arch/*/arch.cmake`・`arch/*/*/chip.cmake`・`target/*/target.cmake` | 新規追加 | CMakeビルド（変数積み上げ方式） | （上流に存在せず・衝突なし） | build(NEW) | — |
@@ -55,9 +51,7 @@
 | `cfg/*.rb`・`kernel/*.trb`・`arch/**/*.trb`・`target/*/*.trb` | cfgのPython化 | v6m系trbも削除（必要時は上流から取得して.py変換） |
 | `configure.rb`・`test/testexec.rb`・`test_cfg/testcfg.rb`・`utils/*.rb`・`utils/makerelease.py` | .rbツールの.py化 | |
 | `MANIFEST`・`E_PACKAGE`（全数．extension/内は残置）・`target/{ct11mpcore,gr_peach,macos_xcode,simtimer_ct11mpcore}_gcc/`・`arch/arm_gcc/rza1/`・`arch/simtimer/`・`test/simt_*.c` | ファイルの削除 | `docs/dev/file-cleanup.md` 参照 |
-
-※make版ビルドファイル（`sample/Makefile`・`Makefile.target/core/chip`・`configure.py`）は
-フェーズ2（`docs/dev/cmake.md` の前提条件解消後）で削除予定．現時点は併存．
+| `configure.py`・`sample/Makefile`・`kernel/Makefile.kernel`・`arch/*/common/Makefile.core`・`arch/*/*/Makefile.chip`・`target/*/Makefile.target` | ファイルの削除（フェーズ2＝make版ビルド廃止．ビルドはCMakeのみ） | **`kernel/Makefile.kernel` はkernel/領域だが削除（上流マージで復活させない）**．`target/stm32mp257f_dk_arm64_gcc/minimal_boot/Makefile`（実機ブート資材）・`target/zybo_z7_gcc/xilinx_sdk/`（実機JTAG資材）は残置 |
 
 ---
 

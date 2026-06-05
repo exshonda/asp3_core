@@ -17,8 +17,8 @@
 | TECSレス | `tecs-less.md` | 完了 |
 | cfgのPython化 | `cfg-python.md` | 完了（実機側でのstm32確認のみ残） |
 | .rbツールの.py化 | `rb-tools-python.md` | 完了 |
-| CMake対応 | `cmake.md` | 完了（pico2はpico-sdk環境で後続） |
-| ファイルの削除 | `file-cleanup.md` | 完了（フェーズ2＝make版削除は別途） |
+| CMake対応 | `cmake.md` | 完了 |
+| ファイルの削除 | `file-cleanup.md` | 完了 |
 | QEMUターゲット | `qemu-target.md` | 計画中 |
 | CLIターゲット | `cli-target.md` | 計画中 |
 | CI整備 | `ci.md` | 計画中 |

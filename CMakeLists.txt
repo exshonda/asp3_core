@@ -317,7 +317,7 @@ add_executable(asp
     ${ASP3_EXTRA_APP_C_FILES}
 )
 #  ASP3_OMIT_DEFAULT_SYSSVC=ON でシステムサービスを組み込まない
-#  （cfgテスト等の素のカーネルビルド用．configure.pyの同名引数に相当）
+#  （cfgテスト等の素のカーネルビルド用）
 if(NOT ASP3_OMIT_DEFAULT_SYSSVC)
     asp3_add_syssvc(asp)
 endif()

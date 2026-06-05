@@ -20,7 +20,7 @@
 | TECSレス | `tecs-less.md` | `tecsgen/`・`tecs_kernel/`・TECS版syssvc・各TECSセル（`.cdl`等）・`extension/non_tecs/`（展開済み） |
 | cfgのPython化 | `cfg-python.md` | Ruby版エンジン（`cfg/*.rb`）・生成テンプレート `.trb` 一式 |
 | .rbツールの.py化 | `rb-tools-python.md` | `configure.rb`・`testexec.rb`・`testcfg.rb`・`utils/*.rb` |
-| CMake対応 | `cmake.md` | make版（`sample/Makefile`・`Makefile.target/core/chip`・`configure.py`）。**条件付き＝フェーズ2**（pico2のCMake対応・testcfg/testexecのCMake化が前提） |
+| CMake対応 | `cmake.md` | make版（`sample/Makefile`・`Makefile.target/core/chip`・`configure.py`）。フェーズ2として実施済み |
 | その他 | 本ファイル（下記） | 上流配布用メタデータ・使用しないターゲット等 |
 
 ### その他の削除対象（本項目固有）
@@ -78,7 +78,7 @@
 
 ## 実施結果
 
-（2026-06-06 記載。フェーズ1完了・フェーズ2＝make版削除は別途）
+（2026-06-06 記載。フェーズ1・フェーズ2とも完了）
 
 ### 削除したファイル（計524ファイル変更・約120,000行削除）
 
@@ -117,7 +117,35 @@
 | testcfg.py（dummy_gcc） | ○ | cfg_all1生成物一致・pass2/pass1エラー一致（make行式差のみ） |
 | testexec.py（QEMU mps2） | ○ | sem1／flg1 All check points passed |
 
-### 残課題（フェーズ2）
+### フェーズ2（make版ビルドの削除）
 
-- make版ビルドファイル（`sample/Makefile`・`Makefile.target/core/chip`・`configure.py`）の削除。
-  前提条件（pico2のCMake対応・testcfg/testexecのCMake化等）は `cmake.md` 参照
+（2026-06-06 実施。前提条件の解消経緯は `cmake.md` 参照）
+
+#### 削除したファイル（15ファイル）
+
+- `configure.py`（Makefileビルドの入口）
+- `sample/Makefile`（ビルドテンプレート）
+- `kernel/Makefile.kernel` ※**kernel/領域の削除**（DIVERGENCE_MAP「削除済みファイル」節に記録）
+- `arch/{arm64_gcc,arm_gcc,arm_m_gcc}/common/Makefile.core`（3本）
+- `arch/{arm64_gcc/stm32mp2,arm_gcc/zynq7000,arm_m_gcc/rp2350}/Makefile.chip`（3本）
+- `target/{dummy,linux,mps2_an521,raspberrypi_pico2,stm32mp257f_dk_arm64,zybo_z7}_gcc/Makefile.target`（6本）
+
+残置（Makefileだが make版ビルドとは無関係）：
+
+- `target/stm32mp257f_dk_arm64_gcc/minimal_boot/Makefile`（実機ブート資材）
+- `target/zybo_z7_gcc/xilinx_sdk/`（`jtag.tcl` 等の実機JTAG資材）
+
+#### 波及修正
+
+- `docs/building.md`：CMake単一系統の手順に全面書き換え
+- `AGENTS.md` §4 前提メモ：「2系統」→「CMakeのみ」
+- `target/stm32mp257f_dk_arm64_gcc/CLAUDE.md`：クイック手順を CMake（swd-run 等）に更新
+- `DIVERGENCE_MAP.md`：configure.rb／Makefile改変行・「Makefile系 CMakeへ置換」行を整理し、
+  make版ファイル群を「削除済みファイル」節へ移動（kernel/Makefile.kernel 含む）
+- `.gitignore`：`obj/` エントリ削除（Makefileビルド作業ディレクトリ廃止）
+- `target/{mps2_an521,raspberrypi_pico2,stm32mp257f_dk_arm64}_gcc/target_user.md`：
+  構築・実行・テスト手順を CMake に更新（あわせて TECS 前提の記述
+  ＝tUsart セル・tecsgen 同梱等を非 TECS 構成の記述に修正）
+- `docs/dev/cmake.md`：前提条件節をフェーズ2実施済みに更新
+
+※テストランナ（testexec.py／testcfg.py）はフェーズ2前にCMakeベース化済みのため影響なし

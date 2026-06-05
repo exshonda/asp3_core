@@ -1,73 +1,18 @@
-# ビルド手順（Makefile版／CMake版）
+# ビルド手順（CMake）
 
-TOPPERS/ASP3 Core のビルド方法。**Makefile版（configure.py）** と **CMake版** の
-2系統があり、どちらも cfg 3パス（静的API抽出 → カーネル構成生成 → 構成チェック）を
-自動実行する。コンフィギュレータは Python版（`cfg/cfg.py`）がデフォルト。
+TOPPERS/ASP3 Core のビルド方法。ビルドシステムは **CMake**（Ninjaジェネレータ）で、
+cfg 3パス（静的API抽出 → カーネル構成生成 → 構成チェック）を自動実行する。
+コンフィギュレータは Python版（`cfg/cfg.py`）。
 
 > 共通の既定（asp3_core の変更点）
-> - **非TECS構成**がデフォルト（TECSに戻す場合は configure 引数に `OMIT_TECS=` と空値を指定）
-> - syssvc共通オブジェクト（syslog/banner/serial/serial_cfg/logtask）と
+> - **非TECS構成**（TECSは廃止済み）
+> - syssvc共通ソース（syslog/banner/serial/serial_cfg/logtask）と
 >   ターゲットSIOドライバは自動でリンク対象に入る
-> - `OMIT_DEFAULT_SYSSVC` 指定で上記の自動付与を抑止（素のカーネルビルド用）
+> - `-DASP3_OMIT_DEFAULT_SYSSVC=ON` で上記の組込みを抑止（素のカーネルビルド用）
 
 ---
 
-## 1. Makefile版（configure.py）
-
-### 基本の流れ（例：QEMU mps2-an521）
-
-```bash
-# 1. ビルドフォルダを作成（場所・名前は任意。obj/ 配下は .gitignore 済み）
-mkdir -p obj/obj_mps2
-cd obj/obj_mps2
-
-# 2. configure.py で Makefile を生成（-T でターゲット指定）
-python3 ../../configure.py -T mps2_an521_gcc
-
-# 3. ビルド（cfg 3パス → libkernel.a → asp → 構成チェックまで自動実行）
-make
-
-# 4. 実行（mps2 は make run で QEMU 起動。終了は Ctrl-A X）
-make run
-```
-
-### 他ターゲットの例
-
-```bash
-# POSIX（ホスト実行）
-mkdir -p obj/obj_linux && cd obj/obj_linux
-python3 ../../configure.py -T linux_gcc
-make
-./asp
-```
-
-`-T` を省略すると、利用可能なターゲット一覧が表示される。
-
-### よく使うオプション
-
-| オプション | 意味 |
-|---|---|
-| `-A <名前>` | アプリ名（既定：sample1） |
-| `-a <dir>` | アプリのディレクトリ（既定：`$(SRCDIR)/sample`。テストなら `-a '$(SRCDIR)/test'`） |
-| `-S "x.o y.o"` | システムサービスの追加オブジェクト（共通分とターゲットSIOは自動付与されるので通常不要） |
-| `-O "-DXXX"` | マクロ定義の追加 |
-| `-L <dir>` | ビルド済み libkernel.a のディレクトリ（カーネル再ビルドを省略） |
-| `OMIT_DEFAULT_SYSSVC` | syssvc自動付与の抑止 |
-
-### 部分ビルド（デバッグ時）
-
-```bash
-make cfg1_out.c      # パス1まで（静的API抽出）
-make kernel_cfg.c    # パス2まで（カーネル構成生成）
-make libkernel.a     # カーネルライブラリまで
-make clean           # クリーン
-```
-
----
-
-## 2. CMake版
-
-### 基本の流れ（例：QEMU mps2-an521）
+## 1. 基本の流れ（例：QEMU mps2-an521）
 
 ```bash
 # 1. configure（プリセットがビルドフォルダ・toolchain・ターゲットを決める）
@@ -88,25 +33,31 @@ cmake --build build/m33-qemu --target run
 
 ```bash
 cd build/m33-qemu
-ninja        # = make
-ninja run    # = make run（ビルドしてQEMU実行）
+ninja        # ビルド
+ninja run    # ビルドして実行
 
 # cd したくない場合
 ninja -C build/m33-qemu run
 ```
 
-### ビルド毎のフォルダを作る（Makefile版の obj/obj_xxx に相当）
+buildPresets（`run-posix`／`run-m33-qemu`／`run-zybo-qemu`）でルートから
+`cmake --build --preset run-m33-qemu` の1コマンド実行もできる。
+
+---
+
+## 2. ビルド毎のフォルダ
 
 `-B` で指定するフォルダがビルド毎のフォルダで、いくつでも並存できる（cd 不要）。
 
 ```bash
 # ターゲット別
 cmake --preset m33-qemu -B build/m33-qemu
-cmake --preset posix    -B build/posix          # （posix対応後）
+cmake --preset posix    -B build/posix
 
 # 同じターゲットで構成違い（例：テストプログラム）
 cmake --preset m33-qemu -B build/mps2-sem1 \
-  -DASP3_APPLNAME=test_sem1 -DASP3_APPLDIR=$PWD/test
+  -DASP3_APPLNAME=test_sem1 -DASP3_APPLDIR=$PWD/test \
+  "-DASP3_EXTRA_APP_C_FILES=$PWD/syssvc/test_svc.c"
 cmake --build build/mps2-sem1
 ```
 
@@ -119,84 +70,103 @@ cmake -B build/mytest -G Ninja \
 cmake --build build/mytest
 ```
 
-### Makefile版との対応表
+### 主なCMake変数
 
-| Makefile版 | CMake版 |
+| 変数 | 意味 |
 |---|---|
-| `mkdir obj/obj_xxx && cd obj/obj_xxx` | `-B build/xxx`（自動作成・cd不要） |
-| `python3 ../../configure.py -T <target>` | `cmake --preset <preset>`（または `-DASP3_TARGET=<target>`） |
-| `make` | `cmake --build build/xxx`／`ninja -C build/xxx` |
-| `make run` | `cmake --build build/xxx --target run`／`ninja -C build/xxx run` |
-| `make clean` | `--target clean`／`ninja -C build/xxx clean` |
-| アプリ指定 `-A perf1 -a '$(SRCDIR)/test'` | `-DASP3_APPLNAME=perf1 -DASP3_APPLDIR=$PWD/test` |
-| 生成物はビルドフォルダ直下 | `build/xxx/generated/` 配下 |
+| `ASP3_TARGET` | ターゲット名（`target/` 配下のディレクトリ名） |
+| `ASP3_APPLNAME` | アプリ名（既定：sample1） |
+| `ASP3_APPLDIR` | アプリのディレクトリ（既定：`sample/`） |
+| `ASP3_APPCFGNAME` | `.cfg` ファイル名がアプリ名と異なる場合に指定 |
+| `ASP3_EXTRA_APP_C_FILES` | 追加でビルドするソース（`;`区切り） |
+| `ASP3_EXTRA_COMPILE_DEFS` | 追加のマクロ定義（`;`区切り、`-D`なし） |
+| `ASP3_OMIT_DEFAULT_SYSSVC` | ONでsyssvcを組み込まない |
 
 ### 補足
 
 - 構成は `CMakeCache.txt` に記憶されるため、2回目以降は `cmake --build build/xxx` だけでよい
-- インクリメンタルビルドは賢く動く（.cfg を変更しても生成物の内容が同じなら再リンクされない）
+- 生成物（`kernel_cfg.c/h`・`offset.h` 等）は `build/xxx/generated/` 配下
 - 完全クリーンは `rm -rf build/xxx` でフォルダごと削除して configure からやり直すのが確実
 - `compile_commands.json` がビルドフォルダに自動生成される
   （`ln -sf build/m33-qemu/compile_commands.json compile_commands.json` でルートにリンク：AGENTS.md §5）
 
 ---
 
-## 3. QEMUでの実行
+## 3. 実行（QEMU／実機）
 
-### run ターゲット（推奨）
+### run ターゲット
 
-ターゲットの `target.cmake`（`ASP3_RUN_COMMAND`）／`Makefile.target` が定義する。
-未ビルドなら自動でビルドしてから起動し、UARTが端末に接続される（キー入力可）。
-**終了は Ctrl-A X**。
+ターゲットの `target.cmake`（`ASP3_RUN_COMMAND`）が定義する。
+未ビルドなら自動でビルドしてから実行する。
 
 ```bash
-ninja -C build/m33-qemu run        # CMake版
-make run                            # Makefile版（ビルドフォルダ内）
+ninja -C build/m33-qemu run     # QEMU（終了は Ctrl-A X）
+ninja -C build/posix run        # ホスト実行
+ninja -C build/pico2-m33 run    # 実機書込み（OpenOCD program）
 ```
 
-テストプログラムは `ext_ker` 時にセミホスティングで QEMU が自動終了する
-（`TOPPERS_USE_QEMU` 定義済みのため）。
+テストプログラムは `ext_ker` 時にセミホスティングで QEMU が自動終了する。
+
+### 実機デバッグ系ターゲット（pico2／stm32mp257-a35）
+
+`target/<name>/run.cmake` が定義する（`ninja -C build/<dir> <target>`）：
+
+| ターゲット | pico2 | stm32mp257-a35 | 内容 |
+|---|---|---|---|
+| `run`／`swd-run` | run | swd-run | OpenOCDで書込み・実行 |
+| `openocd`・`gdb`・`swd-debug` | ○ | ○ | デバッグセッション |
+| `osdebug` | − | ○ | OS-awareness付き（gdb-multiarch） |
+| `console` | ○ | ○ | UARTコンソール（picocom等自動選択） |
 
 ### QEMUを直接起動
 
 ```bash
 qemu-system-arm -machine mps2-an521 -nographic \
   -semihosting-config enable=on,target=native -kernel build/m33-qemu/asp.elf
+
+# zybo（UART1が2本目の-serial）
+qemu-system-arm -M xilinx-zynq-a9 -semihosting -nographic \
+  -serial /dev/null -serial mon:stdio -kernel build/zybo-qemu/asp.elf
 ```
 
-### スクリプトから使う（タイムアウト付き・入力送り込み）
+スクリプトからは `timeout` と入力の送り込みが使える：
 
 ```bash
-# 10秒で打ち切り
-timeout 10 qemu-system-arm -machine mps2-an521 -nographic \
-  -semihosting-config enable=on,target=native -kernel build/m33-qemu/asp.elf
-
-# 3秒後に 'r' を送ってタスク切替を確認するような自動検証
 (sleep 3; printf 'r'; sleep 3) | timeout 10 qemu-system-arm -machine mps2-an521 \
   -nographic -semihosting-config enable=on,target=native -kernel build/m33-qemu/asp.elf
 ```
 
-### ターゲット別のQEMUマシン
+---
 
-| ターゲット | QEMUコマンド |
-|---|---|
-| mps2_an521_gcc | `qemu-system-arm -machine mps2-an521 -nographic -semihosting-config enable=on,target=native -kernel <elf>` |
-| zybo_z7_gcc | `qemu-system-arm -M xilinx-zynq-a9 -semihosting -nographic -serial /dev/null -serial mon:stdio -kernel <elf>`（UART1が2本目のserial） |
+## 4. テストランナ
+
+```bash
+# 機能テスト（QEMU mps2の例）：作業ディレクトリを作って実行
+mkdir TEST-MPS2 && cd TEST-MPS2
+echo '--preset m33-qemu' > TARGET_OPTIONS
+echo 'timeout 20 qemu-system-arm -machine mps2-an521 -nographic \
+  -semihosting-config enable=on,target=native -kernel asp.elf' > TARGET_RUN
+python3 ../test/testexec.py sem1 flg1      # build＋exec
+
+# cfgテスト（dummyターゲット）
+mkdir TESTCFG && cd TESTCFG
+echo '-G Ninja -DASP3_TARGET=dummy_gcc -DASP3_OMIT_DEFAULT_SYSSVC=ON \
+  -DASP3_EXTRA_COMPILE_DEFS=TOPPERS_OMIT_SYSLOG' > TARGET_OPTIONS
+python3 ../test_cfg/testcfg.py all
+```
 
 ---
 
-## 4. ビルド方式の対応状況
+## 5. ターゲット対応状況
 
-| ターゲット | Makefile版 | CMake版 |
+| ターゲット | プリセット | 実行 |
 |---|---|---|
-| mps2_an521_gcc | ○（make run対応） | ○（preset: m33-qemu，runターゲット対応） |
-| linux_gcc | ○ | ○（preset: posix，runターゲット対応） |
-| zybo_z7_gcc | ○ | ○（preset: zybo-qemu，runターゲット対応） |
-| raspberrypi_pico2_gcc | ○ | ○（preset: pico2-m33．`--target run`=OpenOCD書込み，gdb/console等も対応） |
-| stm32mp257f_dk_arm64_gcc | ○（リンクは aarch64-none-elf 環境） | ○（preset: stm32mp257-a35．swd-run/osdebug/console等も対応．リンク・実機は aarch64-none-elf 環境） |
-| dummy_gcc（cfgテスト用） | ○ | 未定 |
+| linux_gcc | posix | ホスト実行（run） |
+| mps2_an521_gcc | m33-qemu | QEMU（run） |
+| zybo_z7_gcc | zybo-qemu | QEMU（run） |
+| raspberrypi_pico2_gcc | pico2-m33 | 実機（run=OpenOCD書込み．gdb/console等） |
+| stm32mp257f_dk_arm64_gcc | stm32mp257-a35 | 実機（swd-run/osdebug/console等．リンクは aarch64-none-elf 環境） |
+| dummy_gcc | （プリセット無し．`-DASP3_TARGET=dummy_gcc`） | cfgテスト用ホストビルド |
+| pico2-riscv | （予約） | arch/riscv_gcc 未実装 |
 
-`cmake --build --preset run-m33-qemu` のように buildPresets（run-posix / run-m33-qemu /
-run-zybo-qemu）でルートから1コマンド実行もできる。
-
-CMake対応の進捗は `docs/dev/cmake.md` を参照。
+CMake対応の経緯は `docs/dev/cmake.md` を参照。

@@ -147,7 +147,7 @@ cmake --preset stm32mp257-a35 -B build/stm32mp257-a35 && cmake --build build/stm
 ```
 
 > **前提メモ**
-> - ビルドは **Makefile版（configure.py）とCMake版の2系統**（詳細は `docs/building.md`）。CMake版は posix / m33-qemu / zybo-qemu / stm32mp257-a35 対応済み。**pico2 は pico-sdk 必須で未対応**（プリセットは予約）。
+> - ビルドは **CMakeのみ**（Makefile版は廃止済み。詳細は `docs/building.md`）。プリセット：posix / m33-qemu / zybo-qemu / pico2-m33 / stm32mp257-a35。
 > - `posix` プリセットの実体は **ホストシミュレーション**（`target/linux_gcc`＝上流SVNの `asp3_arch_posix_gcc` パッケージ由来）。
 > - QEMUマシン名は `mps2-an521`（ハイフン）だが、ASP3ターゲット名は `mps2_an521_gcc`（アンダースコア）。
 
@@ -333,7 +333,7 @@ scope: target / syssvc / cfg / cmake / upstream / ci
 |---|---|
 | **プロジェクト全体像** | **`docs/OVERVIEW.md`** |
 | **開発の始め方・人間/AIの分担** | **`START.md`** |
-| ビルド・テスト方法 | 本ファイル §4 + `docs/building.md`（Makefile版/CMake版の詳細手順） |
+| ビルド・テスト方法 | 本ファイル §4 + `docs/building.md`（CMakeビルドの詳細手順） |
 | 新ターゲット移植 | `docs/porting/PORTING_GUIDE.md` + `target_spec.yaml` |
 | 既存実装の参照 | `docs/porting/IMPL_INDEX.md` |
 | 機能追加の実施記録・経緯 | `docs/dev/README.md` + 本ファイル §1「機能追加の実施ルール」 |
