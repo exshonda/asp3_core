@@ -124,9 +124,9 @@ cmake --preset linux -B build/linux && cmake --build build/linux
 ./build/linux/asp --tap
 
 # QEMU Cortex-M33（mps2-an521・ハードなし）
-cmake --preset mps2_an521 -B build/mps2_an521 && cmake --build build/mps2_an521
+cmake --preset mps2_an521-qemu -B build/mps2_an521-qemu && cmake --build build/mps2_an521-qemu
 timeout 30 qemu-system-arm -M mps2-an521 -cpu cortex-m33 \
-  -kernel build/mps2_an521/asp.elf \
+  -kernel build/mps2_an521-qemu/asp.elf \
   -semihosting -semihosting-config enable=on,target=native -nographic
 
 # QEMU Cortex-A53（xlnx-zcu102・ハードなし）
