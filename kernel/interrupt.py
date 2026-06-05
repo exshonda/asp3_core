@@ -120,8 +120,9 @@ for _, params in sorted(cfgData["CRE_ISR"].items()):
 
     # intnoに対応するinhnoに対してDEF_INHがある場合（E_OBJ）［NGKI3013］
     # この処理で［NGKI3063］にも対応している
-    _inhno_val = to_inhno_val[int(params["intno"])]
-    if _inhno_val in cfgData["DEF_INH"]:
+    #（無効なintnoの場合はNone．Ruby版のnil参照と同じく非該当として扱う）
+    _inhno_val = to_inhno_val.get(int(params["intno"]))
+    if _inhno_val is not None and _inhno_val in cfgData["DEF_INH"]:
         error_ercd("E_OBJ", params, f"%%intno in %apiname is duplicated"
                    f" with inhno {cfgData['DEF_INH'][_inhno_val]['inhno']}")
 

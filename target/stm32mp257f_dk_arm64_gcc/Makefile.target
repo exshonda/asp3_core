@@ -52,17 +52,15 @@ KERNEL_COBJS := $(KERNEL_COBJS) target_kernel_impl.o
 #  システムサービスに関する定義（非TECS版）
 #
 ifdef OMIT_TECS
+ifndef OMIT_DEFAULT_SYSSVC
 SYSSVC_COBJS := $(SYSSVC_COBJS) target_serial.o stm32usart.o
+endif
 endif
 
 #
 #  リンカスクリプトの定義
 #
 LDSCRIPT = $(TARGETDIR)/stm32mp257f_dk.ld
-
-#
-#  本ターゲットはTECS構成のみをサポートする（configure.rb に -w を付けないこと）
-#
 
 #
 #  GNU開発環境のターゲットアーキテクチャの定義

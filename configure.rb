@@ -260,9 +260,11 @@ $bannerobj ||= ($vartable["OMIT_TECS"] != "") ? "banner.o" : "tBannerMain.o"
 #
 #  【asp3_core変更】非TECS時は共通の非TECS版システムサービスのオブジェ
 #  クトファイルをデフォルトでSYSSVCOBJSに含める（-Sオプションの指定は
-#  ターゲット依存のSIOドライバ等の追加分のみで足りる）．
+#  ターゲット依存のSIOドライバ等の追加分のみで足りる）．システムサービ
+#  スを使わない構成（cfgテスト等）では，引数に OMIT_DEFAULT_SYSSVC を
+#  指定すると自動付与を抑止できる．
 #
-if $vartable["OMIT_TECS"] != ""
+if $vartable["OMIT_TECS"] != "" && $vartable["OMIT_DEFAULT_SYSSVC"] == ""
   $syssvcobjs = ["syslog.o", "banner.o", "serial.o", "serial_cfg.o",
 									"logtask.o"] | $syssvcobjs
 end

@@ -54,7 +54,9 @@ KERNEL_COBJS := $(KERNEL_COBJS) target_kernel_impl.o
 #  システムサービスに関する定義（非TECS版）
 #
 ifdef OMIT_TECS
+ifndef OMIT_DEFAULT_SYSSVC
 SYSSVC_COBJS := $(SYSSVC_COBJS) target_serial.o cmsdk_uart.o
+endif
 endif
 
 #

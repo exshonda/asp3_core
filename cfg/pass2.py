@@ -305,7 +305,7 @@ class Cfg1Out:
                     # オブジェクト識別名の重複チェック
                     if obj_name in object_names:
                         error(f"E_OBJ: {api_def.get('KEYPAR', '')} "
-                              f"'{obj_name}' is duplicated in {cfg_info['APINAME']}",
+                              f"`{obj_name}' is duplicated in {cfg_info['APINAME']}",
                               f"{cfg_info['_FILE_']}:{cfg_info['_LINE_']}:")
                         cfg_info["VALID"] = False
                     object_names.append(obj_name)
@@ -387,7 +387,7 @@ class Cfg1Out:
                 key = int(key_param)
                 if key in g["cfgData"].get(api_sym, {}):
                     # 登録キーの重複
-                    error(f"E_OBJ: {api_def['KEYPAR']} '{key_param}' "
+                    error(f"E_OBJ: {api_def['KEYPAR']} `{key_param}' "
                           f"is duplicated in {cfg_info['APINAME']}",
                           f"{cfg_info['_FILE_']}:{cfg_info['_LINE_']}:")
             else:

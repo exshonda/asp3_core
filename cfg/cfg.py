@@ -760,7 +760,15 @@ def main():
         pass4(g, args.include_directories, args.trb_file_names)
 
     # エラー発生時はabortする
-    if error_flag:
+    #
+    # 本ファイルをスクリプトとして実行した場合，__main__モジュールと
+    # pass1.py等がimportするcfgモジュールの2インスタンスが存在し，
+    # error()が立てるerror_flagはcfgモジュール側に記録される．そのため
+    # cfgモジュール側のフラグも併せて確認する．
+    #
+    cfg_module = sys.modules.get("cfg")
+    if error_flag or (cfg_module is not None
+                      and getattr(cfg_module, "error_flag", False)):
         sys.exit(1)
 
     #

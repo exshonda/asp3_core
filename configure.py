@@ -237,9 +237,12 @@ def main():
     #
     #  【asp3_core変更】非TECS時は共通の非TECS版システムサービスのオブジェ
     #  クトファイルをデフォルトでSYSSVCOBJSに含める（-Sオプションの指定は
-    #  ターゲット依存のSIOドライバ等の追加分のみで足りる）．
+    #  ターゲット依存のSIOドライバ等の追加分のみで足りる）．システムサービ
+    #  スを使わない構成（cfgテスト等）では，引数に OMIT_DEFAULT_SYSSVC を
+    #  指定すると自動付与を抑止できる．
     #
-    if vartable.get("OMIT_TECS", "") != "":
+    if vartable.get("OMIT_TECS", "") != "" \
+            and vartable.get("OMIT_DEFAULT_SYSSVC", "") == "":
         defobjs = ["syslog.o", "banner.o", "serial.o", "serial_cfg.o",
                    "logtask.o"]
         syssvcobjs = defobjs + [o for o in syssvcobjs if o not in defobjs]

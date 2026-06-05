@@ -50,7 +50,9 @@ SYSSVC_COBJS := $(SYSSVC_COBJS)
 #  システムサービスに関する定義（非TECS版）
 #
 ifdef OMIT_TECS
+ifndef OMIT_DEFAULT_SYSSVC
 SYSSVC_COBJS := $(SYSSVC_COBJS) posix_serial.o
+endif
 endif
 
 #
