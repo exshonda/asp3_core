@@ -94,7 +94,7 @@ ARMv8-A（AArch64）のQEMUターゲットを追加し、Cortex-A系のカーネ
 | `zcu102.ld` | stm32mp257f_dk.ld と同一（配置は `-Ttext/-Tdata` で指定） |
 | `target_kernel_impl.c` | MMUテーブル＝DDR(0x0,128MB)＋デバイス(0xF9000000,112MB)。低レベル出力はxuartps。**`target_exit` はセミホスティング SYS_EXIT でQEMU終了** |
 | `target_syssvc.h` | UART0（0xFF000000, IRQ53）＝QEMUコンソール |
-| `target.cmake` | TEXT=0x00100000／DATA=0x04000000・`TOPPERS_TZ_S`・`TOPPERS_USE_QEMU`・RUN_COMMAND=`qemu-system-aarch64 -M xlnx-zcu102,secure=on -semihosting...` |
+| `target.cmake` | TEXT=0x00100000／DATA=0x04000000・`TOPPERS_TZ_S`・**`ZCU102_QEMU` オプション（既定ON）**・RUN_COMMAND=`qemu-system-aarch64 -M xlnx-zcu102,secure=on -semihosting...`（QEMU時のみ） |
 | その他（kernel.h/cfg/py・check.py・timer・serial・test・stddef・sil・rename等） | stm32mp257f_dk／kr260から流用 |
 
 **その他**：`CMakePresets.json` に `a64-qemu`／`run-a64-qemu` を追加
@@ -114,6 +114,21 @@ ARMv8-A（AArch64）のQEMUターゲットを追加し、Cortex-A系のカーネ
    `-DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-` を付与。
 4. コア依存部 `arch/arm64_gcc/common/` は**無変更**（stm32mp2移植の検証済み資産）。
 
+### QEMU／実機の切り替え（条件コンパイル）
+
+CMakeオプション `ZCU102_QEMU`（既定ON）で `TOPPERS_USE_QEMU` の定義を切り替える。
+実機ZCU102向けは `-DZCU102_QEMU=OFF` でconfigureする：
+
+| 切替箇所 | QEMU（既定） | 実機（`-DZCU102_QEMU=OFF`） |
+|---|---|---|
+| STG初期化＋CNTFRQ設定（`chip_kernel_impl.c`） | スキップ（QEMUは0xFF260000未実装） | 実行（FMP3と同一） |
+| `target_exit`（`target_kernel_impl.c`） | セミホスティングSYS_EXITでQEMU終了 | 無限ループ |
+| DDRマップ（`zcu102.h`） | 128MB（QEMU既定RAM） | 低位2GB |
+| `run` ターゲット | QEMU起動 | 定義なし（書込み手段は実機検証時に整備） |
+
+両構成のビルドとバイナリ差分（STGコード有無・hlt #0xf000 有無）を確認済み。
+**実機での動作確認は未実施**（FSBLからのロード・JTAG等の実行手段とあわせて今後）。
+
 ### Git情報
 
 - ベースコミット：`7e0c457`
@@ -127,7 +142,7 @@ ARMv8-A（AArch64）のQEMUターゲットを追加し、Cortex-A系のカーネ
 | QEMU sample1 | ○ | バナー・logging task・task1周期実行・`a`/`r`入力で task2/3 切替 |
 | testexec（QEMU） | ○ | **task1/sem1/flg1/dtq1/mutex1/tmevt1 All check points passed・hrt1 正常完了（カウンタ逆行なし・cyclic 203回）** |
 | `ext_ker` でのQEMU自動終了 | ○ | セミホスティング SYS_EXIT 動作（testexecが自動進行） |
-| 実機 ZCU102 | − | スコープ外（QEMU専用として整備．実機は将来） |
+| 実機 ZCU102 | − | ビルドのみ確認（`-DZCU102_QEMU=OFF`．実行は将来・上記切り替え表参照） |
 
 ### DIVERGENCE_MAP との関連
 

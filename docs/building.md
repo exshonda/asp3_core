@@ -164,7 +164,7 @@ python3 ../test_cfg/testcfg.py all
 | linux_gcc | posix | ホスト実行（run） |
 | mps2_an521_gcc | m33-qemu | QEMU（run） |
 | zybo_z7_gcc | zybo-qemu | QEMU（run） |
-| zcu102_arm64_gcc | a64-qemu | QEMU（run．aarch64-none-elf が無い環境は `-DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-` を付与） |
+| zcu102_arm64_gcc | a64-qemu | QEMU（run．aarch64-none-elf が無い環境は `-DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-` を付与．実機ZCU102向けは `-DZCU102_QEMU=OFF`） |
 | raspberrypi_pico2_gcc | pico2-m33 | 実機（run=OpenOCD書込み．gdb/console等） |
 | stm32mp257f_dk_arm64_gcc | stm32mp257-a35 | 実機（swd-run/osdebug/console等．リンクは aarch64-none-elf 環境） |
 | dummy_gcc | （プリセット無し．`-DASP3_TARGET=dummy_gcc`） | cfgテスト用ホストビルド |

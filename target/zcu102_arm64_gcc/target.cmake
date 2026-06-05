@@ -29,8 +29,18 @@ list(APPEND ASP3_INCLUDE_DIRS
 )
 
 #
-#  メモリアドレスの設定（QEMU xlnx-zcu102 のDDRは既定128MB＝
-#  0x00000000-0x07FFFFFF．この範囲に収める．先頭1MBは空けておく）
+#  QEMU／実機の切り替え（既定：QEMU）
+#
+#  OFF（実機ZCU102）にすると TOPPERS_USE_QEMU を定義しない：
+#    - System Timestamp Generator の初期化とCNTFRQ設定を行う（chip依存部）
+#    - target_exit のセミホスティング終了を行わない
+#    - DDRマップが低位2GBになる（zcu102.h）
+#
+option(ZCU102_QEMU "Build for QEMU xlnx-zcu102 (OFF: real ZCU102 board)" ON)
+
+#
+#  メモリアドレスの設定（先頭1MBは空けておく．QEMU xlnx-zcu102 の
+#  既定RAM=128MB（0x00000000-0x07FFFFFF）にも収まる配置）
 #
 set(TEXT_START_ADDRESS 0x0000100000)
 set(DATA_START_ADDRESS 0x0004000000)
@@ -42,8 +52,11 @@ list(APPEND ASP3_COMPILE_DEFS
     USE_ARM64_FPU
     TOPPERS_TZ_S
     TOPPERS_32BIT_ABOVE_ADDR
-    TOPPERS_USE_QEMU
 )
+
+if(ZCU102_QEMU)
+    list(APPEND ASP3_COMPILE_DEFS TOPPERS_USE_QEMU)
+endif()
 
 #
 #  コンパイル・リンクオプション
@@ -74,10 +87,12 @@ list(APPEND ASP3_TARGET_C_FILES
 include(${ASP3_ROOT_DIR}/arch/arm64_gcc/zynqmp/chip.cmake)
 
 #
-#  QEMUによる実行（cmake --build <dir> --target run）
+#  QEMUによる実行（cmake --build <dir> --target run．QEMUビルド時のみ）
 #
-set(ASP3_RUN_COMMAND
-    qemu-system-aarch64 -machine xlnx-zcu102,secure=on -nographic
-    -semihosting-config enable=on,target=native
-    -kernel $<TARGET_FILE:asp>
-)
+if(ZCU102_QEMU)
+    set(ASP3_RUN_COMMAND
+        qemu-system-aarch64 -machine xlnx-zcu102,secure=on -nographic
+        -semihosting-config enable=on,target=native
+        -kernel $<TARGET_FILE:asp>
+    )
+endif()

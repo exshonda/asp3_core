@@ -44,10 +44,17 @@
 #define TOPPERS_ZCU102_H
 
 /*
- *  DDR（QEMU xlnx-zcu102 の低位DDR領域．既定の128MBをマップ）
+ *  DDR（低位DDR領域）
+ *    QEMU: xlnx-zcu102 の既定RAMは128MB（0x00000000-0x07FFFFFF）
+ *    実機: ZCU102 はPS DDR4 4GB（低位2GB＝0x00000000-0x7FFFFFFF＋
+ *          高位2GB＝0x800000000-）．低位2GBをマップする
  */
 #define DDR_ADDR		UINT_C(0x0000000000)
+#ifdef TOPPERS_USE_QEMU
 #define DDR_SIZE		UINT_C(0x0008000000)	/* 128MB をマップ */
+#else  /* 実機ZCU102 */
+#define DDR_SIZE		UINT_C(0x0080000000)	/* 低位2GB をマップ */
+#endif /* TOPPERS_USE_QEMU */
 
 /*
  *  UARTの設定値の定義（115.2Kbpsで動作させる場合．UARTREFCLK=100MHz）
