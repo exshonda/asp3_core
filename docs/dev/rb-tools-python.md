@@ -58,4 +58,55 @@ cfgのPython化（`cfg-python.md`）の後続作業。
 
 ## 実施結果
 
-（完了時に記載）
+（2026-06-05 記載・完了）
+
+### 変更したファイル
+
+| ファイル | 変更内容概要 |
+|---|---|
+| `configure.rb`・`configure.py`・`sample/Makefile`・各`Makefile.target`/`Makefile.chip` | `OMIT_DEFAULT_SYSSVC`（非TECS時のsyssvcオブジェクト自動付与の抑止）を追加。素のカーネルビルド（cfgテスト等）を可能にする |
+| `cfg/cfg.py` | スクリプト実行時の`__main__`/`cfg`モジュール二重化で`error_flag`が伝播せず、エラー時も終了コード0になるバグを修正 |
+| `cfg/pass2.py` | 重複エラーメッセージの引用符をRuby版と同形式（`` `X' ``）に修正 |
+| `kernel/interrupt.py` | 無効な`intno`のCRE_ISRでKeyError crashするバグを修正 |
+| `target/stm32mp257f_dk_arm64_gcc/Makefile.target` | 古い「TECS構成のみサポート」コメントを削除 |
+
+### 追加したファイル
+
+| ファイル | 対応するRuby版 | 検証結果 |
+|---|---|---|
+| `configure.py` | `configure.rb`（375行） | 全8ターゲット＋オプション網羅ケースで生成Makefileがバイト一致。linuxビルド・実行確認 |
+| `test_cfg/testcfg.py` | `test_cfg/testcfg.rb`（424行） | dummy_gccで全9テストが期待値一致（makeのバージョン表記差のみ）。pass3チェック56エラー含む |
+| `test/testexec.py` | `test/testexec.rb`（492行） | QEMU mps2-an521で機能テスト6本（sem1/sem2/flg1/dtq1/task1/hrt1）build→exec全pass。非TECS用に`tecsgen.cfg`スタブ自動生成を追加 |
+| `utils/genrename.py` | `utils/genrename.rb`（187行） | 既存14個の`*_rename.def`から再生成した`*_rename.h`/`*_unrename.h`がコミット済みと一致（CRLF既存ファイルは改行差のみ） |
+| `utils/applyrename.py` | `utils/applyrename.rb`（122行） | kernel/の3ソースへの適用結果がRuby版と完全一致 |
+| `utils/gentest.py` | `utils/gentest.rb`（545行） | **全46テストソース**でRuby版と出力完全一致（HOOK %d書式・Ruby版typoの出力互換含む） |
+| `utils/makerelease.py` | `utils/makerelease.rb`（218行） | zyboターゲットMANIFESTでtar.gz/zip生成・アーカイブ内容がRuby版と一致 |
+
+### 削除したファイル
+
+なし（Ruby版は全て残置。削除は別項目「ファイルの削除」で実施。`tecsgen/` は対象外＝同項目で削除予定）
+
+### Git情報
+
+- ベースコミット：`507c007`（rb-tools計画記載）
+- 関連コミット範囲：`9ccd72e`（configure.py）〜本コミット（testcfg+cfg修正 `e460cb4`／testexec `dcfdb93`／rename系 `d2c1b95`／gentest+makerelease `4227cd5`）
+- ファイルリスト再現コマンド例：`git diff --stat 507c007 HEAD`
+
+### 検証結果
+
+| テスト | 実施 | 結果 |
+|---|---|---|
+| configure.py（Makefile一致） | ○ | 8ターゲット＋オプションケースでバイト一致 |
+| testcfg.py（cfgテストスイート） | ○ | 9/9 期待値一致（make表記差のみ）。**Python版cfgの回帰テストとして機能** |
+| testexec.py（QEMU mps2-an521） | ○ | 機能テスト6本 All check points passed |
+| genrename/applyrename/gentest/makerelease | ○ | Ruby版出力と一致（上記表参照） |
+
+### DIVERGENCE_MAP との関連
+
+- `.py`ツール群の行を追加（上流`.rb`変更時は対応`.py`へ手動再反映）
+- `configure.rb`行は既存（OMIT_DEFAULT_SYSSVC追加も同行でカバー）
+
+### 残課題・備考
+
+- ビルド・テストフローはPythonのみで完結（Ruby不要）になった。Ruby版・`tecsgen/`の削除は「ファイルの削除」項目で実施
+- testcfg/testexecの実行にはTARGET_OPTIONSの作成が必要（testcfg.py冒頭コメント参照）

@@ -27,6 +27,7 @@
 | `target/linux_gcc/`・`arch/posix_gcc/` | 上流SVN（3.7.2）から取込み＋`Makefile.target`改変 | POSIXシミュレーション環境（3.7.2 tarball未収録のため別途取込み） | 上流posix_gccパッケージの更新に追従 | target/arch | 3.7.2 |
 | `syssvc/qemu_exit.c` | 新規追加 | QEMUセミホスティング終了 | （上流に存在せず・衝突なし） | syssvc(NEW) | — |
 | `cfg/cfg.py`・`pass1.py`・`pass2.py`・`gen_file.py`・`srecord.py` | Ruby→Python移植（エンジン，asp3_fsp由来＋1.7.1差分反映） | コンフィギュレータのPython化（Ruby版は残置） | **上流cfg.rb系の挙動変更時はテキスト差分不可・手動再反映（CFG_SPEC_MAP参照）** | cfg | cfg 1.7.1 |
+| `configure.py`・`test/testexec.py`・`test_cfg/testcfg.py`・`utils/{genrename,applyrename,gentest,makerelease}.py` | Ruby→Python移植（.rbツール群．Ruby版は残置） | ビルド・テスト・開発フローからRuby依存を除去 | **上流.rbツール変更時は対応.pyへ手動再反映** | build/test | 3.7.2 |
 | `kernel/*.py`（kernel.py・kernel_check.py・genoffset.py＋オブジェクト別11本） | 旧`kernel/*.trb`→Python移植（新規追加・既存.trbは未変更） | 生成テンプレートのPython化（kernel/への新規ファイル追加） | **上流kernel/*.trb変更時は対応.pyへ手動再反映** | kernel(テンプレート追加) | 3.7.2 |
 | `kernel/kernel_api.def` | 上流同形式（変更なし〜微修正） | 静的API定義（api-table） | 上流と同形式のためテキストマージ可能 | cfg(PRISTINE寄り) | 3.7.0 |
 | `arch/*/*.py` 生成テンプレート（core_kernel/core_check/core_offset/gic/chip） | 旧`.trb`→Python移植（arm_m/arm_gcc/arm64_gcc/posix各系列．v6m系は未変換） | offset.h・kernel_cfg生成テンプレートのPython化 | **上流の対応`.trb`変更時はテキスト差分不可・手動再反映** | cfg(テンプレート) | 3.7.2 |
