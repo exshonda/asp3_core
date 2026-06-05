@@ -78,4 +78,46 @@
 
 ## 実施結果
 
-（完了時に記載）
+（2026-06-06 記載。フェーズ1完了・フェーズ2＝make版削除は別途）
+
+### 削除したファイル（計524ファイル変更・約120,000行削除）
+
+| コミット | 由来項目 | 内容 |
+|---|---|---|
+| `7a94b2a` | TECSレス | `tecsgen/`・`tecs_kernel/`・`extension/non_tecs/`・TECS版syssvc・全TECSセル・tSample2系・`test/*.cdl`（315ファイル・94,349行） |
+| `31acf36` | cfgのPython化 | `cfg/*.rb` 5本・`.trb` 全数（v6m系含む）（48ファイル・6,539行） |
+| `e6d62d2` | .rbツールの.py化 | `configure.rb`・`testexec.rb`・`testcfg.rb`・`utils/*.rb`・`makerelease.py`（8ファイル・2,591行） |
+| `1de1bb4` | 本項目（その他） | `target/{ct11mpcore,gr_peach,macos_xcode,simtimer_ct11mpcore}_gcc/`・`arch/arm_gcc/rza1/`・`arch/simtimer/`・MANIFEST/E_PACKAGE全数・`test/simt_*.c` 8本（149ファイル・16,494行） |
+
+提案の採否：提1（makerelease）採用／提2（simt系整理）採用／
+提3（xilinx_sdk）**取り下げ**（`jtag.tcl` が実機実行で使用中）
+
+### 波及修正
+
+- `test/testexec.py`：simt系（TARGET:2）エントリ削除・コメント整理
+- `target/mps2_an521_gcc/`・`target/raspberrypi_pico2_gcc/` の `Makefile.target`：
+  依存関係定義の `.trb` 参照を `.py` に修正（回帰確認で検出）
+- `arch/arm_m_gcc/common/Makefile.core`：v6m分岐の未変換注記
+- `target/stm32mp257f_dk_arm64_gcc/CLAUDE.md`：MANIFEST追記規約を削除
+- `docs/building.md`・`configure.py`：Ruby版cfg切替の記述削除
+- `DIVERGENCE_MAP.md`：**「削除済みファイル」節を追加**（上流マージで復活させないための台帳）
+
+### Git情報
+
+- ベースコミット：`d8ddab5`（削除リスト記載）
+- 関連コミット範囲：`7a94b2a`〜`183a90c`（削除4・台帳1・回帰修正1）
+- ファイルリスト再現コマンド例：`git diff --stat d8ddab5 183a90c`
+
+### 検証結果（回帰確認）
+
+| テスト | 実施 | 結果 |
+|---|---|---|
+| CMake posix／m33-qemu／zybo-qemu | ○ | クリーンビルド＋実行OK（バナー確認） |
+| Makefile版 linux／mps2_an521 | ○ | linux実行・mps2 build＋check passed |
+| testcfg.py（dummy_gcc） | ○ | cfg_all1生成物一致・pass2/pass1エラー一致（make行式差のみ） |
+| testexec.py（QEMU mps2） | ○ | sem1／flg1 All check points passed |
+
+### 残課題（フェーズ2）
+
+- make版ビルドファイル（`sample/Makefile`・`Makefile.target/core/chip`・`configure.py`）の削除。
+  前提条件（pico2のCMake対応・testcfg/testexecのCMake化等）は `cmake.md` 参照
