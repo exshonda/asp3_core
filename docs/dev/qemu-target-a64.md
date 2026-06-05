@@ -97,7 +97,9 @@ ARMv8-A（AArch64）のQEMUターゲットを追加し、Cortex-A系のカーネ
 | `target.cmake` | TEXT=0x00100000／DATA=0x04000000・`TOPPERS_TZ_S`・**`ZCU102_QEMU` オプション（既定ON）**・RUN_COMMAND=`qemu-system-aarch64 -M xlnx-zcu102,secure=on -semihosting...`（QEMU時のみ） |
 | その他（kernel.h/cfg/py・check.py・timer・serial・test・stddef・sil・rename等） | stm32mp257f_dk／kr260から流用 |
 
-**その他**：`CMakePresets.json` に `a64-qemu`／`run-a64-qemu` を追加
+**その他**：プリセット `zcu102_arm64`（実機）／`zcu102_arm64-qemu`（QEMU）を追加
+（`target/zcu102_arm64_gcc/presets.json`．当初の名称 `a64-qemu` から，
+プリセット名統一＝「ターゲット名から`_gcc`を除き，QEMU側は`-qemu`」に改名）
 
 ### 設計のポイント・ハマりどころ
 
@@ -132,7 +134,9 @@ CMakeオプション `ZCU102_QEMU`（既定ON）で `TOPPERS_USE_QEMU` の定義
 ### Git情報
 
 - ベースコミット：`7e0c457`
-- ファイルリスト再現：`git diff --stat 7e0c457 HEAD -- arch/arm64_gcc/zynqmp target/zcu102_arm64_gcc CMakePresets.json`
+- 関連コミット範囲：`49614dc`（ターゲット追加）→`ac8c94f`（QEMU/実機切替）
+  →`9940685`/`fccb9d9`/`c68ec99`（プリセット名統一）
+- ファイルリスト再現：`git diff --stat 7e0c457 HEAD -- arch/arm64_gcc/zynqmp target/zcu102_arm64_gcc`
 
 ### 検証結果
 
