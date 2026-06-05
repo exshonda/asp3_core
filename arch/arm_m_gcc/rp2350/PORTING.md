@@ -308,5 +308,9 @@ ARMv7-M/v8-M では PRIMASK=1 中は構成可能優先度の例外（UsageFault,
 - **Core1**: 未使用・未停止（bootROM 内で待機）。省電力化するなら PSM での停止を検討。
 - **TrustZone の本格利用**（Secure/Non-secure 分割, `-mcmse` のコールゲート等）: 対象外。
   現状は「Secure 単独動作のための `ENABLE_TRUSTZONE=1`」のみ。
-- **TOPPERS_OMIT_TECS（-w）ビルド**: 非 TECS 用の `chip_serial.h`/`target_serial.c` を
-  用意していないため不可（rp2040 版も同様）。
+- ~~**TOPPERS_OMIT_TECS（-w）ビルド**: 非 TECS 用の `chip_serial.h`/`target_serial.c` を
+  用意していないため不可（rp2040 版も同様）。~~
+  → **解決済み（2026-06-05）**: asp3_core の TECSレス化に伴い，非 TECS 版 SIO ドライバ
+  （`rp2350_uart.{c,h}`・`chip_serial.{c,h,cfg}`，上流 `extension/non_tecs` の
+  uart_pl011／rza1 chip_serial 構成を規範）を追加。configure.rb は非 TECS が
+  デフォルトとなった（TECS 構成は `OMIT_TECS=` 空指定でビルド可能）。

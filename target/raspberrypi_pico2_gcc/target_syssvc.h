@@ -49,6 +49,9 @@
 
 #ifdef TOPPERS_OMIT_TECS
 
+#include "rpi_pico.h"
+#include "RP2350.h"
+
 /*
  * 起動メッセージのターゲットシステム名
  */
@@ -60,6 +63,20 @@
  * ターゲット依存の方法で，文字cを表示/出力/保存する．
  */
 extern void target_fput_log(char c);
+
+/*
+ * SIOドライバで使用するUARTに関する設定（UART0を使用）
+ */
+#define SIO_UART_BASE		RP2350_UART0_BASE		/* UARTのベース番地 */
+#define SIO_UART_RESET_BIT	RP2350_RESETS_RESET_UART0	/* リセットビット */
+
+/*
+ * SIO割込みを登録するための定義
+ */
+#define INTNO_SIO		(RP2350_UART0_IRQn + 16)	/* UART割込み番号 */
+#define ISRPRI_SIO		1							/* UART ISR優先度 */
+#define INTPRI_SIO		(-2)						/* UART割込み優先度 */
+#define INTATR_SIO		TA_NULL						/* UART割込み属性 */
 
 /*
  * 低レベル出力で使用するSIOポート

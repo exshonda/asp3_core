@@ -34,6 +34,13 @@ SYSSVC_DIR := $(SYSSVC_DIR) $(SRCDIR)/arch/$(PRC)_$(TOOL)/$(CHIP)
 SYSSVC_COBJS := $(SYSSVC_COBJS)
 
 #
+# システムサービスに関する定義（非TECS版）
+#
+ifdef OMIT_TECS
+SYSSVC_COBJS := $(SYSSVC_COBJS) chip_serial.o rp2350_uart.o
+endif
+
+#
 # コア依存部のインクルード
 #
 include $(SRCDIR)/arch/$(PRC)_$(TOOL)/common/Makefile.core
