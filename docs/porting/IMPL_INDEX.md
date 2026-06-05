@@ -36,6 +36,9 @@
 | Cortex-A35 アーキテクチャタイマ | `stm32mp257f_dk_arm64_gcc` | `target_timer.c` | CNTP_TVAL_EL0 |
 | Cortex-A35 UART | `stm32mp257f_dk_arm64_gcc` | `target_serial.c` | USART |
 | POSIXホストシミュレーション | `linux_gcc` | 全ファイル | signal/timerエミュレーション |
+| ZynqMP（Cortex-A53）EL3初期化 | `arch/arm64_gcc/zynqmp` | `chip_kernel_impl.c` | SCR/SMPEN/STG（QEMUはSTGスキップ） |
+| Cadence UART（ARM64） | `arch/arm64_gcc/zynqmp` | `xuartps.[ch]`・`chip_serial.c` | 非TECS SIO |
+| QEMU AArch64ベアメタル実行 | `zcu102_arm64_gcc` | `target.cmake`・`target_kernel_impl.c` | xlnx-zcu102,secure=on／SYS_EXIT終了／glibc系ツールチェーン対策 |
 
 ---
 

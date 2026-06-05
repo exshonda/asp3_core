@@ -1,0 +1,7 @@
+# chip_kernel_impl.c
+chip_el3_initialize
+chip_el2_initialize
+chip_initialize
+chip_terminate
+
+INCLUDE "core"

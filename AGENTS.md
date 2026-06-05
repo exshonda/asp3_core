@@ -129,6 +129,11 @@ timeout 30 qemu-system-arm -M mps2-an521 -cpu cortex-m33 \
   -kernel build/m33-qemu/asp.elf \
   -semihosting -semihosting-config enable=on,target=native -nographic
 
+# QEMU Cortex-A53（xlnx-zcu102・ハードなし）
+cmake --preset a64-qemu -B build/a64-qemu && cmake --build build/a64-qemu
+timeout 30 qemu-system-aarch64 -machine xlnx-zcu102,secure=on -nographic \
+  -semihosting-config enable=on,target=native -kernel build/a64-qemu/asp.elf
+
 # Raspberry Pi PICO2 (Cortex-M33 / 実機)
 cmake --preset pico2-m33 -B build/pico2-m33 && cmake --build build/pico2-m33
 
@@ -148,7 +153,7 @@ cmake --preset stm32mp257-a35 -B build/stm32mp257-a35 && cmake --build build/stm
 ```
 
 > **前提メモ**
-> - ビルドは **CMakeのみ**（Makefile版は廃止済み。詳細は `docs/building.md`）。プリセット：posix / m33-qemu / zybo-qemu / pico2-m33 / stm32mp257-a35。
+> - ビルドは **CMakeのみ**（Makefile版は廃止済み。詳細は `docs/building.md`）。プリセット：posix / m33-qemu / zybo-qemu / a64-qemu / pico2-m33 / stm32mp257-a35。
 > - `posix` プリセットの実体は **ホストシミュレーション**（`target/linux_gcc`＝上流SVNの `asp3_arch_posix_gcc` パッケージ由来）。
 > - QEMUマシン名は `mps2-an521`（ハイフン）だが、ASP3ターゲット名は `mps2_an521_gcc`（アンダースコア）。
 

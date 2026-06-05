@@ -41,6 +41,16 @@
       }
     },
     {
+      "name": "a64-qemu",
+      "inherits": "_base",
+      "displayName": "Cortex-A53 / QEMU (xlnx-zcu102)",
+      "description": "非Pico：ASP3_TARGET直接指定。ハードなし・ARMv8-A確認用（aarch64-none-elf無しの環境は -DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu- を付与）",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-a35.cmake",
+      "cacheVariables": {
+        "ASP3_TARGET": "zcu102_arm64_gcc"
+      }
+    },
+    {
       "name": "stm32mp257-a35",
       "inherits": "_base",
       "displayName": "STM32MP257F-DK (Cortex-A35)",
@@ -75,12 +85,14 @@
     { "name": "posix",          "configurePreset": "posix" },
     { "name": "m33-qemu",       "configurePreset": "m33-qemu" },
     { "name": "zybo-qemu",      "configurePreset": "zybo-qemu" },
+    { "name": "a64-qemu",       "configurePreset": "a64-qemu" },
     { "name": "stm32mp257-a35", "configurePreset": "stm32mp257-a35" },
     { "name": "pico2-m33",      "configurePreset": "pico2-m33" },
     { "name": "pico2-riscv",    "configurePreset": "pico2-riscv" },
     { "name": "run-posix",      "configurePreset": "posix",     "targets": ["run"] },
     { "name": "run-m33-qemu",   "configurePreset": "m33-qemu",  "targets": ["run"] },
-    { "name": "run-zybo-qemu",  "configurePreset": "zybo-qemu", "targets": ["run"] }
+    { "name": "run-zybo-qemu",  "configurePreset": "zybo-qemu", "targets": ["run"] },
+    { "name": "run-a64-qemu",   "configurePreset": "a64-qemu",  "targets": ["run"] }
   ],
   "testPresets": [
     {
