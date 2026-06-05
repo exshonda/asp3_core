@@ -40,11 +40,21 @@ cfgは2層に分けて扱う（`docs/asp3_derivative_plan.md` §8.1 CFG_SPEC_MAP
 - `DIVERGENCE_MAP.md` には `cfg/cfg.py`・`pass1.py`・`pass2.py`（エンジン）と
   `*.py` 生成テンプレートの行が**計画として記載済み**（実体は未作成）。
 
-### 参照実装
+### ベース実装（asp3_fsp）
 
-- [asp3_pico_sdk](https://github.com/exshonda/asp3_pico_sdk)（AGENTS.md §14）に
-  Python版cfgの先行実装あり。RP2350移植時には採用を見送った経緯がある
-  （`arch/arm_m_gcc/rp2350/PORTING.md` 参照）ため、流用範囲は実施プランで検討する。
+**[asp3_fsp](https://github.com/exshonda/asp3_fsp) の実装済みPython版cfgをベースとする。**
+
+- Python版エンジン：`asp3_fsp/main` の `asp3/cfg/`
+  （`cfg.py`・`pass1.py`・`pass2.py`・`gen_file.py`・`srecord.py`、計約2,626行。**cfg 1.7.0ベース**）
+- ベースとしたRuby版 cfg 1.7.0：`asp3_fsp` の `step1-complete` タグの `asp3/cfg/`
+- 本リポジトリのRuby版は **cfg 1.7.1**（`cfg/MANIFEST`）。
+  1.7.0→1.7.1のエンジン差分は小規模（diff行数：cfg.rb 12・pass1.rb 30・pass2.rb 77）
+- Python版は `.trb` 生成テンプレートを **Pythonコードとして `exec`** する設計。
+  そのため `.trb` 群のPython構文版が必要で、asp3_fsp には以下が変換済み：
+  - `kernel/`：`kernel.py`・`kernel_check.py`・`genoffset.py`＋オブジェクト別11本（計14本。
+    本リポジトリの `kernel/*.trb` 14本と1対1対応）
+  - `arch/arm_m_gcc/common/`：`core_offset.py`・`core_check.py`
+  - `target/`：`ek_ra6m5`・`ek_ra8m2` の `target_kernel.py`・`target_check.py`（変換の規範）
 
 ### 関連記述
 
@@ -55,7 +65,49 @@ cfgは2層に分けて扱う（`docs/asp3_derivative_plan.md` §8.1 CFG_SPEC_MAP
 
 ## 実施プラン
 
-（着手時に記載）
+asp3_fsp の実装済みコードをベースに、以下の手順で進める。
+
+1. **エンジンの導入**
+   - `asp3_fsp/main` の `asp3/cfg/`（`cfg.py`・`pass1.py`・`pass2.py`・`gen_file.py`・`srecord.py`）を
+     本リポジトリの `cfg/` に追加する。
+   - Ruby版（`cfg.rb` 系）は残置する（生成物比較・フォールバック用）。削除は別項目「ファイルの削除」で実施。
+2. **cfg 1.7.0→1.7.1 差分の反映**
+   - Ruby 1.7.0（`asp3_fsp` の `step1-complete` タグ）と本リポジトリの Ruby 1.7.1 の diff を抽出し、
+     エンジンの挙動変更を Python 版へ手動反映する（`GenFile.rb`・`SRecord.rb` の差分も確認）。
+   - Python版の `VERSION` を 1.7.1 に更新する。
+3. **生成テンプレート（.trb → .py）の整備**
+   - `kernel/`：asp3_fsp の `kernel/*.py` 14本を取込む。ベースが1.7.0のため、
+     1.7.1 の `kernel/*.trb` との差分を確認のうえ反映する。
+     **kernel/ への新規ファイル追加にあたるため、DIVERGENCE_MAP.md に記録する**（禁則①の手続き。
+     既存ファイルの編集はしない）。
+   - `arch/`：
+     - `arm_m_gcc/common`（mps2_an521・pico2用）：asp3_fsp の `core_offset.py`・`core_check.py` を流用。
+       `core_kernel.trb` 相当のPython版が asp3_fsp に見当たらないため、FSPでの扱いを調査のうえ
+       必要なら新規変換。
+     - `arm_gcc/common`・`arm_gcc/zynq7000`（zybo用）、`arm64_gcc/common`・`arm64_gcc/stm32mp2`
+       （stm32mp257f用）、`arm_gcc/rza1`（gr_peach用）、`posix_gcc`（linux用）：**新規にPython変換**。
+     - `core_*_v6m.trb`（ARMv6-M用）は使用ターゲットが無いため対象外（必要時に変換）。
+   - `target/`：全8ターゲットの `target_kernel.trb`・`target_check.trb`（＋`dummy_gcc/target_offset.trb`）を
+     Python変換する（asp3_fsp の `ek_ra8m2/target_*.py` を規範とする）。
+4. **ビルド統合**
+   - `configure.rb` の `CFG` デフォルトを `ruby cfg/cfg.rb` → `python3 cfg/cfg.py` に変更
+     （`-g` オプションでRuby版にも切替可能なまま）。DIVERGENCE_MAP に記録。
+   - `sample/Makefile` の `.trb` 参照（`TARGET_KERNEL_TRB` 等）を `.py` に切替える
+     （asp3_fsp の `sample/Makefile` を規範に最小差分で）。
+5. **検証**
+   - **生成物の一致確認**：各ターゲットで Ruby版／Python版それぞれの生成物
+     （`cfg1_out.c`・`kernel_cfg.c/h`・`offset.h`）を diff し、一致（または説明可能な差のみ）を確認。
+   - **動作確認（linux＋QEMU）**：
+     - linux_gcc：`obj/obj_linux` でビルド・実行（sample1動作）
+     - mps2_an521_gcc／zybo_z7_gcc：ビルド警告ゼロ＋QEMU実行
+       （sample1・シリアル入力 `r` でタスク切替・configuration check passed）
+   - その他ターゲットはビルド確認まで：pico2／ct11mpcore／gr_peach／dummy はリンク・check まで、
+     stm32mp257f は開発機ではコンパイル＋pass2生成物diffまで（リンク以降は実機側マシン）。
+6. **記録・後処理**
+   - `DIVERGENCE_MAP.md`：cfgエンジン行の実体化（最終確認バージョン cfg 1.7.1）・`kernel/*.py` 追加行・
+     `configure.rb`／`Makefile` 変更を記録。
+   - `docs/asp3_derivative_plan.md` CFG_SPEC_MAP節の対応表（最終確認バージョン）を更新。
+   - 本ファイルの実施結果を記載し、`docs/dev/README.md` の状態を更新。コミット・プッシュ。
 
 ## 実施結果
 
