@@ -12,6 +12,7 @@
 
 | ファイル / ディレクトリ | 変更種別 | 理由 | 上流変更時のリスク | 担当レイヤ | 最終確認バージョン |
 |---|---|---|---|---|---|
+| `configure.rb` | 改変 | 非TECSビルドをデフォルト化（`OMIT_TECS`初期設定＋共通syssvcオブジェクトの自動付与） | 上流configure.rb変更時に要確認（変更箇所は【asp3_core変更】コメントでマーク） | build | 3.7.2 |
 | `syssvc/serial.c` | 上流 `non_tecs` 由来 | TECSレス版を上流拡張から採用 | `extension/non_tecs/syssvc` の更新に追従 | syssvc(EXTENDED) | 3.7.0 |
 | `syssvc/logtask.c` | 上流 `non_tecs` 由来 | 同上 | 同上 | syssvc(EXTENDED) | 3.7.0 |
 | `syssvc/banner.c` | 上流 `non_tecs` 由来 | 同上 | 同上 | syssvc(EXTENDED) | 3.7.0 |

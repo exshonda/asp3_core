@@ -105,6 +105,9 @@ require "optparse"
 #
 #  変数の初期化
 #
+#  【asp3_core変更】非TECS（TECSレス）ビルドをデフォルトとする．
+#  OMIT_TECSを初期値で設定する（-wオプションの付与は不要）．
+#
 $target = nil
 $appldirs = []
 $applname = nil
@@ -129,6 +132,7 @@ $cdefs = []
 $ldflags = []
 $libs = []
 $vartable = Hash.new("")
+$vartable["OMIT_TECS"] = "true"		# 【asp3_core変更】非TECSをデフォルト化
 
 #
 #  オプションの処理
@@ -248,6 +252,14 @@ $cfgfile ||= $applname + ".cfg"
 $cdlfile ||= $applname + ".cdl"
 $applobjs.unshift($applname + ".o") if !$option_t
 $bannerobj ||= $vartable.has_key?("OMIT_TECS") ? "banner.o" : "tBannerMain.o"
+#
+#  【asp3_core変更】非TECS時は共通の非TECS版システムサービスのオブジェ
+#  クトファイルをデフォルトでSYSSVCOBJSに含める（-Sオプションの指定は
+#  ターゲット依存のSIOドライバ等の追加分のみで足りる）．
+#
+if $vartable.has_key?("OMIT_TECS")
+  $syssvcobjs = ["syslog.o", "serial.o", "serial_cfg.o", "logtask.o"] | $syssvcobjs
+end
 if $srcdir.nil?
   # ソースディレクトリ名を取り出す
   if /^(.*)\/configure/ =~ $0
