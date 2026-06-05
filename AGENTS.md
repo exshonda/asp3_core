@@ -146,9 +146,9 @@ cmake --preset stm32mp257-a35 -B build/stm32mp257-a35 && cmake --build build/stm
 3. 実機         ← 最後に実ハードで確認
 ```
 
-> **前提メモ（上流ソース確認済み）**
-> - 上流ASP3はビルドが **Makefileベース**（`configure.rb` / `Makefile.target`）。CMakeは `asp3_pico_sdk` 由来であり、**非Picoの上流ターゲット（`mps2_an521_gcc` / `stm32mp257f_dk_arm64_gcc` 等）をasp3_coreに取り込む際は Makefile→CMake 移植が必要**。
-> - `posix` プリセットの実体は **ホストシミュレーション** で、上流の `extension/non_tecs/target/linux_gcc`（Linux）/ `macos_xcode`（mac）が相当。上流に独立した `posix_gcc` ターゲットは無い。これもCMake移植が要る。
+> **前提メモ**
+> - ビルドは **Makefile版（configure.py）とCMake版の2系統**（詳細は `docs/building.md`）。CMake版は posix / m33-qemu / zybo-qemu / stm32mp257-a35 対応済み。**pico2 は pico-sdk 必須で未対応**（プリセットは予約）。
+> - `posix` プリセットの実体は **ホストシミュレーション**（`target/linux_gcc`＝上流SVNの `asp3_arch_posix_gcc` パッケージ由来）。
 > - QEMUマシン名は `mps2-an521`（ハイフン）だが、ASP3ターゲット名は `mps2_an521_gcc`（アンダースコア）。
 
 ### 検証の鉄則

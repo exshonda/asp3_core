@@ -34,7 +34,8 @@
 | `target/*/target_kernel.py`・`target_check.py`（全9ターゲット＋dummyのtarget_offset.py） | 旧`.trb`→Python移植 | pass2/pass3テンプレートのPython化 | 上流由来ターゲットは上流.trb変更時に対応.pyへ手動再反映 | target(テンプレート) | 3.7.2 |
 | `Makefile` 系 | CMakeへ置換 | ビルドシステム近代化 | 上流Makefile変更は参照のみ・取り込まない | build | 3.7.0 |
 | `CMakeLists.txt` | 新規追加 | CMakeビルド | （上流に存在せず・衝突なし） | build(NEW) | — |
-| `cmake/` 一式 | 新規追加 | ツールチェーン・CMakeモジュール | （上流に存在せず・衝突なし） | build(NEW) | — |
+| `cmake/` 一式 | 新規追加 | ツールチェーンファイル（arm-none-eabi/a35） | （上流に存在せず・衝突なし） | build(NEW) | — |
+| `asp3_core.cmake`・`arch/*/arch.cmake`・`arch/*/*/chip.cmake`・`target/*/target.cmake` | 新規追加 | CMakeビルド（変数積み上げ方式） | （上流に存在せず・衝突なし） | build(NEW) | — |
 | `arch/riscv_gcc/` | 新規追加 | RP2350 RISC-V対応 | 上流がRISC-V対応を追加した場合は統合検討 | arch(NEW) | — |
 | `target/mps2_an521_gcc/` | 新規追加 | QEMU Cortex-M33ターゲット | （上流に存在せず・衝突なし） | target(NEW) | — |
 | `target/rp2350-arm-s_pico_sdk/` | 新規追加 | asp3_pico_sdkから移植 | （上流に存在せず・衝突なし） | target(NEW) | — |
