@@ -159,9 +159,10 @@ for _intno_val in INTNO_CREISR_VALID:
         kernelCfgC.add("void")
         kernelCfgC.add(f"_kernel_inthdr_{_intno_val}(void)")
         kernelCfgC.add("{")
-        _i = 0
+        # Pythonのsortedは安定ソートのため，isrpriのみをキーとすれば
+        # 同一優先度のISRは定義順が保たれる（Ruby版のi += 1相当は不要）
         for _idx, _params in enumerate(
-                sorted(_isr_params_list, key=lambda p: (int(p["isrpri"]), (_i := _i + 1) and _i))):
+                sorted(_isr_params_list, key=lambda p: int(p["isrpri"]))):
             if _idx > 0:
                 kernelCfgC.add()
                 kernelCfgC.add("\tif (_kernel_sense_lock()) {")

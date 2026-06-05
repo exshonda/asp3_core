@@ -51,6 +51,13 @@ SYSSVC_DIRS := $(SYSSVC_DIRS) $(SRCDIR)/arch/arm_gcc/common
 SYSSVC_COBJS := $(SYSSVC_COBJS)
 
 #
+#  システムサービスに関する定義（非TECS版）
+#
+ifdef OMIT_TECS
+SYSSVC_COBJS := $(SYSSVC_COBJS) target_serial.o uart_pl011.o
+endif
+
+#
 #  リンカスクリプトの定義
 #
 LDSCRIPT = $(TARGETDIR)/ct11mpcore.ld

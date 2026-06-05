@@ -16,8 +16,8 @@ TOOL = gcc
 #  このターゲット依存部ではct11mpcore_gccと異なるファイルのみを用意する
 #
 TARGETDIR2 = $(SRCDIR)/target/ct11mpcore_gcc
-TARGET_KERNEL_TRB = $(TARGETDIR2)/target_kernel.trb
-TARGET_CHECK_TRB = $(TARGETDIR2)/target_check.trb
+TARGET_KERNEL_TRB = $(TARGETDIR2)/target_kernel.py
+TARGET_CHECK_TRB = $(TARGETDIR2)/target_check.py
 TARGET_KERNEL_CFG = $(TARGETDIR2)/target_kernel.cfg
 
 #

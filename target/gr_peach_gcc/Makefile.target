@@ -60,6 +60,13 @@ LDFLAGS := $(LDFLAGS) -mlittle-endian
 #
 KERNEL_DIRS := $(KERNEL_DIRS) $(TARGETDIR)
 KERNEL_COBJS := $(KERNEL_COBJS) target_kernel_impl.o
+
+#
+#  システムサービスに関する定義（非TECS版）
+#
+ifdef OMIT_TECS
+SYSSVC_COBJS := $(SYSSVC_COBJS) chip_serial.o scif.o
+endif
 KERNEL_ASMOBJS := $(KERNEL_ASMOBJS)
 START_OBJS := target_start.o
 

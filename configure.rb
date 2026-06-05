@@ -281,7 +281,12 @@ else
 end
 $tempmakefile ||= $srcdir + "/sample/Makefile"
 $tecsdir ||= "\$(SRCDIR)/tecsgen"
-$cfg ||= $ruby + " \$(SRCDIR)/cfg/cfg.rb"
+#
+#  【asp3_core変更】コンフィギュレータのデフォルトをPython版（cfg.py）
+#  とする．Ruby版を使用する場合は -g "ruby $(SRCDIR)/cfg/cfg.rb" を指定
+#  する（その場合は生成テンプレートも.trbを指定すること）．
+#
+$cfg ||= "python3 \$(SRCDIR)/cfg/cfg.py"
 $tecsgen ||= $ruby + " \$(TECSDIR)/tecsgen.rb"
 
 #

@@ -134,7 +134,7 @@ endif
 ifeq ($(ARM_ARCH),ARMV6M)
 	TARGET_OFFSET_TRB = $(COREDIR)/core_offset_v6m.trb
 else
-	TARGET_OFFSET_TRB = $(COREDIR)/core_offset.trb
+	TARGET_OFFSET_TRB = $(COREDIR)/core_offset.py
 endif
 
 #

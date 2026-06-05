@@ -48,4 +48,4 @@ CFG_TABS := $(CFG_TABS) --symval-table $(COREDIR)/core_sym.def
 #
 #  オフセットファイル生成のための定義
 #
-TARGET_OFFSET_TRB = $(COREDIR)/core_offset.trb
+TARGET_OFFSET_TRB = $(COREDIR)/core_offset.py

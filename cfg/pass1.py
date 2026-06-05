@@ -742,6 +742,7 @@ def _generate_cfg1_out_c(g):
     cfg1_out.add(f"const uint32_t {CFG1_SIZEOF_SIGNED} = sizeof(signed_t);")
     cfg1_out.add(f"const uint32_t {CFG1_SIZEOF_INTPTR} = sizeof(intptr_t);")
     cfg1_out.add(f"const uint32_t {CFG1_SIZEOF_CHARPTR} = sizeof(char *);")
+    cfg1_out.add("")
 
     # 値取得シンボルの処理
     for symbol_name, symbol_data in symbol_value_table.items():

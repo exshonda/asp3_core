@@ -293,11 +293,12 @@ endif
 ifdef TARGET_OFFSET_TRB
 	OFFSET_H = offset.h
 endif
+# 【asp3_core変更】生成テンプレートのデフォルトをPython版（.py）とする
 ifndef TARGET_KERNEL_TRB
-	TARGET_KERNEL_TRB := $(TARGETDIR)/target_kernel.trb
+	TARGET_KERNEL_TRB := $(TARGETDIR)/target_kernel.py
 endif
 ifndef TARGET_CHECK_TRB
-	TARGET_CHECK_TRB := $(TARGETDIR)/target_check.trb
+	TARGET_CHECK_TRB := $(TARGETDIR)/target_check.py
 endif
 ifndef TARGET_KERNEL_CFG
 	TARGET_KERNEL_CFG := $(TARGETDIR)/target_kernel.cfg
