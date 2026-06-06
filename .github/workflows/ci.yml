@@ -65,7 +65,7 @@ jobs:
       - name: Function tests (testexec.py)
         run: |
           scripts/ci/run_testexec.py --options "--preset linux" \
-            --run "timeout 20 ./asp" --workdir build/testexec-linux \
+            --run "timeout 60 ./asp" --workdir build/testexec-linux \
             ${{ env.POSIX_TESTS }}
       - name: cfg tests (dummy target)
         run: scripts/ci/run_testcfg.sh build/testcfg

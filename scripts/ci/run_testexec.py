@@ -15,7 +15,7 @@
 # 【例】
 #	# POSIX（linuxプリセット・ホスト実行）
 #	scripts/ci/run_testexec.py --options "--preset linux" \
-#	    --run "timeout 20 ./asp" --workdir build/testexec-linux task1 sem1
+#	    --run "timeout 60 ./asp" --workdir build/testexec-linux task1 sem1
 #
 #	# QEMU mps2-an521
 #	scripts/ci/run_testexec.py --options "--preset mps2_an521-qemu" \
