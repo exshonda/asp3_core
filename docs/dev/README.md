@@ -24,7 +24,8 @@
 | CLIターゲット | `cli-target.md` | 完了 |
 | CI整備 | `ci.md` | 完了 |
 | OS Awareness 対応 | `os-awareness.md` | 完了（stm32実機回帰・pico2実機確認のみ実機側PCで実施） |
-| RISC-V Hazard3ターゲット | `pico2-riscv.md` | 計画中（実機接続PCで実施） |
+| 移植検証テスト | `porting-test.md` | 計画中（pico2-riscvの前に実施） |
+| RISC-V Hazard3ターゲット | `pico2-riscv.md` | 計画中（実機接続PCで実施・移植検証テスト整備後） |
 | ドキュメントMarkdown化 | `docs-markdown.md` | 計画中 |
 | devcontainer / Docker | `devcontainer.md` | 実施中 |
 | skillパッケージ | `skill-package.md` | 計画中 |

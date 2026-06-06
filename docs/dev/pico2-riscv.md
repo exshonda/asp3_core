@@ -132,6 +132,10 @@ ninja -C build/raspberrypi_pico2_riscv console   # 端末C
 ninja -C build/raspberrypi_pico2_riscv run       # OpenOCD書込み→実行
 ```
 
+0. **test_porting（移植検証テスト・最初に実施）**：`docs/dev/porting-test.md` で
+   整備済みの6項目TAP（`-DASP3_APPLDIR=test/porting -DASP3_APPLNAME=test_porting`
+   でビルド）。**①syslog=ブート/UART・②tick=TICKS/TIMER0・⑥alarm=Xh3irq割込み経路**
+   の切り分けに直結。6/6 passed を確認してから次へ
 1. sample1：バナー（`<RISC-V Hazard3>`等の表記）・task1周期実行・
    `a`/`r`でタスク切替・`z`（CPU例外）
 2. testexec（ARM版実績＝36本中34本PASS）：
