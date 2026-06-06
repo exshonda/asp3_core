@@ -230,6 +230,7 @@ ninja -C build/raspberrypi_pico2_riscv run       # OpenOCD書込み→実行
 | ビルド | 警告ゼロ・rv32 ELF・IMAGE_DEFは先頭4KB内（0x94） |
 | test_porting | **6/6 passed**（修正済みカーネルで再確認込み） |
 | sample1 | バナー`<RISC-V Hazard3>`・task1周期実行・`a`（act_tsk）・`r`×2（task1→2→3切替）・`3`+`z`（CPU例外→ハンドラ→復帰）すべてOK |
+| dlynse較正 | SIL_DLY_TIM1/2＝**40/13**で全項目OK（NG=0）．呼出実測46ns・ループ実測はビルド（XIPフェッチ整列）で13.3〜20.5ns変動→理論下限（6cyc/2cyc @150MHz）基準で設定 |
 | シリアル | RX/TX割込み駆動で動作（logtask経由） |
 | polarfire回帰 | ビルド・リンクOK（QEMU実行はCI＝ピン留めコンテナで確認） |
 
@@ -241,7 +242,6 @@ ninja -C build/raspberrypi_pico2_riscv run       # OpenOCD書込み→実行
 
 ### 残課題（スコープ外含む）
 
-- `dlynse` によるSIL_DLY_TIM較正（現状ARM版の46/33を仮置き）
 - testexec全件の実機実行（ARM版PORTING.mdの環境構築を踏襲）
 - OS Awareness（`chip_os_awareness.py`＝Xh3irq対応）
 - polarfire QEMUスモークのCI確認（実施PCのQEMU 8.2.2では

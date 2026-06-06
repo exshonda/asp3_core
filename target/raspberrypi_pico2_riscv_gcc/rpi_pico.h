@@ -24,10 +24,15 @@
 #define CORE_CLK_MHZ    150
 
 /*
- *  微少時間待ちのための定義（sil_dly_nse用．未較正＝ARM版の値を初期値
- *  とする．test/のdlynseテストで較正すること）
+ *  微少時間待ちのための定義（sil_dly_nse用）
+ *
+ *  実機のdlynseテストで較正（2026-06-06）：呼出オーバヘッドの実測は
+ *  46ns，1ループの実測はビルド（XIPフェッチの整列）により13.3〜20.5ns
+ *  で変動した．「実測≥要求」を常に満たすため，理論下限
+ *  （呼出≈6サイクル=40ns・ループ2サイクル=13.3ns @150MHz）を
+ *  下回らない値に設定する．
  */
-#define SIL_DLY_TIM1    46
-#define SIL_DLY_TIM2    33
+#define SIL_DLY_TIM1    40
+#define SIL_DLY_TIM2    13
 
 #endif /* TOPPERS_RPI_PICO_H */
