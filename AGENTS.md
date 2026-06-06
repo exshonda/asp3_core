@@ -37,6 +37,7 @@ TOPPERS/ASP3カーネルを上流追従しながら、各社SDK（Raspberry Pi P
 | CLIターゲット | POSIX sim。エージェントのbuild→run→testループ用 | 高 |
 | CI整備 | GitHub Actions：全ターゲットbuild＋POSIX/QEMUテスト実行 | 高 |
 | OS Awareness 対応 | OS Awareness を全ターゲット使用可能とする | 高  |
+| RISC-V Hazard3ターゲット | PICO2のRISC-Vコア（Hazard3）をSDK非依存ベアメタルで対応（raspberrypi_pico2_gccのRISC-V版） | 高 |
 | ドキュメントMarkdown化 | 統合仕様書・APIリファレンスをMarkdown化（RAG対応） | 中 |
 | devcontainer / Docker | ツールチェーン・QEMU・Pythonをピン留めした開発コンテナ。開発機/CI/エージェント環境の再現性を確保 | 中 |
 | skillパッケージ | build/flash/debug/cfg生成skill（別リポジトリ） | 中 |
