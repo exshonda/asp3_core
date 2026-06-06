@@ -34,7 +34,7 @@
 
 | ファイル | 内容 | 対応元 | 状態 |
 |---------|------|--------|------|
-| `configurator_spec.md` | cfg仕様詳細 | configurator.txt | ⚪ |
+| `configurator_spec.md` | cfg仕様詳細（kernel_cfg.c/h 生成仕様・エラー条件） | configurator.txt | 🟢 |
 | `design_overview.md` | カーネル内部設計 | design.txt | ⚪ |
 | `design_mutex.md` | ミューテックス設計 | mutex_design.txt | ⚪ |
 | `design_inherit.md` | 優先度継承設計 | inherit_design.txt | ⚪ |
@@ -101,7 +101,8 @@ python3 scripts/check_spec_conversion.py doc/user.txt <開始行>:<終了行> do
   - Phase 2（2026-06-07 完了）: 03_quickstart.md ～ 08_system_services.md
   - Phase 3（2026-06-07 完了）: 09_support_libraries.md ～ 13_reference_detail.md
     — **user.txt 全13章の変換完了**（全章機械突合・911トークン欠落ゼロ）
-  - 次: configurator.txt → design系3本 → asp_spec/non_tecs/extension → porting.txt → migration
+  - configurator.txt（2026-06-07 完了）: configurator_spec.md（機械突合516トークン欠落ゼロ）
+  - 次: design系3本 → asp_spec/non_tecs/extension → porting.txt → migration
 - **手順3（計画中）**: simtimer.txt 削除、参照張り替え
 
 ---
