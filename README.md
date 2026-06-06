@@ -32,6 +32,16 @@ cmake --preset mps2_an521-qemu && cmake --build --preset run-mps2_an521-qemu
 
 プリセット一覧は `cmake --list-presets`。詳細は [docs/building.md](docs/building.md)。
 
+### 開発環境（Docker / devcontainer）
+
+ツールチェーン・QEMU・Pythonをピン留めした開発コンテナ
+（`ghcr.io/exshonda/asp3_core-dev`）を用意しています。
+**CIも同一イメージで実行**するため、コンテナ内で通ればCIでも通ります。
+
+- VS Code / Claude Code：リポジトリを開いて「Reopen in Container」（[.devcontainer/](.devcontainer/)）
+- 手順の詳細：[docs/building.md §6「開発コンテナでのビルド」](docs/building.md#6-開発コンテナでのビルド)
+- 設計・経緯：[docs/dev/devcontainer.md](docs/dev/devcontainer.md)
+
 ## 対応ターゲット
 
 | ターゲット | ISA | 実行環境 |
