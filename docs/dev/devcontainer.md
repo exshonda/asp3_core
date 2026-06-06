@@ -138,7 +138,7 @@ devcontainer / Docker（AGENTS.md §1 機能追加計画、優先度：中）
 
 ## 実施結果
 
-（2026-06-06 実施・完了。nightly のdispatch確認を除き計画どおり）
+（2026-06-06 実施・完了）
 
 実施プランどおり、①Dockerfile（ubuntu:26.04・シングルステージ）、
 ②ローカル検証（開発機Docker）、③devcontainer.json、④container.yml
@@ -209,7 +209,7 @@ Actions検証を実施した。
 | コンテナ内 testcfg／cppcheck | 9/9パス／67ファイル完走 |
 | **GitHub Actions Container**（run 27057520965） | **success**（4m20s・タグ `20260606`＋`latest` をGHCRへpush。コメントのみ変更の再runはキャッシュで22s） |
 | **GitHub Actions CI**（run 27057740846・コンテナ実行） | **全8ジョブ success**（3m10s。従来2m47sとの比較は `ci.md` の実測表） |
-| GitHub Actions nightly（コンテナ実行） | 手動dispatchで確認（スケジュール実行でも同一構成） |
+| **GitHub Actions nightly**（run 27057992875・手動dispatch・コンテナ実行） | **全3ジョブ success**（mps2 148s／zcu102 164s／polarfire 154s＝マトリクス統合後の初回） |
 
 ### DIVERGENCE_MAP との関連
 
