@@ -55,6 +55,13 @@ jobs:
           cmake --build build/linux
       - name: ctest (sample1 run + slog check, JUnit)
         run: ctest --preset linux --output-junit ctest-junit.xml
+      - name: Porting verification test (test_porting)
+        run: |
+          cmake --preset linux -B build/test_porting-linux \
+            -DASP3_APPLDIR=test/porting -DASP3_APPLNAME=test_porting \
+            -DASP3_EXTRA_APP_C_FILES=test/porting/tap.c
+          cmake --build build/test_porting-linux
+          ctest --test-dir build/test_porting-linux --output-on-failure
       - name: Function tests (testexec.py)
         run: |
           scripts/ci/run_testexec.py --options "--preset linux" \
@@ -209,6 +216,17 @@ jobs:
             -machine microchip-icicle-kit -nographic \
             -semihosting-config enable=on,target=native \
             -bios none -kernel build/polarfire_soc_kit-qemu/asp.elf
+      - name: Porting verification test (test_porting)
+        run: |
+          cmake --preset polarfire_soc_kit-qemu -B build/test_porting-polarfire \
+            -DASP3_APPLDIR=test/porting -DASP3_APPLNAME=test_porting \
+            -DASP3_EXTRA_APP_C_FILES=test/porting/tap.c
+          cmake --build build/test_porting-polarfire
+          timeout 60 qemu-system-riscv64 -machine microchip-icicle-kit \
+            -nographic -semihosting-config enable=on,target=native \
+            -bios none -kernel build/test_porting-polarfire/asp.elf \
+            | tee test_porting.log || true
+          grep -q "# 6/6 passed" test_porting.log
 
   #
   #  Raspberry Pi PICO2（実機ターゲット）：build only
@@ -230,6 +248,29 @@ jobs:
         run: |
           cmake --preset raspberrypi_pico2 -B build/raspberrypi_pico2
           cmake --build build/raspberrypi_pico2
+
+  #
+  #  Raspberry Pi PICO2 RISC-V（実機ターゲット・Hazard3）：build only
+  #  （QEMUにHazard3モデルが無いため実行はできない．実機検証の経緯は
+  #  docs/dev/pico2-riscv.md）
+  #
+  pico2-riscv:
+    name: Build raspberrypi_pico2_riscv (RISC-V Hazard3)
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      #  イメージの既定ユーザはvscode（devcontainer用）のため、Actionsの
+      #  ランナーファイルに書けるようrootで実行する
+      options: --user root
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (sample1)
+        run: |
+          cmake --preset raspberrypi_pico2_riscv -B build/raspberrypi_pico2_riscv
+          cmake --build build/raspberrypi_pico2_riscv
 
   #
   #  STM32MP257F-DK（実機ターゲット）：build only（リンクまで）
