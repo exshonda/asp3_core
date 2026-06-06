@@ -38,9 +38,9 @@
 | `design_overview.md` | カーネル内部設計（設計方針・ディスパッチャ・CHECKマクロ等） | design.txt | 🟢 |
 | `design_mutex.md` | ミューテックス設計（優先度上限・標準構成） | mutex_design.txt | 🟢 |
 | `design_inherit.md` | 優先度継承設計（extension/inherit/・推移的継承） | inherit_design.txt | 🟢 |
-| `asp3_spec_overview.md` | ASP3仕様概要 | asp_spec.txt | ⚪ |
-| `extension_guide.md` | 拡張パッケージガイド | extension.txt | ⚪ |
-| `non_tecs_services.md` | 非TECS版システムサービス | non_tecs.txt | ⚪ |
+| `asp3_spec_overview.md` | ASP3仕様概要（μITRON4.0との差分・JSP/ASP1比較） | asp_spec.txt | 🟢 |
+| `extension_guide.md` | 機能拡張・チューニングガイド（拡張パッケージ9種） | extension.txt | 🟢 |
+| `non_tecs_services.md` | 非TECS版システムサービス（asp3_coreの既定構成・§3=移植時の正本） | non_tecs.txt | 🟢 |
 | `porting_guide_upstream.md` | 上流ポーティングガイド | porting.txt | ⚪ |
 | `migration_guide.md` | マイグレーション | migration.txt | ⚪ |
 | `version_history.md` | 変更履歴 | version.txt | ⚪ |
@@ -104,7 +104,9 @@ python3 scripts/check_spec_conversion.py doc/user.txt <開始行>:<終了行> do
   - configurator.txt（2026-06-07 完了）: configurator_spec.md（機械突合516トークン欠落ゼロ）
   - design系3本（2026-06-07 完了）: design_overview.md・design_mutex.md・design_inherit.md
     （機械突合 計420トークン欠落ゼロ）
-  - 次: asp_spec/non_tecs/extension → porting.txt → migration
+  - asp_spec/non_tecs/extension（2026-06-07 完了）: asp3_spec_overview.md・
+    non_tecs_services.md・extension_guide.md（機械突合 計619トークン欠落ゼロ）
+  - 次: porting.txt → migration
 - **手順3（計画中）**: simtimer.txt 削除、参照張り替え
 
 ---
