@@ -175,7 +175,8 @@ python3 ../test_cfg/testcfg.py all
 | zcu102_arm64_gcc | zcu102_arm64／**zcu102_arm64-qemu** | 実機（実行手段は今後整備）／QEMU（run）．aarch64-none-elf が無い環境は `-DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-` を付与 |
 | raspberrypi_pico2_gcc | raspberrypi_pico2 | 実機（run=OpenOCD書込み．gdb/console等） |
 | stm32mp257f_dk_arm64_gcc | stm32mp257f_dk_arm64 | 実機（swd-run/osdebug/console等．リンクは aarch64-none-elf 環境） |
+| polarfire_soc_kit_gcc | polarfire_soc_kit／**polarfire_soc_kit-qemu** | 実機（実行手段は今後整備）／QEMU（run）．qemu-system-riscv64 がPATHにない場合は `-DQEMU_SYSTEM_RISCV64=...` を付与 |
 | dummy_gcc | （プリセット無し．`-DASP3_TARGET=dummy_gcc`） | cfgテスト用ホストビルド |
-| rp2350-riscv_pico_sdk | rp2350-riscv_pico_sdk（予約） | arch/riscv_gcc 未実装 |
+| rp2350-riscv_pico_sdk | rp2350-riscv_pico_sdk（予約） | チップ依存部（Hazard3）未実装（コア依存部 arch/riscv_gcc/common は実装済み） |
 
 CMake対応の経緯は `docs/dev/cmake.md` を参照。

@@ -15,7 +15,9 @@
 | Cortex-A コンテキストスイッチ | `arm64_gcc/common` | `core_support.S` | — |
 | Cortex-A 例外ベクタ・EL設定 | `arm64_gcc/common` | `core_support.S` | EL1/EL3初期化 |
 | RISC-V コンテキストスイッチ | `riscv_gcc/common` | `core_support.S` | mret/csr |
-| RISC-V トラップエントリ | `riscv_gcc/common` | `core_support.S` | mcause判定 |
+| RISC-V トラップエントリ | `riscv_gcc/common` | `core_support.S`・`polarfire_soc/chip_support.S` | mtvecベクタ＋mcause判定 |
+| RISC-V PLIC割込み制御 | `riscv_gcc/common` | `plic_kernel_impl.[ch]`・`polarfire_soc/chip_support.S` | claim/complete・閾値マスク |
+| RISC-V Machine Timer | `riscv_gcc/common` | `mtimer.[ch]` | CLINT mtime/mtimecmp（MTIはローカル割込み） |
 
 ---
 
@@ -39,6 +41,8 @@
 | ZynqMP（Cortex-A53）EL3初期化 | `arch/arm64_gcc/zynqmp` | `chip_kernel_impl.c` | SCR/SMPEN/STG（QEMUはSTGスキップ） |
 | Cadence UART（ARM64） | `arch/arm64_gcc/zynqmp` | `xuartps.[ch]`・`chip_serial.c` | 非TECS SIO |
 | QEMU AArch64ベアメタル実行 | `zcu102_arm64_gcc` | `target.cmake`・`target_kernel_impl.c` | xlnx-zcu102,secure=on／SYS_EXIT終了／glibc系ツールチェーン対策 |
+| MMUART（PolarFire SoC） | `arch/riscv_gcc/polarfire_soc` | `mmuart.[ch]`・`chip_serial.c` | 非TECS SIO（16550系） |
+| QEMU RISC-Vベアメタル実行 | `polarfire_soc_kit_gcc` | `target.cmake`・`target_kernel_impl.c` | microchip-icicle-kit／-bios none／ハートパーキング／SYS_EXIT終了 |
 
 ---
 
@@ -61,7 +65,7 @@
 | Cortex-M でSysTickが空いている | SysTick直接制御 | `mps2_an521_gcc` |
 | SDKがタイマAPIを提供（Pico等） | SDKラッパー経由 | `rp2350-arm-s_pico_sdk` |
 | Cortex-A | アーキテクチャタイマ（CNTP） | `stm32mp257f_dk_arm64_gcc` |
-| RISC-V | CLINT mtime/mtimecmp | `rp2350-riscv_pico_sdk` |
+| RISC-V | CLINT mtime/mtimecmp | `arch/riscv_gcc/common`（mtimer） |
 
 ---
 
