@@ -22,10 +22,20 @@ list(APPEND ASP3_INCLUDE_DIRS
 
 list(APPEND ASP3_ARCH_C_FILES
     ${COREDIR}/core_kernel_impl.c
-    ${COREDIR}/plic_kernel_impl.c
-    ${COREDIR}/mtimer.c
     ${COREDIR}/core_support.S
 )
+
+#
+#  PLIC・Machine Timerドライバ（既定で使用．独自の割込みコントローラ／
+#  タイマを使うチップ（rp2350のXh3irq＋TIMER0等）は，chip.cmakeで
+#  ASP3_RISCV_OMIT_PLIC_MTIMER をONにして除外する）
+#
+if(NOT ASP3_RISCV_OMIT_PLIC_MTIMER)
+    list(APPEND ASP3_ARCH_C_FILES
+        ${COREDIR}/plic_kernel_impl.c
+        ${COREDIR}/mtimer.c
+    )
+endif()
 
 list(APPEND ASP3_START_FILES
     ${COREDIR}/start.S

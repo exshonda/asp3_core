@@ -164,6 +164,7 @@
 
 #define RP2350_UART_FR_TXFF             (1 << 5)
 #define RP2350_UART_FR_RXFE             (1 << 4)
+#define RP2350_UART_FR_BUSY             (1 << 3)
 #define RP2350_UART_LCR_H_WLEN_8BITS    (0b11 << 5)
 #define RP2350_UART_LCR_H_FEN           (1 << 4)
 #define RP2350_UART_CR_RXE              (1 << 9)

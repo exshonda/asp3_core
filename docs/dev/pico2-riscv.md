@@ -173,4 +173,76 @@ ninja -C build/raspberrypi_pico2_riscv run       # OpenOCD書込み→実行
 
 ## 実施結果
 
-（完了時に記載）
+（2026-06-06・実機接続PC（Ubuntu 24.04・PICO2＋Debugprobe）で実施）
+
+### 追加したファイル
+
+- **`arch/riscv_gcc/rp2350/`（新規・13ファイル）**：Xh3irqチップ依存部
+  - `xh3irq_kernel_impl.h`：Xh3irq制御（窓方式CSR・割込み許可/禁止/
+    probe/強制・優先度設定・PREEMPT操作）
+  - `chip_kernel_impl.[ch]`：チップ初期化（mtvec・Xh3irq・MEIEのみ許可）・
+    `initialize_interrupt`・t_set_ipm/t_get_ipm・ras_int/clr_int（meifa）
+  - `chip_support.S`：トラップベクタ・irc_begin_int（meinext UPDATE=1で
+    claim）・irc_end_int（優先度スタックのソフトウェアpop）・irc_*_exc
+  - `chip_kernel.h`（TMIN_INTPRI=-15）・`chip_asm.inc`・`chip_sil.h`
+    （RP2350アトミックエイリアス）・`chip_stddef.h`・`chip_kernel.py`
+    （INTNO_VALID=1〜52）・`chip_rename.def/.h`・`chip_unrename.h`・
+    `chip.cmake`
+- **`target/raspberrypi_pico2_riscv_gcc/`（新規・27ファイル）**：
+  ARM版をベースに，`image_def.S`（RISC-V EXE 0x1101＋ENTRY_POINT item
+  0x44）・`rpi_pico2.ld`（エントリコード先頭・sdata/gp配置）・
+  `target_timer.[ch]`（TIMER0流用・割込み強制をNVIC ISPR→meifaに置換）・
+  `target_kernel_impl.c`（hardware_init_hook流用・FPU部削除）・
+  `run.cmake`（rp2350-riscv.cfg・gdb-multiarch）・`presets.json` ほか
+
+### 変更したファイル（既存）
+
+| ファイル | 内容 |
+|---|---|
+| `arch/riscv_gcc/common/core_kernel.h` | RV32対応：`TOPPERS_STK_T` をXLENで分岐（RV32は`__int128`非対応のためaligned(16)構造体） |
+| `arch/riscv_gcc/common/arch.cmake` | PLIC/mtimerを `ASP3_RISCV_OMIT_PLIC_MTIMER` で除外可能に |
+| `arch/riscv_gcc/common/core_rename.def/.h`・`core_unrename.h` | `target_hrt_*` のリネームを削除（ARM系の慣例に統一．kernel_cfg.cの参照と不整合になるため．polarfireはビルドで整合確認済み） |
+| `arch/arm_m_gcc/rp2350/rp2350_uart.c`・`RP2350.h` | `cls_por`に送信FIFOドレイン待ち（FR.BUSY）を追加（終了時の末尾出力欠落の修正．ARM版共通） |
+| `target/raspberrypi_pico2_gcc/presets.json`・`CMakePresets.json` | 予約プリセット`rp2350-riscv_pico_sdk`を削除し`raspberrypi_pico2_riscv`を追加 |
+
+### 要確認事項の結果
+
+1. **IMAGE_DEF**：RISC-V EXE＝IMAGE_TYPE 0x1101．既定エントリは
+   イメージ先頭だが，pico-sdk同様 **ENTRY_POINT item（0x44・
+   entry＋初期SP）** を付与（SPはstart.Sが直ちにistkptへ差替え）
+2. **OpenOCD**：RPiフォークの `target/rp2350-riscv.cfg` で
+   `program asp.elf verify reset exit` がそのまま動作（フラッシュ
+   書込み・verify・リセットOK）
+3. **優先度モデル**：meipra（4bit・16段階）に内部表現1〜15を対応付け，
+   マスクはmeicontext.PREEMPT（=内部表現+1）．**重要な知見**：Hazard3は
+   **MEIトラップ入口で優先度スタックをハードウェアがpush**
+   （PREEMPT←受付け割込み優先度+1・PPREEMPT←旧PREEMPT・MRETEIRQ←1）し，
+   mret時にMRETEIRQ=1ならpopする．ASP3はディスパッチでmretを通らず
+   タスクへ戻る経路があるため，**popをソフトウェア（irc_end_int）に
+   一本化**した（csrwで入口前の値を書き戻す方式は不可＝書き戻す値自体が
+   push後の値になる．実機で全割込みマスク固着として顕在化）
+4. **ARM版chip_serial.c**：そのまま流用可（ena_int/dis_int経由＝ISA非依存）
+
+### 検証結果（すべて実機）
+
+| 項目 | 結果 |
+|---|---|
+| ビルド | 警告ゼロ・rv32 ELF・IMAGE_DEFは先頭4KB内（0x94） |
+| test_porting | **6/6 passed**（修正済みカーネルで再確認込み） |
+| sample1 | バナー`<RISC-V Hazard3>`・task1周期実行・`a`（act_tsk）・`r`×2（task1→2→3切替）・`3`+`z`（CPU例外→ハンドラ→復帰）すべてOK |
+| シリアル | RX/TX割込み駆動で動作（logtask経由） |
+| polarfire回帰 | ビルド・リンクOK（QEMU実行はCI＝ピン留めコンテナで確認） |
+
+### Git情報
+
+- ベースコミット：`7f8213b`
+- ファイルリスト再現：
+  `git diff --stat <base> main -- arch/riscv_gcc target/raspberrypi_pico2_riscv_gcc arch/arm_m_gcc/rp2350 CMakePresets.json target/raspberrypi_pico2_gcc/presets.json`
+
+### 残課題（スコープ外含む）
+
+- `dlynse` によるSIL_DLY_TIM較正（現状ARM版の46/33を仮置き）
+- testexec全件の実機実行（ARM版PORTING.mdの環境構築を踏襲）
+- OS Awareness（`chip_os_awareness.py`＝Xh3irq対応）
+- polarfire QEMUスモークのCI確認（実施PCのQEMU 8.2.2では
+  sample1含め無出力＝既存の環境制約）

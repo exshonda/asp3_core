@@ -147,8 +147,8 @@ timeout 30 qemu-system-riscv64 -machine microchip-icicle-kit -nographic \
 # Raspberry Pi PICO2 (Cortex-M33 / 実機)
 cmake --preset raspberrypi_pico2 -B build/raspberrypi_pico2 && cmake --build build/raspberrypi_pico2
 
-# Raspberry Pi PICO2 (RISC-V / 実機)
-cmake --preset rp2350-riscv_pico_sdk -B build/rp2350-riscv_pico_sdk && cmake --build build/rp2350-riscv_pico_sdk
+# Raspberry Pi PICO2 (RISC-V Hazard3 / 実機)
+cmake --preset raspberrypi_pico2_riscv -B build/raspberrypi_pico2_riscv && cmake --build build/raspberrypi_pico2_riscv
 
 # STM32MP257F-DK (Cortex-A35 / 実機)
 cmake --preset stm32mp257f_dk_arm64 -B build/stm32mp257f_dk_arm64 && cmake --build build/stm32mp257f_dk_arm64

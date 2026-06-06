@@ -1,0 +1,24 @@
+{
+  "version": 4,
+  "include": [
+    "../../cmake/presets-base.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "raspberrypi_pico2_riscv",
+      "inherits": "_base",
+      "displayName": "Raspberry Pi PICO2 (RISC-V Hazard3)",
+      "description": "SDK非依存ベアメタル移植（Xh3irq）。実機書込みはOpenOCD（--target run）",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-riscv64.cmake",
+      "cacheVariables": {
+        "ASP3_TARGET": "raspberrypi_pico2_riscv_gcc"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "raspberrypi_pico2_riscv",
+      "configurePreset": "raspberrypi_pico2_riscv"
+    }
+  ]
+}

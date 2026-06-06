@@ -173,6 +173,13 @@ rp2350_uart_cls_por(SIOPCB *p_siopcb)
 {
 	if (p_siopcb->opened) {
 		/*
+		 *  送信FIFOが掃けるのを待つ（待たずにディスエーブルすると
+		 *  カーネル終了時の最後の出力（TAPサマリ行等）が失われる）
+		 */
+		while ((sil_rew_mem(RP2350_UART_FR(p_siopcb->siopinib->base))
+				& RP2350_UART_FR_BUSY) != 0U) ;
+
+		/*
 		 *  UARTをディスエーブル
 		 */
 		sil_wrw_mem(RP2350_UART_CR(p_siopcb->siopinib->base), 0U);

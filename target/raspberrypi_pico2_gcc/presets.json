@@ -13,26 +13,12 @@
       "cacheVariables": {
         "ASP3_TARGET": "raspberrypi_pico2_gcc"
       }
-    },
-    {
-      "name": "rp2350-riscv_pico_sdk",
-      "inherits": "_base",
-      "displayName": "Raspberry Pi PICO2 (RISC-V Hazard3)",
-      "description": "予約：arch/riscv_gcc未実装（Pico SDK統合・PICO_PLATFORMで選択）",
-      "cacheVariables": {
-        "PICO_BOARD": "pico2",
-        "PICO_PLATFORM": "rp2350-riscv"
-      }
     }
   ],
   "buildPresets": [
     {
       "name": "raspberrypi_pico2",
       "configurePreset": "raspberrypi_pico2"
-    },
-    {
-      "name": "rp2350-riscv_pico_sdk",
-      "configurePreset": "rp2350-riscv_pico_sdk"
     }
   ]
 }

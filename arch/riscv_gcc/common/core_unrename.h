@@ -40,13 +40,6 @@
 #undef sense_lock
 
 /*
- *  mtimer.c
- */
-#undef target_hrt_initialize
-#undef target_hrt_terminate
-#undef target_hrt_handler
-
-/*
  *  plic_kernel_impl.c
  */
 #undef plic_context_initialize

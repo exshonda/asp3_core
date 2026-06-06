@@ -32,7 +32,9 @@
 | Pico SDK統合タイマ | `rp2350-arm-s_pico_sdk` | `target_timer.c` | add_repeating_timer_us |
 | Pico SDK UART | `rp2350-arm-s_pico_sdk` | `target_serial.c` | uart_putc_raw |
 | Pico SDK ブート連携 | `rp2350-arm-s_pico_sdk` | `target_kernel.c` | stdio_init / Core1停止 |
-| RP2350 RISC-V起動 | `rp2350-riscv_pico_sdk` | `target_kernel.c` | Hazard3固有 |
+| RP2350 RISC-V起動（IMAGE_DEF） | `raspberrypi_pico2_riscv_gcc` | `image_def.S` | RISC-V EXE（0x1101）＋ENTRY_POINT item |
+| Hazard3 Xh3irq割込み制御 | `arch/riscv_gcc/rp2350` | `xh3irq_kernel_impl.h`・`chip_support.S` | meinext claim・優先度スタックをソフトpop |
+| RV32実証（XLEN抽象） | `arch/riscv_gcc/rp2350` | `chip.cmake`・`common/core_kernel.h` | rv32imac/ilp32・STK_T分岐 |
 | GICv3初期化 | `stm32mp257f_dk_arm64_gcc` | `target_kernel.c` | GICD/GICR/ICC |
 | Cortex-A35 MMU/キャッシュ初期化 | `stm32mp257f_dk_arm64_gcc` | `target_kernel.c` | EL1ページテーブル |
 | Cortex-A35 アーキテクチャタイマ | `stm32mp257f_dk_arm64_gcc` | `target_timer.c` | CNTP_TVAL_EL0 |

@@ -39,13 +39,6 @@
 #define sense_lock					_kernel_sense_lock
 
 /*
- *  mtimer.c
- */
-#define target_hrt_initialize		_kernel_target_hrt_initialize
-#define target_hrt_terminate		_kernel_target_hrt_terminate
-#define target_hrt_handler			_kernel_target_hrt_handler
-
-/*
  *  plic_kernel_impl.c
  */
 #define plic_context_initialize		_kernel_plic_context_initialize

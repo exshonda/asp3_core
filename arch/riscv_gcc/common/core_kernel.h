@@ -53,8 +53,15 @@
  *  スタックの型
  *
  *  RISC-Vでは，スタックを16バイト境界に配置する必要がある．
+ *  RV32（ILP32）のGCCは__int128をサポートしないため，16バイト
+ *  アライン指定の構造体で代用する（サイズ・アラインとも16バイト）．
  */
+#if __riscv_xlen == 64
 #define TOPPERS_STK_T    __int128
+#else /* __riscv_xlen == 32 */
+#define TOPPERS_STK_T \
+	struct { uint64_t lo; uint64_t hi; } __attribute__((aligned(16)))
+#endif /* __riscv_xlen == 64 */
 
 /*
  *  CPU例外ハンドラ番号の数

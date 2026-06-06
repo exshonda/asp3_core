@@ -25,11 +25,6 @@ lock_cpu
 unlock_cpu
 sense_lock
 
-# mtimer.c
-target_hrt_initialize
-target_hrt_terminate
-target_hrt_handler
-
 # plic_kernel_impl.c
 plic_context_initialize
 plic_global_initialize
