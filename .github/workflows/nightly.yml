@@ -77,7 +77,7 @@ jobs:
               notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
               sysman1 sysstat1 task1 tmevt1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Function tests (testexec.py)
         run: |
           scripts/ci/run_testexec.py --options "${{ matrix.options }}" \
@@ -86,7 +86,7 @@ jobs:
             ${{ matrix.tests }}
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: nightly-${{ matrix.name }}-logs
           path: build/testexec-${{ matrix.name }}/testexec.log

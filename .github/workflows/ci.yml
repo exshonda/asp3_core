@@ -48,7 +48,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build (sample1)
         run: |
           cmake --preset linux -B build/linux
@@ -71,7 +71,7 @@ jobs:
         run: scripts/ci/run_testcfg.sh build/testcfg
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: posix-logs
           path: |
@@ -96,7 +96,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build (sample1)
         run: |
           cmake --preset mps2_an521-qemu -B build/mps2_an521-qemu
@@ -110,7 +110,7 @@ jobs:
             task1 sem1 flg1 tmevt1 hrt1
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mps2-qemu-logs
           path: build/testexec-mps2/testexec.log
@@ -131,7 +131,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build (sample1)
         run: |
           cmake --preset zybo_z7-qemu -B build/zybo_z7-qemu
@@ -160,7 +160,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build (sample1)
         run: |
           cmake --preset zcu102_arm64-qemu -B build/zcu102_arm64-qemu
@@ -181,7 +181,7 @@ jobs:
             sem1
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: zcu102-qemu-logs
           path: build/testexec-zcu102/testexec.log
@@ -205,7 +205,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build (sample1)
         run: |
           cmake --preset polarfire_soc_kit-qemu -B build/polarfire_soc_kit-qemu
@@ -243,7 +243,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build (sample1)
         run: |
           cmake --preset raspberrypi_pico2 -B build/raspberrypi_pico2
@@ -266,7 +266,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build (sample1)
         run: |
           cmake --preset raspberrypi_pico2_riscv -B build/raspberrypi_pico2_riscv
@@ -289,7 +289,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build (sample1)
         run: |
           cmake --preset stm32mp257f_dk_arm64 -B build/stm32mp257f_dk_arm64
@@ -311,7 +311,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: cppcheck (syssvc/ target/ arch/)
         continue-on-error: true
         run: |
@@ -334,7 +334,7 @@ jobs:
           clang-tidy -p build/linux --quiet $files 2>&1 | tee clang-tidy-report.txt
       - name: Upload reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: static-analysis-reports
           path: |
