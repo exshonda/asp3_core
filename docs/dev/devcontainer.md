@@ -11,12 +11,13 @@ devcontainer / Docker（AGENTS.md §1 機能追加計画、優先度：中）
 
 ### 意義（何が嬉しいか）
 
-1. **環境乖離の解消（実害が発生中）**：開発機はQEMU **11.0**へ更新済みだが、
-   CI（ubuntu-24.04ランナー）はapt版**8.2**。この乖離により
-   **polarfire（microchip-icicle-kit）はCIでbuild-onlyに格下げ**されている
-   （8.2は `-bios none` 直接ブート未対応。`docs/dev/ci.md` 参照）。
-   QEMU≥9をピン留めしたコンテナをCIでも使えば、**RISC-VのフルテストをCIに
-   復帰**できる。
+1. **環境乖離の解消**：開発機はQEMU **11.0**へ更新済みだが、
+   CI（ubuntu-24.04ランナー）はapt版**8.2**。
+   ※この乖離による最大の実害（polarfireのCI build-only格下げ）は、
+   **polarfireジョブを ubuntu:26.04 コンテナ（QEMU 10.2）で実行する対処で
+   解消済み**（`82bd565`・ci.md参照）。ただしジョブ毎に異なるOSイメージが
+   混在する状態であり、**全ジョブ／開発機／エージェントを単一のピン留め
+   イメージに統一する**意義は残る。
 2. **「開発機でしか通らない」の根絶**：ツールチェーン4系統
    （host gcc／arm-none-eabi／aarch64-linux-gnu／riscv64-unknown-elf）＋
    aarch64-none-elf（ARM公式tarball）＋CMake/Ninja/Python/cppcheckの
@@ -73,7 +74,7 @@ devcontainer / Docker（AGENTS.md §1 機能追加計画、優先度：中）
    - イメージビルド → コンテナ内で：
      linux（ctest＋testexec数本）／mps2・zcu102・polarfire 各QEMUスモーク／
      pico2・stm32 build（**stm32はフルリンク**）／testcfg／cppcheck
-   - **polarfireのQEMU実行がコンテナ内で通ること**（CI復帰の根拠）
+   - **polarfireのQEMU実行がコンテナ内で通ること**
 3. **devcontainer.json作成**
    - image参照（GHCR日付タグ）・clangd拡張・
      postCreateCommand（compile_commands.jsonリンク等）
@@ -82,8 +83,8 @@ devcontainer / Docker（AGENTS.md §1 機能追加計画、優先度：中）
      重いためBuildKitレイヤキャッシュ＝`cache-from: gha`を使用）
 5. **CIのコンテナ化**（`ci.yml`/`nightly.yml` を `container:` 実行に切替）
    - apt install手順を削除しイメージ参照に置換（セットアップ時間も短縮）
-   - **polarfire をbuild-onlyからQEMUスモークへ復帰**、
-     nightlyにpolarfire全件を追加
+   - polarfireの暫定対処（ubuntu:26.04コンテナ・QEMU 10.2）を本イメージに
+     統一（CIへの復帰自体は実施済み）
    - ランナー上のdockerイメージpullが毎回入るため、所要時間の前後を計測し
      ci.mdに記録（イメージサイズ次第では従来方式の維持も判断）
 6. **検証**：feat/devcontainer ブランチでActions確認（container.yml→
