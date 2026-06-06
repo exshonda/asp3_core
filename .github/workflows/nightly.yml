@@ -13,6 +13,10 @@
 #  - cpuexc1・cpuexc4（mps2）：CPU例外がHardFaultへエスカレートし
 #    Unregistered Exceptionとなる既存挙動（要調査）
 #
+#  polarfireはランナーのQEMU 8.2がmicrochip-icicle-kitの直接カーネル
+#  ブート（-bios none）未対応のため対象外（ci.ymlのbuild-onlyのみ．
+#  経緯は docs/dev/ci.md）．
+#
 name: Nightly
 
 on:
@@ -29,7 +33,7 @@ jobs:
       matrix:
         include:
           - name: mps2-qemu
-            packages: gcc-arm-none-eabi qemu-system-arm
+            packages: gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm
             options: --preset mps2_an521-qemu
             run: >-
               timeout 60 qemu-system-arm -machine mps2-an521 -nographic
@@ -41,7 +45,7 @@ jobs:
               notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
               sysman1 sysstat1 task1 tmevt1
           - name: zcu102-qemu
-            packages: gcc-aarch64-linux-gnu qemu-system-arm
+            packages: gcc-aarch64-linux-gnu libc6-dev-arm64-cross qemu-system-arm
             options: >-
               --preset zcu102_arm64-qemu -DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-
             run: >-
@@ -52,20 +56,6 @@ jobs:
               cpuexc1 cpuexc2 cpuexc3 cpuexc4 cpuexc5 cpuexc6 cpuexc7 cpuexc8
               cpuexc9 cpuexc10
               dtq1 exttsk flg1 hrt1 int1 mpf1
-              mutex1 mutex2 mutex3 mutex4 mutex5 mutex6 mutex7 mutex8
-              notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
-              sysman1 sysstat1 task1 tmevt1
-          - name: polarfire-qemu
-            packages: gcc-riscv64-unknown-elf qemu-system-misc
-            options: --preset polarfire_soc_kit-qemu
-            run: >-
-              timeout 60 qemu-system-riscv64 -machine microchip-icicle-kit
-              -nographic -semihosting-config enable=on,target=native
-              -bios none -kernel asp.elf
-            tests: >-
-              cpuexc1 cpuexc2 cpuexc3 cpuexc4 cpuexc5 cpuexc6 cpuexc7 cpuexc8
-              cpuexc9 cpuexc10
-              dtq1 exttsk flg1 hrt1 mpf1
               mutex1 mutex2 mutex3 mutex4 mutex5 mutex6 mutex7 mutex8
               notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
               sysman1 sysstat1 task1 tmevt1

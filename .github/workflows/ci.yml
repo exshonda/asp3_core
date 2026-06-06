@@ -75,10 +75,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
+        #  libnewlib-arm-none-eabi はRecommendsのため明示指定が必要
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            ninja-build gcc-arm-none-eabi qemu-system-arm
+            ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi \
+            qemu-system-arm
       - name: Build (sample1)
         run: |
           cmake --preset mps2_an521-qemu -B build/mps2_an521-qemu
@@ -110,7 +112,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            ninja-build gcc-arm-none-eabi qemu-system-arm
+            ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi \
+            qemu-system-arm
       - name: Build (sample1)
         run: |
           cmake --preset zybo_z7-qemu -B build/zybo_z7-qemu
@@ -133,9 +136,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
+          #  libc6-dev-arm64-cross はRecommendsのため明示指定が必要
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            ninja-build gcc-aarch64-linux-gnu qemu-system-arm
+            ninja-build gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
+            qemu-system-arm
       - name: Build (sample1)
         run: |
           cmake --preset zcu102_arm64-qemu -B build/zcu102_arm64-qemu \
@@ -164,12 +169,14 @@ jobs:
           if-no-files-found: ignore
 
   #
-  #  QEMU RV64GC（polarfire／microchip-icicle-kit）：build → sample1スモーク
-  #  ※開発機はQEMU 11で検証済み．ランナーのQEMU 8.2での動作確認を兼ねる
-  #    （NGの場合の対処は docs/dev/ci.md を参照）
+  #  RV64GC（polarfire）：build only
+  #  ※QEMU 8.2のmicrochip-icicle-kitは「-bios none -kernel」の直接Mモード
+  #    ブート未対応（リセットベクタがeNVM固定．QEMU 11で動作確認済み）の
+  #    ため、ランナー（apt QEMU 8.2）では実行せずビルドのみ行う。
+  #    経緯・代替案（QEMUソースビルド＋cache）は docs/dev/ci.md を参照
   #
-  polarfire-qemu:
-    name: QEMU polarfire (RV64GC)
+  polarfire:
+    name: Build polarfire (RV64GC)
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -177,17 +184,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            ninja-build gcc-riscv64-unknown-elf qemu-system-misc
+            ninja-build gcc-riscv64-unknown-elf
       - name: Build (sample1)
         run: |
           cmake --preset polarfire_soc_kit-qemu -B build/polarfire_soc_kit-qemu
           cmake --build build/polarfire_soc_kit-qemu
-      - name: Smoke test (sample1)
-        run: |
-          scripts/ci/smoke_sample1.sh 60 qemu-system-riscv64 \
-            -machine microchip-icicle-kit -nographic \
-            -semihosting-config enable=on,target=native \
-            -bios none -kernel build/polarfire_soc_kit-qemu/asp.elf
 
   #
   #  Raspberry Pi PICO2（実機ターゲット）：build only
@@ -201,7 +202,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            ninja-build gcc-arm-none-eabi
+            ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi
       - name: Build (sample1)
         run: |
           cmake --preset raspberrypi_pico2 -B build/raspberrypi_pico2
