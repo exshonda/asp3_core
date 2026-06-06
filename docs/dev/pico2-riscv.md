@@ -223,6 +223,16 @@ ninja -C build/raspberrypi_pico2_riscv run       # OpenOCD書込み→実行
    push後の値になる．実機で全割込みマスク固着として顕在化）
 4. **ARM版chip_serial.c**：そのまま流用可（ena_int/dis_int経由＝ISA非依存）
 
+### テストにより発見・修正した問題
+
+1. **`__idata_start = .;` 方式のROM化コピー元ずれ**（notify1で発覚）：
+   `.data : ALIGN(8)` のLMAはアラインで繰り上がるため，.text終端を
+   コピー元とすると4バイトずれて初期値付き変数（test_notify1の
+   `count_variable = 1`等）が壊れる．→ `__idata_start = LOADADDR(.data)`
+   に修正．あわせてリンカスクリプトをLINK_DEPENDSに登録
+   （CMakeLists.txt．-Wl,-Tは依存にならず.ld編集が再リンクされないため）
+2. **SIL_DLY_TIM較正**：上記dlynse較正の行を参照
+
 ### 検証結果（すべて実機）
 
 | 項目 | 結果 |
@@ -231,6 +241,8 @@ ninja -C build/raspberrypi_pico2_riscv run       # OpenOCD書込み→実行
 | test_porting | **6/6 passed**（修正済みカーネルで再確認込み） |
 | sample1 | バナー`<RISC-V Hazard3>`・task1周期実行・`a`（act_tsk）・`r`×2（task1→2→3切替）・`3`+`z`（CPU例外→ハンドラ→復帰）すべてOK |
 | dlynse較正 | SIL_DLY_TIM1/2＝**40/13**で全項目OK（NG=0）．呼出実測46ns・ループ実測はビルド（XIPフェッチ整列）で13.3〜20.5ns変動→理論下限（6cyc/2cyc @150MHz）基準で設定 |
+| testexec全件 | **36/36 PASS**（cpuexc10はSKIP＝not necessary）．ARM版実績（34/36）で既知FAILだったcpuexc1/cpuexc4もRISC-Vでは**PASS**．ランナは`scripts/ci/run_board_pico2.sh`（UARTキャプチャ→OpenOCD書込み→完走マーカ待ち．ARM版と共用可） |
+| OS Awareness | `chip_os_awareness.py`（Xh3irq）を実装し実機で確認（atask/stask/intr．窓方式CSR＝meiea/meipaはOpenOCDの`riscv exec_progbuf`で`csrrs s0,csr,s0`を1命令実行して読出し）．`--target osdebug`をrun.cmakeに追加 |
 | シリアル | RX/TX割込み駆動で動作（logtask経由） |
 | polarfire回帰 | ビルド・リンクOK（QEMU実行はCI＝ピン留めコンテナで確認） |
 
@@ -240,11 +252,8 @@ ninja -C build/raspberrypi_pico2_riscv run       # OpenOCD書込み→実行
 - ファイルリスト再現：
   `git diff --stat <base> main -- arch/riscv_gcc target/raspberrypi_pico2_riscv_gcc arch/arm_m_gcc/rp2350 CMakePresets.json target/raspberrypi_pico2_gcc/presets.json`
 
-### 残課題（スコープ外含む）
+### 残課題
 
-- testexec全件の実機実行（ARM版PORTING.mdの環境構築を踏襲．
-  ARM版実績＝36本中34本PASS が比較基準）
-- OS Awareness（`chip_os_awareness.py`＝Xh3irq対応→`osdebug`確認）
-
-（polarfire QEMUでのtest_porting実行はCI＝ピン留めコンテナで
-6/6 passedを確認済み＝完了）
+なし（testexec全件・dlynse較正・OS Awareness・polarfire QEMUのCI確認
+まですべて完了．スコープ外＝SDK統合版・core1・QEMU対応は本ファイル
+冒頭の「スコープ外」を参照）

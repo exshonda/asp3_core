@@ -359,6 +359,12 @@ target_include_directories(asp
 )
 target_link_libraries(asp PRIVATE asp3 ${ASP3_LINK_LIBS})
 target_link_options(asp PRIVATE ${ASP3_LINK_OPTIONS})
+#  リンカスクリプトの変更で再リンクされるようにする（-Wl,-Tは依存に
+#  ならないため．忘れると.ld編集が反映されない）
+if(DEFINED ASP3_LDSCRIPT)
+    set_property(TARGET asp APPEND PROPERTY LINK_DEPENDS ${ASP3_LDSCRIPT})
+    set_property(TARGET ${CFG1_OUT} APPEND PROPERTY LINK_DEPENDS ${ASP3_LDSCRIPT})
+endif()
 asp3_cfg_check(asp)
 
 #

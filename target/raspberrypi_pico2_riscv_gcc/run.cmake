@@ -9,12 +9,15 @@
 #    openocd    : OpenOCDだけを起動（前面．Ctrl-Cで終了）
 #    gdb        : gdbだけを起動しロード＆デバッグ（OpenOCDは別端末で起動済みのこと）
 #    swd-debug  : OpenOCDを自動起動しgdbでロード＆デバッグ
+#    osdebug    : 同上＋OS-awareness（atask/stask/intr等．Xh3irqの割込み状態は
+#                 OpenOCDのexec_progbufで読出し）
 #    console    : UARTコンソール（picocom/minicom/cu自動選択）
 #
 #  上書き可能なキャッシュ変数: OCD_IF / OCD_TGT / OCD_SPEED / TTY / BAUD / OSGDB
 #
 
 set(GDB_SCRIPT ${TARGETDIR}/swd-debug.gdb)
+set(AWARENESS ${ASP3_ROOT_DIR}/scripts/gdb_os_aware/os_awareness.py)
 
 set(OCD_IF interface/cmsis-dap.cfg CACHE STRING "OpenOCD interface config")
 set(OCD_TGT target/rp2350-riscv.cfg CACHE STRING "OpenOCD target config")
@@ -45,6 +48,15 @@ add_custom_target(swd-debug
     USES_TERMINAL
     VERBATIM
     COMMENT "OpenOCD + gdb debug session"
+)
+
+#  OS-awareness付きデバッグ（swd-debug＋os_awareness.py読込み）
+add_custom_target(osdebug
+    COMMAND bash -c "echo '[osdebug] starting OpenOCD in background (log: openocd-bg.log)'; echo '[osdebug] in gdb: continue -> (run) -> Ctrl-C -> atask / stask / intr'; openocd -f ${OCD_IF} -f ${OCD_TGT} -c 'adapter speed ${OCD_SPEED}' > openocd-bg.log 2>&1 & OCD_PID=$!; trap 'kill $OCD_PID 2>/dev/null' EXIT INT TERM; sleep 2; ${OSGDB} $<TARGET_FILE:asp> -x ${GDB_SCRIPT} -ex 'source ${AWARENESS}'"
+    DEPENDS asp
+    USES_TERMINAL
+    VERBATIM
+    COMMENT "OpenOCD + gdb-multiarch with OS-awareness"
 )
 
 #  シリアルコンソール

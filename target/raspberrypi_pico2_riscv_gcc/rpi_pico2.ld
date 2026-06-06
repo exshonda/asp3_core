@@ -32,7 +32,6 @@ SECTIONS
         . = ALIGN(4);
     } > FLASH
 
-    __idata_start = .;
     /* Main DATA section (SRAM) */
     .data : ALIGN(8)
     {
@@ -43,6 +42,12 @@ SECTIONS
         *(.sdata .sdata.*)
         . = ALIGN(4);
     } > RAM AT>FLASH
+    /*
+     *  ROM化コピー元はLOADADDRで取る．「__idata_start = .;」（=.text終端）
+     *  方式は，セクションALIGNでLMAが繰り上がると4バイトずれて.dataが
+     *  化ける（test_notify1のcount_variable初期値消失で発覚）
+     */
+    __idata_start = LOADADDR(.data);
     __idata_end = __idata_start + SIZEOF(.data);
 
     /* MAIN BSS SECTION */
