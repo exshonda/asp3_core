@@ -138,4 +138,80 @@ devcontainer / Docker（AGENTS.md §1 機能追加計画、優先度：中）
 
 ## 実施結果
 
-（完了時に記載）
+（2026-06-06 実施・完了。nightly のdispatch確認を除き計画どおり）
+
+実施プランどおり、①Dockerfile（ubuntu:26.04・シングルステージ）、
+②ローカル検証（開発機Docker）、③devcontainer.json、④container.yml
+（GHCR publish）、⑤CIのコンテナ化、⑥feat/devcontainerブランチでの
+Actions検証を実施した。
+
+### 設計上の決定事項（プランからの具体化）
+
+- **aptパッケージは `=version` でピンしない**：Ubuntuアーカイブは旧版を
+  保持しないため、ピンすると再ビルドが壊れる。バージョン固定は
+  **イメージの日付タグ**（`ghcr.io/exshonda/asp3_core-dev:YYYYMMDD`）で
+  担保し、検証済みバージョンはDockerfileコメントと
+  コンテナ内 `/etc/asp3_core-toolchain-versions.txt`（ビルド時生成）に記録
+- **aarch64-none-elf tarball は SHA256 ピン**
+  （`7fedf894…`・ARM公式 .sha256asc と照合）
+- **非rootユーザ**：ubuntu:26.04既定の `ubuntu`(UID 1000) を devcontainers
+  慣行の `vscode` に置き換え（`USER vscode` 既定）。**CIの container: 実行
+  には `options: --user root` が必須**（vscodeのままだと actions/checkout
+  がランナーファイル `/__w/_temp/...` への書込みでEACCES。
+  run 27057634659 で実測・fix `8712240`）
+- **nightlyのpolarfire別ジョブを廃止**：イメージ統一により mps2／zcu102 と
+  同一マトリクスに統合
+- 実測イメージサイズ：非圧縮 4.73GB（見込み1.5〜2.5GBを超過したが、
+  CIオーバーヘッドは下記のとおり許容範囲）
+
+### 変更したファイル
+
+| ファイル | 変更内容概要 |
+|---|---|
+| `.github/workflows/ci.yml` | 全8ジョブを `container:` 実行に切替。apt install／tarball＋cache手順を削除。zcu102の `A35_TOOLCHAIN_PREFIX` オーバーライド廃止 |
+| `.github/workflows/nightly.yml` | 同上＋polarfire別ジョブをマトリクスに統合 |
+| `AGENTS.md` | §4前提メモに開発コンテナの言及を追加 |
+| `docs/building.md` | §6「開発コンテナでのビルド」を追加（devcontainer／docker run／GHCRログイン手順） |
+| `docs/dev/README.md` | 索引の状態更新 |
+| `docs/dev/ci.md` | コンテナ統一の経緯・所要時間実測を追記 |
+
+### 追加したファイル
+
+- `.devcontainer/Dockerfile` — ubuntu:26.04・シングルステージ。apt一式
+  （QEMU 10.2.1含む）＋aarch64-none-elf 13.3.rel1 tarball（SHA256ピン・
+  share/doc削除）。vscodeユーザ。ツールチェーンバージョン一覧を生成
+- `.devcontainer/devcontainer.json` — GHCR日付タグ参照・clangd拡張＋
+  query-driver設定・postCreate（compile_commands.jsonリンク）・
+  remoteUser=vscode
+- `.github/workflows/container.yml` — Dockerfile変更時にGHCRへbuild&push
+  （latest＋日付タグ・cache-from/to: gha。2回目以降はキャッシュで20秒台）
+
+### 削除したファイル
+
+なし
+
+### Git情報
+
+- ベースコミット：`4af3cc3`
+- 関連コミット：`e85578c`（.devcontainer＋container.yml）→
+  `16e7ecd`（CI/nightlyコンテナ化）→ `8712240`（--user root fix）→ 記録コミット
+- ファイルリスト再現：
+  `git diff --stat 4af3cc3 main -- .devcontainer .github/workflows AGENTS.md docs`
+
+### 検証結果
+
+| 範囲 | 結果 |
+|---|---|
+| ローカル docker build | 成功（ツールチェーンは「再検討」節の検証値と一致：gcc 15.2／arm-none-eabi 14.2.1／aarch64-none-elf 13.3.1／riscv64 14.2／CMake 4.2.3／Python 3.14.4／QEMU 10.2.1／cppcheck 2.19） |
+| コンテナ内 7プリセットbuild | 全BUILD OK・コンパイル警告ゼロ（linux／mps2／zybo／zcu102／polarfire／pico2／stm32。zcu102・stm32は `A35_TOOLCHAIN_PREFIX` なし＝同梱none-elfでフルリンク。残るはRWXセグメントのリンカ注意のみ＝既知・ターゲット既存挙動） |
+| コンテナ内 linux | ctest 2/2・testexec 5本（task1/sem1/flg1/mutex1/tmevt1）全ok |
+| コンテナ内 QEMUスモーク | mps2／zybo／zcu102／polarfire 全ok（icicle-kit直接ブート含む） |
+| コンテナ内 testcfg／cppcheck | 9/9パス／67ファイル完走 |
+| **GitHub Actions Container**（run 27057520965） | **success**（4m20s・タグ `20260606`＋`latest` をGHCRへpush。コメントのみ変更の再runはキャッシュで22s） |
+| **GitHub Actions CI**（run 27057740846・コンテナ実行） | **全8ジョブ success**（3m10s。従来2m47sとの比較は `ci.md` の実測表） |
+| GitHub Actions nightly（コンテナ実行） | 手動dispatchで確認（スケジュール実行でも同一構成） |
+
+### DIVERGENCE_MAP との関連
+
+なし（PRISTINE領域への変更なし）
+

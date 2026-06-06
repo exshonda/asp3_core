@@ -220,3 +220,39 @@ zcu102／polarfire）、③build-onlyジョブ（pico2／stm32mp257）、
 > 補足：開発機からのpushはSSH鍵がエージェント経由のため、
 > AIセッション内からは実行不可（ユーザーがpushを実施）。gh CLIは導入済み
 > だが現在のPATはread権限のみ（run watch／log取得は可能）。
+
+### 後続変更：開発コンテナイメージへの統一（2026-06-06）
+
+devcontainer / Docker 項目（`devcontainer.md`）の一環として、ci.yml・
+nightly.yml の全ジョブを開発コンテナイメージ
+（`ghcr.io/exshonda/asp3_core-dev`・日付タグ参照）での実行に切り替えた。
+
+- ランナーでの apt install／ARM tarball＋actions/cache の手順を削除し
+  `container:` 参照に置換（ci.yml＋nightly.ymlで計124行→76行）
+- zcu102 はイメージ同梱の aarch64-none-elf を使用（CIだけの
+  `A35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-` オーバーライドを廃止し、
+  開発機／CI のツールチェーン乖離を解消）
+- polarfire の ubuntu:26.04 素コンテナ＋apt の暫定対処（`82bd565`）を
+  本イメージに統一。nightly では polarfire を mps2／zcu102 と同一
+  マトリクスに統合（別ジョブを廃止）
+- イメージの既定ユーザが vscode（devcontainer用）のため、
+  `options: --user root` が必要（無いと actions/checkout がランナー
+  ファイル `/__w/_temp/...` への書込みで EACCES。run 27057634659 で実測）
+
+**所要時間の実測**（feat/devcontainer・同一コミット相当の連続run）：
+
+| ジョブ | 従来（apt install）run 27057520949 | コンテナ run 27057740846 |
+|---|---|---|
+| POSIX (linux) | 163s | 187s |
+| QEMU mps2-an521 | 54s | 61s |
+| QEMU zybo_z7 | 68s | 77s |
+| QEMU zcu102 | 67s | 81s |
+| QEMU polarfire | 92s | 133s |
+| pico2 build | 36s | 48s |
+| stm32 build | 27s | 48s |
+| static-analysis | 43s | 49s |
+| **全体（wall）** | **2m47s** | **3m10s** |
+
+イメージpull（非圧縮4.7GB級）のオーバーヘッドは＋10〜40s/ジョブ・
+全体では＋23s。再現性の対価として許容と判断し、折衷案（QEMUのみ
+イメージから取り出す等）は不採用。

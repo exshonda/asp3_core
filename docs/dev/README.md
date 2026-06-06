@@ -27,7 +27,7 @@
 | 移植検証テスト | `porting-test.md` | 計画中（pico2-riscvの前に実施） |
 | RISC-V Hazard3ターゲット | `pico2-riscv.md` | 計画中（実機接続PCで実施・移植検証テスト整備後） |
 | ドキュメントMarkdown化 | `docs-markdown.md` | 計画中 |
-| devcontainer / Docker | `devcontainer.md` | 実施中 |
+| devcontainer / Docker | `devcontainer.md` | 完了 |
 | skillパッケージ | `skill-package.md` | 計画中 |
 
 状態：計画中 → 実施中 → 完了（各項目の進行に合わせて更新する）
