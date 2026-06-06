@@ -88,4 +88,15 @@ if(POLARFIRE_QEMU)
         -semihosting-config enable=on,target=native
         -bios none -kernel $<TARGET_FILE:asp>
     )
+
+    #  osdebug用のgdb接続手順の差し替え（root CMakeLists.txtが参照）．
+    #
+    #  icicle-kitはマルチクラスタ構成（E51クラスタ＋U54クラスタ）で，QEMUの
+    #  gdbstubはクラスタ毎に別プロセスとして公開する．既定の
+    #  `gdb asp.elf -ex "target remote :1234"` ではE51（FPUなし）のtarget
+    #  descriptionとRV64GCのELFが衝突し "bfd requires flen 8, but target has
+    #  flen 0" で接続に失敗するため，ELFなしで接続→U54クラスタ（inferior 2）に
+    #  attach→fileの順とする（ASP3はhart1=U54で動作する）．
+    set(ASP3_OSDEBUG_GDB_CONNECT
+        "-ex 'target extended-remote :1234' -ex 'add-inferior' -ex 'inferior 2' -ex 'attach 2' -ex 'file $<TARGET_FILE:asp>'")
 endif()

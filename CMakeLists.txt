@@ -356,6 +356,37 @@ if(DEFINED ASP3_RUN_COMMAND)
         USES_TERMINAL
         COMMENT "Running ${ASP3_TARGET}"
     )
+
+    #
+    #  OS-awareness付きQEMUデバッグ（cmake --build <dir> --target osdebug）
+    #
+    #  実行コマンドがQEMUのターゲットでのみ定義する（linux=ネイティブ実行や
+    #  pico2=picotool書込みは対象外）．QEMUを -s -S（gdbserver :1234・起動時
+    #  停止）で起動し，gdb-multiarchで接続してOS-awarenessエンジン
+    #  （scripts/gdb_os_aware/os_awareness.py）を読み込む．エンジンはELF横の
+    #  CMakeCache.txtからターゲット依存部（target_os_awareness.py）を自動発見
+    #  する．gdb内: continue →（実行）→ Ctrl-C でhalt → atask / stask /
+    #  sem / intr 等．QEMUの出力はビルドディレクトリの qemu-osdebug.log へ．
+    #  実機SWD用のosdebug（stm32）はtarget/<name>/run.cmake側で定義される．
+    #
+    string(JOIN " " _ASP3_RUN_COMMAND_STR ${ASP3_RUN_COMMAND})
+    if(_ASP3_RUN_COMMAND_STR MATCHES "qemu-system")
+        set(OSGDB gdb-multiarch CACHE STRING "gdb for OS-awareness (osdebug)")
+        #  gdbの起動引数（ELF指定＋接続コマンド）．マルチクラスタ構成のマシン
+        #  （polarfire=icicle-kit等）はtarget.cmakeがASP3_OSDEBUG_GDB_CONNECT
+        #  を上書きして接続手順を差し替える．
+        if(NOT DEFINED ASP3_OSDEBUG_GDB_CONNECT)
+            set(ASP3_OSDEBUG_GDB_CONNECT
+                "$<TARGET_FILE:asp> -ex 'target remote :1234'")
+        endif()
+        add_custom_target(osdebug
+            COMMAND bash -c "command -v ${OSGDB} >/dev/null 2>&1 || { echo '${OSGDB} not found (sudo apt-get install -y gdb-multiarch)'; exit 1; }; echo '[osdebug] QEMU output: qemu-osdebug.log'; echo '[osdebug] in gdb: continue -> (run) -> Ctrl-C -> atask / stask'; ${_ASP3_RUN_COMMAND_STR} -s -S < /dev/null > qemu-osdebug.log 2>&1 & QEMU_PID=$!; trap 'kill $QEMU_PID 2>/dev/null' EXIT INT TERM; sleep 1; ${OSGDB} ${ASP3_OSDEBUG_GDB_CONNECT} -ex 'source ${ASP3_ROOT_DIR}/scripts/gdb_os_aware/os_awareness.py'"
+            DEPENDS asp
+            USES_TERMINAL
+            VERBATIM
+            COMMENT "QEMU (-s -S) + ${OSGDB} with OS-awareness"
+        )
+    endif()
 endif()
 
 #
