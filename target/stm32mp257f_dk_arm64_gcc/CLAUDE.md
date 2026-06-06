@@ -56,8 +56,8 @@ ninja -C build/stm32mp257f_dk_arm64 console  # / osdebug / swd-debug / openocd /
   `SIL_DLY_TIM1/2` を 70/44→**12/10** に修正（dlynse 実測），swd-run の
   halt レース対策（起動待ち 6000ms＋examine/halt 間 settle）を実施．
   詳細は PORTING_ASP3_STM32MP2.md「ランタイムテストの実施」．
-- StepC（gdb OS-awareness の ASP3 移植）: `gdb_os_aware/`（本依存部内） —
-  状況は tasklist（steering）を参照．
+- StepC（gdb OS-awareness の ASP3 移植）: 完了．エンジンは全ターゲット共通化に伴い
+  `<ASP3>/scripts/gdb_os_aware/` へ移動（2026-06-06，docs/dev/os-awareness.md 参照）．
 - 未検証: SD 直接ブート / OVRHDR．性能評価（perf）・simt 系テストは未実施．
 
 ## 運用規約

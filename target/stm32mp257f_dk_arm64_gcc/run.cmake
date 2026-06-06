@@ -16,7 +16,7 @@
 
 set(OCD_DIR ${TARGETDIR}/openocd)
 set(GDB_SCRIPT ${TARGETDIR}/swd-debug.gdb)
-set(AWARENESS ${TARGETDIR}/gdb_os_aware/os_awareness.py)
+set(AWARENESS ${ASP3_ROOT_DIR}/scripts/gdb_os_aware/os_awareness.py)
 set(STM32_GDB ${A35_TOOLCHAIN_PREFIX}gdb)
 set(STM32_READELF ${A35_TOOLCHAIN_PREFIX}readelf)
 

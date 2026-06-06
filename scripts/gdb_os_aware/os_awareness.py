@@ -1,15 +1,25 @@
-# TOPPERS/ASP3 OS-awareness for gdb  （STM32MP257F-DK / AArch64, single processor）
+# TOPPERS/ASP3 OS-awareness for gdb  （ターゲット非依存エンジン, single processor）
 #
-# gdb の Python 機構で ASP3 カーネルの状態を可視化する（Step2: OS Awareness）。
+# gdb の Python 機構で ASP3 カーネルの状態を可視化する（OS Awareness）。
 # FMP3（マルチプロセッサ）版を ASP3（シングルプロセッサ）用に移植したもの。
+# STM32MP257F-DK（AArch64）向け実装を全ターゲット共通エンジンとして一般化した
+# （経緯は docs/dev/os-awareness.md）。
 #
 # 使い方:
 #   (gdb) source <この .py>
 #   (gdb) stask              … タスクの静的情報 (_kernel_tinib_table) を表示
 #
 #   const な _kernel_tinib_table は ELF に初期値が載るため，実行中ターゲットに
-#   接続していなくても `aarch64-none-elf-gdb asp -ex "source os_awareness.py" -ex stask`
-#   で表示できる（試作・確認に便利）。動的情報(atask)は実機/コアダンプが要る。
+#   接続していなくても `gdb-multiarch asp.elf -ex "source os_awareness.py" -ex stask`
+#   で表示できる（試作・確認に便利）。動的情報(atask)は実行中ターゲット/コアダンプが要る。
+#
+# ターゲット依存部（target_os_awareness.py: 割込み状態・primapビット方向）は
+# 以下の順で自動発見する（無ければ該当機能を省略する汎用動作になる）:
+#   1. 既に import 可能（launcher が sys.path に追加済みの場合）
+#   2. 環境変数 ASP3_OSA_TARGET_DIR が指すディレクトリ
+#   3. ELF と同じディレクトリの CMakeCache.txt から ASP3_TARGET を読み，
+#      <ソースルート>/target/<ASP3_TARGET>/ を解決（CMake ビルドの標準配置）
+#   明示指定・再ロードは gdb コマンド `osa-target <dir>`。
 #
 # ASP3 では実行状態はグローバル変数（_kernel_p_runtsk / _kernel_p_schedtsk /
 # _kernel_ready_queue / _kernel_ready_primap / _kernel_dspflg / _kernel_enadsp /
@@ -17,9 +27,10 @@
 #
 # 対応カーネル定数（kernel/kernel_impl.h, include/kernel.h より）:
 #   TMIN_TSKID=1, TMIN_TPRI=1, TMAX_TPRI=16, EXT_TSKPRI(x)=x+TMIN_TPRI
-#   タスク属性 TA_ACT=0x02（生成時に起動）
+#   タスク属性 TA_ACT=0x01（生成時に起動）
 
 import gdb
+import importlib
 import os
 import re
 import sys
@@ -28,18 +39,91 @@ import sys
 # （ソースツリーに __pycache__ を残さないため）。
 sys.dont_write_bytecode = True
 
-# ターゲット依存部の awareness（割込み許可/禁止状態など）。
-# launcher（make osdebug 等）がターゲット依存部のディレクトリを sys.path に追加していれば
-# import できる。無ければ該当機能（intr の ena/pend 列）を省略する。
-try:
-    import target_os_awareness as _TGT
-except Exception:
-    _TGT = None
+# ターゲット依存部の awareness（割込み許可/禁止状態・primapビット方向など）。
+# 読めなければ該当機能（intr の ena/pend 列等）を省略する。
+_TGT = None
+
+
+def _osa_repo_root():
+    """本スクリプト位置（<repo>/scripts/gdb_os_aware/）からリポジトリルートを返す。"""
+    return os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../.."))
+
+
+def _target_dir_from_cmakecache():
+    """ELF と同じディレクトリの CMakeCache.txt からターゲット依存部ディレクトリを推定する。
+
+    CMake ビルドでは ELF は build/<preset>/ 直下にあり，同所の CMakeCache.txt に
+    ASP3_TARGET（ターゲット名）と CMAKE_HOME_DIRECTORY（ソースルート）が記録される。
+    見つからなければ None。
+    """
+    for o in gdb.objfiles():
+        if not o.filename:
+            continue
+        cache = os.path.join(os.path.dirname(o.filename), "CMakeCache.txt")
+        if not os.path.exists(cache):
+            continue
+        tgt = home = None
+        try:
+            with open(cache) as f:
+                for line in f:
+                    m = re.match(r'ASP3_TARGET:\w+=(.+)', line)
+                    if m:
+                        tgt = m.group(1).strip()
+                    m = re.match(r'CMAKE_HOME_DIRECTORY:\w+=(.+)', line)
+                    if m:
+                        home = m.group(1).strip()
+        except OSError:
+            continue
+        if not tgt:
+            continue
+        for root in (home, _osa_repo_root()):
+            if not root:
+                continue
+            d = os.path.join(root, "target", tgt)
+            if os.path.isfile(os.path.join(d, "target_os_awareness.py")):
+                return d
+    return None
+
+
+def _load_target_module(explicit_dir=None, verbose=False):
+    """ターゲット依存部 target_os_awareness を発見・import して _TGT に設定する。
+
+    explicit_dir 指定時（osa-target コマンド）はそのディレクトリを最優先する。
+    依存部は target→chip→core と固定名モジュールの連鎖なので，再ロード時は
+    旧ターゲットの *_os_awareness を sys.modules から取り除いてから import する。
+    """
+    global _TGT
+    for mod in ("target_os_awareness", "chip_os_awareness", "core_os_awareness"):
+        sys.modules.pop(mod, None)
+    cand = [d for d in (explicit_dir, os.environ.get("ASP3_OSA_TARGET_DIR"))
+            if d]
+    found = None
+    for d in cand:
+        if os.path.isfile(os.path.join(d, "target_os_awareness.py")):
+            found = os.path.abspath(d)
+            break
+        print("[os_awareness] target_os_awareness.py not found in %s" % d)
+    if found is None:
+        found = _target_dir_from_cmakecache()
+    if found:
+        sys.path.insert(0, found)
+    importlib.invalidate_caches()
+    try:
+        _TGT = importlib.import_module("target_os_awareness")
+        if verbose or explicit_dir:
+            print("[os_awareness] target module: %s" % _TGT.__file__)
+    except Exception as e:
+        _TGT = None
+        if verbose or explicit_dir:
+            print("[os_awareness] no target module (%s); "
+                  "intr ena/pend etc. will be omitted" % e)
+    return _TGT
 
 TMIN_TSKID = 1
 TMIN_SEMID = 1
 TMIN_TPRI  = 1
-TA_ACT     = 0x02
+TA_ACT     = 0x01   # 生成時に起動（include/kernel.h）
 TA_TPRI    = 0x01   # 待ち行列を優先度順に（未設定なら TA_TFIFO）
 
 
@@ -47,14 +131,37 @@ def _eval(expr):
     return gdb.parse_and_eval(expr)
 
 
+def _table(name):
+    """グローバル配列シンボルを定義側（完全型）で評価する。
+
+    停止位置のコンパイル単位によっては，配列シンボルが extern 宣言
+    （不完全型 SEMCB [] 等）に解決され，sizeof が失敗したり要素アクセスが
+    "optimized out" になることがある。lookup_global_symbol で定義シンボルを
+    引いてから値を得ることでこれを避ける（引けなければ通常評価）。
+    """
+    try:
+        s = gdb.lookup_global_symbol(name)
+        if s is not None:
+            return s.value()
+    except Exception:
+        pass
+    return _eval(name)
+
+
 def _kernel_cfg_path():
-    """kernel_cfg.h を探す（ELF と同じディレクトリ → cwd → ./gen）。無ければ None。"""
+    """kernel_cfg.h を探す（ELF と同じディレクトリ → 同 generated/ → cwd → ./gen）。
+
+    CMake ビルドは build/<preset>/generated/ に生成する（ELF は build/<preset>/）。
+    無ければ None。
+    """
     try:
         for o in gdb.objfiles():
             if o.filename:
-                p = os.path.join(os.path.dirname(o.filename), "kernel_cfg.h")
-                if os.path.exists(p):
-                    return p
+                d = os.path.dirname(o.filename)
+                for p in (os.path.join(d, "kernel_cfg.h"),
+                          os.path.join(d, "generated", "kernel_cfg.h")):
+                    if os.path.exists(p):
+                        return p
     except Exception:
         pass
     for p in ("kernel_cfg.h", os.path.join("gen", "kernel_cfg.h")):
@@ -159,8 +266,25 @@ def _wobjcb_of(tcb):
         return 0
 
 
-def _cb_array_len(tbl):
-    """CB 構造体配列の要素数。要素サイズで全体サイズを割って求める。"""
+# オブジェクト種別 → 最大ID シンボル（TMIN_<obj>ID=1 なので最大ID＝要素数）
+_OBJ_TMAX = {"SEM": "_kernel_tmax_semid", "FLG": "_kernel_tmax_flgid",
+             "DTQ": "_kernel_tmax_dtqid", "PDQ": "_kernel_tmax_pdqid",
+             "MTX": "_kernel_tmax_mtxid", "MPF": "_kernel_tmax_mpfid"}
+
+
+def _cb_count(typekey, tbl):
+    """CB 構造体配列の要素数。
+
+    _kernel_tmax_<obj>id（TMIN=1 なので要素数に等しい）を正とし，読めなければ
+    配列サイズから求める（配列シンボルが不完全型に解決されると sizeof が
+    失敗することがあるため tmax を優先する）。
+    """
+    sym = _OBJ_TMAX.get(typekey)
+    if sym:
+        try:
+            return int(_eval(sym))
+        except gdb.error:
+            pass
     return int(_eval("sizeof(%s)/sizeof(%s[0])" % (tbl, tbl)))
 
 
@@ -177,8 +301,8 @@ def _resolve_wobj(tstat, wobjcb_addr, objnames):
         return "-"
     typekey, tbl = info
     try:
-        arr = _eval(tbl)
-        cnt = _cb_array_len(tbl)
+        arr = _table(tbl)
+        cnt = _cb_count(typekey, tbl)
     except gdb.error:
         return "%s?0x%x" % (typekey, addr)
     oid = None
@@ -245,18 +369,48 @@ def _tcb_to_tid(p_tinib_addr, tinib_base, tinib_sz):
     return (p_tinib_addr - tinib_base) // tinib_sz + TMIN_TSKID
 
 
+def _tinib_stack(inib):
+    """TINIB からスタック領域 (先頭番地, サイズ) を得る。
+
+    TINIB のスタック表現はアーキ依存（kernel/task.h の USE_TSKINICTXB 分岐）:
+      - 標準（arm64/arm/riscv 等）: stksz / stk メンバ
+      - arm_m: tskinictxb.stk_top（領域先頭=低位番地）/ stk_bottom（領域末尾=高位
+        番地=初期SP）。向きの混乱を避けるため min/差分で正規化する
+      - posix: tskinictxb.stksz のみ（スタックは実スレッドのもので番地は持たない）
+    得られない値は None を返す。
+    """
+    try:
+        return int(inib['stk']), int(inib['stksz'])
+    except gdb.error:
+        pass
+    try:
+        ctxb = inib['tskinictxb']
+    except gdb.error:
+        return None, None
+    try:
+        a = int(ctxb['stk_top'])
+        b = int(ctxb['stk_bottom'])
+        return min(a, b), abs(b - a)
+    except gdb.error:
+        pass
+    try:
+        return None, int(ctxb['stksz'])
+    except gdb.error:
+        return None, None
+
+
 def _stack_use(tcb):
     """保存スタックポインタ(tskctxb.sp)から現スタック使用量 "used/size" を概算する。
 
     スタックは [stk, stk+stksz)。used = (stk+stksz) - sp。非実行タスクでは正確，実行中
-    タスクは最後の切替時の値（概算）。休止/範囲外は "-"。
+    タスクは最後の切替時の値（概算）。休止/範囲外/番地情報なし(posix)は "-"。
     """
     try:
-        inib = tcb['p_tinib']
-        stk  = int(inib['stk'])
-        sz   = int(inib['stksz'])
-        sp   = int(tcb['tskctxb']['sp'])
+        stk, sz = _tinib_stack(tcb['p_tinib'])
+        sp = int(tcb['tskctxb']['sp'])
     except gdb.error:
+        return "-"
+    if stk is None or sz is None:
         return "-"
     top = stk + sz
     if sp == 0 or sp < stk or sp > top:
@@ -305,7 +459,7 @@ class StaticTaskCmd(gdb.Command):
     def invoke(self, arg, from_tty):
         try:
             tmax  = int(_eval("_kernel_tmax_tskid"))
-            tinib = _eval("_kernel_tinib_table")
+            tinib = _table("_kernel_tinib_table")
         except gdb.error as e:
             print("stask: cannot read symbols (%s). Is the asp ELF loaded?" % e)
             return
@@ -324,13 +478,13 @@ class StaticTaskCmd(gdb.Command):
             entry = _sym_for(t['task']) or ("0x%x" % int(t['task']))
             exinf = int(t['exinf'])
             pri   = int(t['ipriority']) + TMIN_TPRI
-            stksz = int(t['stksz'])
-            stk   = int(t['stk'])
+            stk, stksz = _tinib_stack(t)
             attr  = int(t['tskatr'])
             act   = "TA_ACT" if (attr & TA_ACT) else "-"
-            print("%-22s %-16s 0x%-8x %-4d %-8d 0x%-10x %s"
+            print("%-22s %-16s 0x%-8x %-4d %-8s %-12s %s"
                   % (tidst, entry, exinf & 0xFFFFFFFFFFFFFFFF, pri,
-                     stksz, stk, act))
+                     str(stksz) if stksz is not None else "-",
+                     ("0x%x" % stk) if stk is not None else "-", act))
 
 
 class DynTaskCmd(gdb.Command):
@@ -348,8 +502,8 @@ class DynTaskCmd(gdb.Command):
     def invoke(self, arg, from_tty):
         try:
             tmax     = int(_eval("_kernel_tmax_tskid"))
-            tcbtab   = _eval("_kernel_tcb_table")
-            tinib0   = int(_eval("_kernel_tinib_table").address)
+            tcbtab   = _table("_kernel_tcb_table")
+            tinib0   = int(_table("_kernel_tinib_table").address)
             tinib_sz = gdb.lookup_type("TINIB").sizeof
         except gdb.error as e:
             print("atask: cannot read symbols (%s). Is the ELF loaded?" % e)
@@ -423,7 +577,7 @@ class DynTaskCmd(gdb.Command):
             primap = int(_eval("_kernel_ready_primap")) & 0xFFFF
             run    = int(_eval("_kernel_p_runtsk"))
             sched  = int(_eval("_kernel_p_schedtsk"))
-            rq     = _eval("_kernel_ready_queue")
+            rq     = _table("_kernel_ready_queue")
         except gdb.error as e:
             print("\n(ready queue: cannot read symbols: %s)" % e)
             return
@@ -447,22 +601,33 @@ class DynTaskCmd(gdb.Command):
         if primap == 0:
             print("  ready queue: (empty)")
             return
-        # arm64 は PRIMAP_BIT(pri)=(0x8000>>pri)（MSB 詰め, CLZ サーチ用）。
+        # PRIMAP_BIT(pri) のビット方向はアーキ依存（arm/arm64 は 0x8000>>pri の
+        # MSB 詰め＝CLZ サーチ用，それ以外はカーネル既定の 1<<pri）。ターゲット
+        # 依存部が primap_bit(pri) を提供すればそれを使い，未提供時は全キューを
+        # 走査して非空のものを表示する（ビット方向に依存しないフォールバック）。
         # ready_queue は内部優先度 pri(0=最高)で添字付け。外部優先度 = pri + TMIN_TPRI。
+        bitfn = getattr(_TGT, "primap_bit", None) if _TGT else None
+        shown = False
         for ipri in range(TNUM_TPRI):
-            if not (primap & (0x8000 >> ipri)):
-                continue
             members = _walk_taskqueue(rq[ipri], tcb_ptr_t, tinib0,
                                       tinib_sz, names)
+            if bitfn is not None:
+                if not (primap & bitfn(ipri)):
+                    continue
+            elif not members:
+                continue
+            shown = True
             print("  pri %2d: %s" % (ipri + TMIN_TPRI, ", ".join(members)))
+        if not shown:
+            print("  ready queue: (no runnable task found)")
 
         # 同期・通信オブジェクトの待ちキュー（待ち中のタスク一覧）
         print("\nWait queues (tasks blocked on synchronization/communication objects)")
         any_wq = False
         for typekey, tbl, fields in _WQ_KINDS:
             try:
-                arr = _eval(tbl)
-                cnt = _cb_array_len(tbl)
+                arr = _table(tbl)
+                cnt = _cb_count(typekey, tbl)
             except gdb.error:
                 continue            # その種別のオブジェクトが無い（表が未定義）
             onames = objnames.get(typekey, {})
@@ -571,9 +736,9 @@ def _show_objects(spec, arg):
         print("%s: no %s objects" % (cmd, spec["typekey"]))
         return
     try:
-        inibt     = _eval(spec["inib"])
-        cbt       = _eval(spec["cb"])
-        tinib0    = int(_eval("_kernel_tinib_table").address)
+        inibt     = _table(spec["inib"])
+        cbt       = _table(spec["cb"])
+        tinib0    = int(_table("_kernel_tinib_table").address)
         tinib_sz  = gdb.lookup_type("TINIB").sizeof
         tcb_ptr_t = gdb.lookup_type("TCB").pointer()
     except gdb.error as e:
@@ -688,8 +853,8 @@ def _show_timeevt(spec, arg):
         print("%s: no %s objects" % (cmd, spec["typekey"]))
         return
     try:
-        inibt = _eval(spec["inib"])
-        cbt   = _eval(spec["cb"])
+        inibt = _table(spec["inib"])
+        cbt   = _table(spec["cb"])
     except gdb.error as e:
         print("%s: cannot read symbols (%s)." % (cmd, e))
         return
@@ -782,12 +947,48 @@ class IntrCmd(gdb.Command):
                     + " [ISR]")
         return nm
 
+    def _invoke_inhinib(self):
+        """INTINIB を持たないターゲット（posix シミュレータ等）向けフォールバック。
+
+        割込みシミュレータの _kernel_inhinib_table（標準 INHINIB に intatr/intpri を
+        追加した posix 版）から登録情報のみを表示する（ena/pend 列は無し）。
+        """
+        try:
+            n   = int(_eval("_kernel_tnum_def_inhno"))
+            tab = _table("_kernel_inhinib_table")
+        except gdb.error as e:
+            print("intr: cannot read symbols (%s). Is the ELF loaded?" % e)
+            return
+        if n < 1:
+            print("intr: no configured interrupts")
+            return
+        isrmap = _load_isr_map()
+        print("ASP3 configured interrupts  "
+              "(tnum_def_inhno = %d, via inhinib_table)" % n)
+        print("%-7s %-6s %-10s %s" % ("INTNO", "pri", "attr", "handler"))
+        print("-" * 60)
+        for i in range(n):
+            e = tab[i]
+            intno = int(e['inhno']) & 0xFFFFFFFF
+            try:
+                pri = str(int(e['intpri']))
+                atr = "0x%x" % (int(e['intatr']) & 0xFFFFFFFF)
+            except gdb.error:
+                pri, atr = "-", "-"
+            try:
+                addr = int(e['inthdr'])      # posix 版 INHINIB
+            except gdb.error:
+                addr = int(e['int_entry'])   # 標準 INHINIB
+            print("%-7d %-6s %-10s %s"
+                  % (intno, pri, atr, self._handler_label(intno, addr, isrmap)))
+
     def invoke(self, arg, from_tty):
         try:
             n   = int(_eval("_kernel_tnum_cfg_intno"))
-            tab = _eval("_kernel_intinib_table")
-        except gdb.error as e:
-            print("intr: cannot read symbols (%s). Is the ELF loaded?" % e)
+            tab = _table("_kernel_intinib_table")
+        except gdb.error:
+            # INTINIB を持たないターゲット（posix シム等）は INHINIB 表で代替
+            self._invoke_inhinib()
             return
         if n < 1:
             print("intr: no configured interrupts")
@@ -801,8 +1002,13 @@ class IntrCmd(gdb.Command):
             hdr += " %-4s %-5s" % ("ena", "pend")
         if use_inh:
             hdr += " %s" % "handler"
-        if not (use_tgt and use_inh):
-            hdr += "  (ena/pend/handler: target_os_awareness not loaded)"
+        notes = []
+        if not use_tgt:
+            notes.append("ena/pend: n/a")
+        if not use_inh:
+            notes.append("handler: n/a")
+        if notes:
+            hdr += "  (%s; see target_os_awareness)" % ", ".join(notes)
         print(hdr)
         print("-" * (60 if use_inh else 44))
         for i in range(n):
@@ -830,10 +1036,35 @@ class IntrCmd(gdb.Command):
             print(line)
 
 
+class OsaTargetCmd(gdb.Command):
+    """osa-target [dir] : (re)load the target-dependent OS-awareness module.
+
+    With dir : load target_os_awareness.py from the given directory.
+    No arg   : re-run auto-discovery (env ASP3_OSA_TARGET_DIR -> CMakeCache.txt).
+    """
+
+    def __init__(self):
+        super(OsaTargetCmd, self).__init__("osa-target", gdb.COMMAND_USER)
+
+    def invoke(self, arg, from_tty):
+        arg = (arg or "").strip()
+        _load_target_module(explicit_dir=arg or None, verbose=True)
+
+
 StaticTaskCmd()
 DynTaskCmd()
 IntrCmd()
+OsaTargetCmd()
 _OBJ_CMDS  = [_make_objcmd(n) for n in _OBJ_CMD_NAMES]
 _TEVT_CMDS = [_make_tevtcmd(n) for n in _TEVT_CMD_NAMES]
+
+# ターゲット依存部の自動発見（launcher が sys.path 設定済みなら従来どおり import 可能。
+# launcher 経由でない場合も ELF 横の CMakeCache.txt から発見できる）。
+if "target_os_awareness" in sys.modules:
+    _TGT = sys.modules["target_os_awareness"]
+else:
+    _load_target_module()
 print("[os_awareness] commands registered: stask, atask, "
-      + ", ".join(_OBJ_CMD_NAMES + _TEVT_CMD_NAMES + ("intr",)))
+      + ", ".join(_OBJ_CMD_NAMES + _TEVT_CMD_NAMES + ("intr", "osa-target"))
+      + ("  (target: %s)" % os.path.dirname(_TGT.__file__) if _TGT else
+         "  (no target module: intr ena/pend omitted)"))

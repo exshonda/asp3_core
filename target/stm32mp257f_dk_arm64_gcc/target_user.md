@@ -420,7 +420,7 @@ ninja -C build/stm32mp257f_dk_arm64 gdb        # 端末2: gdb を起動（再ビ
   するが，ELF を正とする）．
 - **`osdebug`** は OS-awareness（ASP3 のタスク・同期/通信オブジェクト・割込み等を
   gdb から可視化する `stask`/`atask`/`sem`/… コマンド）を読み込んで起動する．
-  `gdb-multiarch`（Python 対応）が必要．詳細は本依存部の `gdb_os_aware/README.md`
+  `gdb-multiarch`（Python 対応）が必要．詳細は `<ASP3>/scripts/gdb_os_aware/README.md`
   を参照．
 
 以下 (1)〜(2) は上記を手動で行う場合の手順（仕組みの説明）である．`openocd` ターゲットが
@@ -612,8 +612,9 @@ gdb: monitor resume                   → OpenOCD: a35_0実行 → ASP3起動
 
 ## OS-awareness（gdb からのカーネル状態の可視化）
 
-本ターゲット依存部の `gdb_os_aware/` に，gdb（Python）から ASP3 のカーネル状態を
-表示するスクリプトを同梱している．`ninja -C build/stm32mp257f_dk_arm64 osdebug` を実行すると，
+gdb（Python）から ASP3 のカーネル状態を表示するスクリプト
+（`<ASP3>/scripts/gdb_os_aware/`，全ターゲット共通）を利用できる．
+`ninja -C build/stm32mp257f_dk_arm64 osdebug` を実行すると，
 OpenOCD と `gdb-multiarch` を起動して読み込む．
 
 - コマンド: `stask`（タスク静的情報）/ `atask`（タスク動的情報＋レディキュー＋
@@ -622,7 +623,7 @@ OpenOCD と `gdb-multiarch` を起動して読み込む．
   ペンディング状態＋ハンドラ/ISR 関数名）．
 - `aarch64-none-elf-gdb` は Python 非対応のため **`gdb-multiarch`** を使う．
 - 使い方: gdb 内で `continue` → Ctrl-C で halt → `atask` 等．詳細は
-  `gdb_os_aware/README.md` を参照．
+  `<ASP3>/scripts/gdb_os_aware/README.md` を参照．
 
 ---
 

@@ -23,3 +23,4 @@ import chip_os_awareness
 int_enabled = chip_os_awareness.int_enabled
 int_pending = chip_os_awareness.int_pending
 inh_handler = chip_os_awareness.inh_handler
+primap_bit = chip_os_awareness.primap_bit

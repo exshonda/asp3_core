@@ -1,8 +1,8 @@
-# Chip (STM32MP2) awareness helpers for gdb OS-awareness (ASP3).
+# Chip (ZynqMP) awareness helpers for gdb OS-awareness (ASP3).
 #
-# 役割: チップ（SoC）依存の知識。STM32MP2 の GIC-400 Distributor ベースアドレスを持ち，
-#       コア層(core_os_awareness, GICv2 レジスタ配置)を使って「指定 INTID の割込み
-#       許可/禁止・ペンディング状態」を返す。
+# 役割: チップ（SoC）依存の知識。ZynqMP（XCZU*）の GIC-400 Distributor ベース
+#       アドレスを持ち，コア層(core_os_awareness, GICv2 レジスタ配置)を使って
+#       「指定 INTID の割込み許可/禁止・ペンディング状態」を返す。
 #
 # core_os_awareness.py は arch/arm64_gcc/common にあるため，本ファイルからの相対パスで
 # sys.path に追加してから import する（__file__ は Python import 時に設定される）。
@@ -19,8 +19,8 @@ sys.path.insert(0, os.path.normpath(
 
 import core_os_awareness
 
-# STM32MP2 GIC-400 Distributor ベース（stm32mp2.h: GICD_BASE）
-GICD_BASE = 0x4AC10000
+# ZynqMP GIC-400 Distributor ベース（zynqmp.h: GICD_BASE）
+GICD_BASE = 0xF9010000
 
 
 def int_enabled(intid):
