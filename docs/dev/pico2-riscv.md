@@ -242,7 +242,9 @@ ninja -C build/raspberrypi_pico2_riscv run       # OpenOCD書込み→実行
 
 ### 残課題（スコープ外含む）
 
-- testexec全件の実機実行（ARM版PORTING.mdの環境構築を踏襲）
-- OS Awareness（`chip_os_awareness.py`＝Xh3irq対応）
-- polarfire QEMUスモークのCI確認（実施PCのQEMU 8.2.2では
-  sample1含め無出力＝既存の環境制約）
+- testexec全件の実機実行（ARM版PORTING.mdの環境構築を踏襲．
+  ARM版実績＝36本中34本PASS が比較基準）
+- OS Awareness（`chip_os_awareness.py`＝Xh3irq対応→`osdebug`確認）
+
+（polarfire QEMUでのtest_porting実行はCI＝ピン留めコンテナで
+6/6 passedを確認済み＝完了）
