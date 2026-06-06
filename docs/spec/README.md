@@ -41,7 +41,9 @@
 | `asp3_spec_overview.md` | ASP3仕様概要（μITRON4.0との差分・JSP/ASP1比較） | asp_spec.txt | 🟢 |
 | `extension_guide.md` | 機能拡張・チューニングガイド（拡張パッケージ9種） | extension.txt | 🟢 |
 | `non_tecs_services.md` | 非TECS版システムサービス（asp3_coreの既定構成・§3=移植時の正本） | non_tecs.txt | 🟢 |
-| `porting_guide_upstream.md` | 上流ポーティングガイド | porting.txt | ⚪ |
+| `porting_01_common.md` | 上流ポーティングガイド(1/3)：共通事項・構築環境・共通定義・SIL・カーネルAPI | porting.txt §1〜§5 | 🟢 |
+| `porting_02_kernel_impl.md` | 上流ポーティングガイド(2/3)：カーネル実装の依存部（ディスパッチャ・割込み/CPU例外出入口・タイマ） | porting.txt §6 | 🟢 |
+| `porting_03_cfg_syssvc.md` | 上流ポーティングガイド(3/3)：cfg設定ファイル・システムサービス・ファイル一覧 | porting.txt §7〜§10 | 🟢 |
 | `migration_guide.md` | マイグレーション | migration.txt | ⚪ |
 | `version_history.md` | 変更履歴 | version.txt | ⚪ |
 
@@ -106,9 +108,11 @@ python3 scripts/check_spec_conversion.py doc/user.txt <開始行>:<終了行> do
     （機械突合 計420トークン欠落ゼロ）
   - asp_spec/non_tecs/extension（2026-06-07 完了）: asp3_spec_overview.md・
     non_tecs_services.md・extension_guide.md（機械突合 計619トークン欠落ゼロ）
-  - 次: porting.txt → migration
+  - porting.txt（2026-06-07 完了）: porting_01_common.md・porting_02_kernel_impl.md・
+    porting_03_cfg_syssvc.md の3分割（機械突合 分冊毎＋全文一括 計982トークン欠落ゼロ）
+  - 次: migration.txt（低優先・最後の1本）
 - **手順3（計画中）**: simtimer.txt 削除、参照張り替え
 
 ---
 
-**最終更新**: 2026-06-07（手順2 Phase 3 完了＝user.txt 全章変換済み）
+**最終更新**: 2026-06-07（porting.txt 変換完了＝残り migration.txt のみ）
