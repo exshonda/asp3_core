@@ -70,6 +70,17 @@ devcontainer / Docker（AGENTS.md §1 機能追加計画、優先度：中）
 
 - **QEMUのピン**：apt版10.2.1（ソースビルド廃止。開発機の11.0との差は
   検証済み機能の範囲では影響なし）
+- **arm64コンパイラは aarch64-none-elf（ARM公式tarball）に一本化**：
+  - aptには26.04でもベアメタル版（gcc-aarch64-none-elf／aarch64用newlib）が
+    **存在しない**（linux-gnu系のみ。実地確認済み）
+  - バージョンは**CIのstm32ジョブと同一の 13.3.rel1** にピン
+    （`arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-elf`）
+  - `toolchain-a35.cmake` の既定プレフィックスが aarch64-none-elf のため、
+    コンテナ内では **`A35_TOOLCHAIN_PREFIX` オーバーライド不要**＝
+    zcu102・stm32 ともプリセット素のままで通る（stm32はフルリンク）
+  - `gcc-aarch64-linux-gnu`（apt）は**イメージに入れない**（2系統混在を回避）。
+    zcu102 chip.cmake のglibc系対策（-nostdlib・libc_stub等）は
+    「tarballが無い素の環境向けフォールバック」として残置
 - **タグ運用**：`ghcr.io/...:latest`＋日付タグ（`:20260606`）。
   CI・devcontainer.jsonは日付タグを参照（暗黙の更新を防ぐ）
 
@@ -77,11 +88,13 @@ devcontainer / Docker（AGENTS.md §1 機能追加計画、優先度：中）
 
 1. **Dockerfile作成**（`.devcontainer/Dockerfile`）
    - **ubuntu:26.04**・apt（バージョン明示）：build-essential, cmake, ninja-build,
-     python3, gcc-arm-none-eabi＋libnewlib, gcc-aarch64-linux-gnu＋
-     libc6-dev-arm64-cross, gcc-riscv64-unknown-elf＋picolibc,
+     python3, gcc-arm-none-eabi＋libnewlib,
+     gcc-riscv64-unknown-elf＋picolibc,
      **qemu-system-arm, qemu-system-riscv**（26.04の分割名に注意）,
      cppcheck, clang-tidy, dtc, git, gh, gdb-multiarch
-   - ARM公式 aarch64-none-elf tarball を /opt へ展開・PATH追加
+     （**gcc-aarch64-linux-gnu は入れない**＝arm64はnone-elfに一本化）
+   - ARM公式 aarch64-none-elf **13.3.rel1** tarball を /opt へ展開・PATH追加
+     （share/doc削除でサイズ節減）
    - 非rootユーザ（vscode）・ワークスペース権限
    - ツールチェーンが一段新しくなる（gcc15/arm-none-eabi14.2等）ため、
      **全ターゲットの警告ゼロ確認**をローカル検証に含める
