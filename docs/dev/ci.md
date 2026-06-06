@@ -214,6 +214,8 @@ zcu102／polarfire）、③build-onlyジョブ（pico2／stm32mp257）、
 | **GitHub Actions CI**（run 27054333051・feat/ci） | **全8ジョブ success**（2分56秒） |
 | **GitHub Actions CI**（run 27054531029・mainマージ後） | **全8ジョブ success** |
 | **GitHub Actions nightly**（run 27054576183・手動dispatch） | **success**（mps2：32本 2分14秒／zcu102：35本 2分26秒。hrt1は完走マーカ判定・zcu102のcpuexc10はSKIP） |
+| **GitHub Actions CI**（run 27055128761・polarfireコンテナ化後） | **全8ジョブ success**（polarfire＝ubuntu:26.04コンテナでQEMUスモーク復活） |
+| **GitHub Actions nightly**（run 27055164787・3ターゲット体制） | **success**（mps2 2分8秒／zcu102 2分29秒／**polarfire：34本 2分13秒**＝QEMU 10.2コンテナ） |
 
 > 補足：開発機からのpushはSSH鍵がエージェント経由のため、
 > AIセッション内からは実行不可（ユーザーがpushを実施）。gh CLIは導入済み
