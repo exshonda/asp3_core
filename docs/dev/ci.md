@@ -204,8 +204,9 @@ zcu102／polarfire）、③build-onlyジョブ（pico2／stm32mp257）、
 | ローカル QEMU zcu102（36本・QEMU 8.2） | 35本パス（dlynseのみ失敗） |
 | ローカル QEMU polarfire（36本・QEMU 11） | 34本パス（dlynse・int1失敗） |
 | ローカル testcfg（9本）・ctest（2本）・pico2ビルド | すべてパス |
-| **GitHub Actions CI**（run 27054333051） | **全8ジョブ success**（2分56秒） |
-| GitHub Actions nightly | 未実走（workflow_dispatchはmainマージ後に可能。対象リストと判定はローカルで同等内容を検証済み。初回スケジュール実行の結果確認が残） |
+| **GitHub Actions CI**（run 27054333051・feat/ci） | **全8ジョブ success**（2分56秒） |
+| **GitHub Actions CI**（run 27054531029・mainマージ後） | **全8ジョブ success** |
+| **GitHub Actions nightly**（run 27054576183・手動dispatch） | **success**（mps2：32本 2分14秒／zcu102：35本 2分26秒。hrt1は完走マーカ判定・zcu102のcpuexc10はSKIP） |
 
 > 補足：開発機からのpushはSSH鍵がエージェント経由のため、
 > AIセッション内からは実行不可（ユーザーがpushを実施）。gh CLIは導入済み
