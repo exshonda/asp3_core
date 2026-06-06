@@ -56,6 +56,7 @@ test_porting.cfg／test_porting_cfg.h・README.md。計約290行）
 
 - テスト項目の追加（割込み応答時間等の性能系）— 必要になったら拡張
 - 実機ターゲット（pico2/stm32）での実行確認 — 各ポートの実機検証時に実施
+  （→ pico2-riscv・stm32とも実施済み．実施結果を参照）
 
 ## 実施結果
 
@@ -85,6 +86,7 @@ test_porting.cfg／test_porting_cfg.h・README.md。計約290行）
 | QEMU xlnx-zcu102（A53） | **6/6 passed** |
 | QEMU microchip-icicle-kit（polarfire） | ビルド成功．実行は**実施PCのQEMU 8.2.2でsample1含め無出力**（本変更と無関係の環境制約）→ ピン留めコンテナのCIで確認する |
 | 実機 raspberrypi_pico2_riscv | **6/6 passed**（`docs/dev/pico2-riscv.md` 参照） |
+| 実機 stm32mp257f_dk_arm64 | **6/6 passed**（swd-runでロード実行．2026-06-06） |
 
 ### Git情報
 

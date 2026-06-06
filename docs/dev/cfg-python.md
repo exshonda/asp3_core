@@ -163,7 +163,7 @@ ct11mpcore/gr_peach/dummy/stm32mp257f_dk）で、Ruby版とPython版の
 | QEMU xilinx-zynq-a9（実行） | ○ | 同上 |
 | raspberrypi_pico2（ビルド） | ○ | check passed |
 | ct11mpcore／gr_peach／dummy（ビルド） | ○ | check passed |
-| stm32mp257f_dk（コンパイル） | △ | pass1/2生成物一致・コンパイル成功（リンク・pass3・実機は実機側マシンで実施のこと） |
+| stm32mp257f_dk（実行） | ○ | pass1/2生成物一致・リンク・pass3成功・**実機でsample1動作**（バナー・task1・`r`でタスク切替．2026-06-06実機接続PCで確認） |
 
 ### DIVERGENCE_MAP との関連
 
