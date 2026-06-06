@@ -14,7 +14,12 @@ parse_slog.py — TOPPERS/ASP3 Core 構造化ログパーサ
 import sys
 import re
 import json
+import signal
 import argparse
+
+# head等とのパイプ接続でBrokenPipeErrorにしない
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 # docs/errors.md のメインエラーコード対応
 ERROR_CODES = {

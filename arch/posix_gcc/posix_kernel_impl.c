@@ -141,10 +141,16 @@ int_entry(void *arg)
 	/* CPUロック状態の解除 */
 	unlock_cpu();
 
-	/* 割込みハンドラを呼び出す */
-	LOG_INH_ENTER(inhno);
+	/*
+	 *  割込みハンドラを呼び出す
+	 *
+	 *  【asp3_core変更】上流はLOG_INH_ENTER/LEAVEに存在しない変数inhno
+	 *  を渡しており，トレースログ有効時（TOPPERS_ENABLE_TRACE）にコンパ
+	 *  イルエラーとなるため，割込みハンドラ初期化ブロックから取り出す．
+	 */
+	LOG_INH_ENTER(p_my_intrcb->p_inhinib->inhno);
 	(*(p_my_intrcb->p_inhinib->inthdr))();
-	LOG_INH_LEAVE(inhno);
+	LOG_INH_LEAVE(p_my_intrcb->p_inhinib->inhno);
 
 	/* CPUロック状態に */
 	if (!sense_lock()) {

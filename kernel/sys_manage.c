@@ -231,7 +231,7 @@ get_lod(PRI tskpri, uint_t *p_load)
 	QUEUE	*p_queue, *p_entry;
 	ER		ercd;
 
-	LOG_GET_LOD_ENTER(p_tskid, p_load);
+	LOG_GET_LOD_ENTER(tskpri, p_load);	/*【asp3_core変更】上流はp_tskid（未定義変数）を渡しており，トレース有効時にコンパイル不能（上流報告：docs/dev/upstream-report-tracelog.md） */
 	CHECK_TSKCTX_UNL();							/*［NGKI3624］［NGKI3625］*/
 	if (tskpri == TPRI_SELF) {
 		pri = p_runtsk->bpriority;				/*［NGKI3631］*/

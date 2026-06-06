@@ -10,7 +10,8 @@
       "displayName": "POSIX CLI (host simulation)",
       "description": "ホストシミュレーション。ハードなし・最速確認/TAP用",
       "cacheVariables": {
-        "ASP3_TARGET": "linux_gcc"
+        "ASP3_TARGET": "linux_gcc",
+        "ASP3_ENABLE_TRACE": "ON"
       }
     }
   ],

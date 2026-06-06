@@ -40,10 +40,24 @@
 
 /*
  *		カーネルのターゲット依存部（Linux用）
+ *
+ *  【asp3_core変更】CLIターゲット対応（経緯は docs/dev/cli-target.md）：
+ *    - main()をargc/argv化し，--tap／--slog／--helpオプションを追加
  */
 
 #include "kernel_impl.h"
 #include "intno.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+/*
+ *  【asp3_core追加】テストプログラム用サービスのTAP出力モード
+ *  （syssvc/test_svc.c）への弱参照．test_svc.cがリンクされていない
+ *  ビルド（sample1等）でもリンクできるよう，weakシンボルとして参照し，
+ *  存在するときのみ--tapで設定する．
+ */
+extern bool_t	test_tap_mode __attribute__((weak));
 
 /*
  *  SIGIOシグナルのハンドラ
@@ -114,12 +128,61 @@ target_exit(void)
 }
 
 /*
+ *  【asp3_core追加】コマンドラインオプションの使用方法の表示
+ */
+static void
+usage(FILE *fp)
+{
+	fputs("usage: asp [options]\n"
+		  "  --tap     output test results in TAP format (ok N / not ok N)\n"
+		  "  --slog    output structured trace log (T=<tick>,EV=<event>,...)\n"
+		  "            to stderr (requires a build with ASP3_ENABLE_TRACE=ON)\n"
+		  "  --help    show this help and exit\n", fp);
+}
+
+/*
  *  メイン関数
+ *
+ *  【asp3_core変更】argc/argv化し，--tap／--slog／--helpを追加．
  */
 int
-main()
+main(int argc, char *argv[])
 {
 	sigset_t	sigmask;
+	int			i;
+
+	/*
+	 *  コマンドラインオプションの処理
+	 */
+	for (i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "--tap") == 0) {
+			if (&test_tap_mode != NULL) {
+				test_tap_mode = true;
+			}
+			else {
+				fputs("asp: warning: --tap has no effect "
+					  "(test_svc.c is not linked).\n", stderr);
+			}
+		}
+		else if (strcmp(argv[i], "--slog") == 0) {
+#ifdef TOPPERS_ENABLE_TRACE
+			trace_initialize((intptr_t) TRACE_SLOG);
+#else /* TOPPERS_ENABLE_TRACE */
+			fputs("asp: error: --slog requires a build with "
+				  "ASP3_ENABLE_TRACE=ON.\n", stderr);
+			return(2);
+#endif /* TOPPERS_ENABLE_TRACE */
+		}
+		else if (strcmp(argv[i], "--help") == 0) {
+			usage(stdout);
+			return(0);
+		}
+		else {
+			fprintf(stderr, "asp: unknown option: %s\n", argv[i]);
+			usage(stderr);
+			return(2);
+		}
+	}
 
 	/*
 	 *  全てのシグナルをマスクする．

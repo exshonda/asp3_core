@@ -1,0 +1,27 @@
+{
+  "name": "sample1",
+  "comment": [
+    "sample1（既定アプリ）の期待イベント列。",
+    "実行方法： timeout 5 ./build/linux/asp --slog 2>&1",
+    "          | python3 scripts/parse_slog.py --json > actual.jsonl",
+    "          python3 scripts/check_events.py test/porting/expected/sample1.json actual.jsonl",
+    "タスクID： 1=LOGTASK, 2=TASK1, 3=TASK2, 4=TASK3（act_tskの引数A1で同定）",
+    "sequenceは部分列マッチ（間に他イベントが挟まってよい）"
+  ],
+  "sequence": [
+    {"ev": "TSK_STAT", "ID": "1", "STAT": "RUNNABLE"},
+    {"ev": "TSK_RUN", "ID": "1"},
+    {"ev": "SVC_ENTER", "API": "act_tsk", "A1": "2"},
+    {"ev": "TSK_STAT", "ID": "2", "STAT": "RUNNABLE"},
+    {"ev": "SVC_ENTER", "API": "act_tsk", "A1": "3"},
+    {"ev": "TSK_STAT", "ID": "3", "STAT": "RUNNABLE"},
+    {"ev": "SVC_ENTER", "API": "act_tsk", "A1": "4"},
+    {"ev": "TSK_STAT", "ID": "4", "STAT": "RUNNABLE"},
+    {"ev": "SVC_ENTER", "API": "dly_tsk"},
+    {"ev": "TSK_RUN", "ID": "2"}
+  ],
+  "forbidden": [
+    {"ev": "ERR"},
+    {"ev": "EXC_ENTER"}
+  ]
+}

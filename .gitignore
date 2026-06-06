@@ -20,6 +20,11 @@ __pycache__/
 *.tap
 results_*.xml
 
+# testexec.py の作業ディレクトリ・ローカル設定（test/で実行）
+test/OBJ-*/
+test/TARGET_OPTIONS
+test/TARGET_RUN
+
 # エディタ
 .vscode/settings.json
 .idea/

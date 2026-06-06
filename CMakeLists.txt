@@ -113,6 +113,24 @@ list(APPEND ASP3_APP_INCLUDE_DIRS ${ASP3_APPLDIR})
 #
 include(${ASP3_ROOT_DIR}/target/${ASP3_TARGET}/target.cmake)
 
+#
+#  トレースログ機能（arch/tracelog・非TECS版）
+#
+#  ASP3_ENABLE_TRACE=ON で TOPPERS_ENABLE_TRACE を定義し，カーネル内の
+#  LOG_*フックを有効化してトレースログ実装をリンクする（既定OFF）．
+#  linuxプリセットは既定ONで，実行時の --slog で構造化ログ
+#  （T=,EV=形式．AGENTS.md §8）を出力できる．
+#
+option(ASP3_ENABLE_TRACE "Enable kernel trace log (arch/tracelog)" OFF)
+if(ASP3_ENABLE_TRACE)
+    list(APPEND ASP3_COMPILE_DEFS TOPPERS_ENABLE_TRACE)
+    list(APPEND ASP3_ARCH_C_FILES
+        ${ASP3_ROOT_DIR}/arch/tracelog/trace_log.c
+        ${ASP3_ROOT_DIR}/arch/tracelog/trace_dump.c
+        ${ASP3_ROOT_DIR}/arch/tracelog/trace_slog.c
+    )
+endif()
+
 list(APPEND ASP3_CFG_FILES
     ${ASP3_APP_CFG_FILE}
 )
@@ -338,6 +356,38 @@ if(DEFINED ASP3_RUN_COMMAND)
         USES_TERMINAL
         COMMENT "Running ${ASP3_TARGET}"
     )
+endif()
+
+#
+#  ctest（POSIX CLIターゲットのスモークテスト．経緯はdocs/dev/cli-target.md）
+#
+#  ホスト実行可能なlinux_gccかつ既定アプリ（sample1）のビルドでのみ登録
+#  する．`ctest --preset linux` で実行できる．機能テスト群（TAP出力）の
+#  一括実行は test/testexec.py を使用する．
+#
+if(ASP3_TARGET STREQUAL "linux_gcc" AND ASP3_APPLNAME STREQUAL "sample1")
+    enable_testing()
+
+    #  sample1が起動してタスクが回ることの確認（出力一致で合否判定）
+    add_test(NAME sample1.run
+        COMMAND bash -c "timeout 5 $<TARGET_FILE:asp> 2>&1 | head -40"
+    )
+    set_tests_properties(sample1.run PROPERTIES
+        PASS_REGULAR_EXPRESSION "task1 is running"
+        TIMEOUT 30
+    )
+
+    #  構造化ログ（--slog）の期待イベント列照合（AGENTS.md §8のフロー）
+    if(ASP3_ENABLE_TRACE)
+        add_test(NAME sample1.slog_check
+            COMMAND bash -c "timeout 5 $<TARGET_FILE:asp> --slog 2>&1 \
+                | ${Python3_EXECUTABLE} ${ASP3_ROOT_DIR}/scripts/parse_slog.py --json \
+                > sample1_actual.jsonl; \
+                ${Python3_EXECUTABLE} ${ASP3_ROOT_DIR}/scripts/check_events.py \
+                ${ASP3_ROOT_DIR}/test/porting/expected/sample1.json sample1_actual.jsonl"
+        )
+        set_tests_properties(sample1.slog_check PROPERTIES TIMEOUT 30)
+    endif()
 endif()
 
 #

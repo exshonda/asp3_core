@@ -21,7 +21,7 @@
 | ファイルの削除 | `file-cleanup.md` | 完了 |
 | QEMUターゲット(ARMv8-A) | `qemu-target-a64.md` | 完了 |
 | QEMUターゲット(RISC-V) | `qemu-target-riscv.md` | 完了 |
-| CLIターゲット | `cli-target.md` | 計画中 |
+| CLIターゲット | `cli-target.md` | 完了 |
 | CI整備 | `ci.md` | 計画中 |
 | ドキュメントMarkdown化 | `docs-markdown.md` | 計画中 |
 | skillパッケージ | `skill-package.md` | 計画中 |

@@ -37,8 +37,15 @@
  *  $Id: test_svc.c 1152 2019-01-14 11:13:22Z ertl-hiro $
  */
 
-/* 
+/*
  *		テストプログラム用サービス（非TECS版専用）
+ *
+ *  【asp3_core変更】TAP（Test Anything Protocol）出力モードを追加
+ *  （経緯は docs/dev/cli-target.md）．test_tap_modeをtrueに設定すると，
+ *  チェックポイントの合否を「ok N」／「not ok N - ...」で出力し，
+ *  check_finish()でプラン行「1..N」を出力する．エージェント・CIが
+ *  出力文字列の解釈なしに合否を機械判定できる（AGENTS.md §4）．
+ *  既定はfalse（従来出力）で，linux_gccターゲットの--tapが設定する．
  */
 
 #include <kernel.h>
@@ -53,6 +60,11 @@
  *	チェックポイント
  */
 static uint_t	check_count;
+
+/*
+ *	【asp3_core追加】TAP出力モード
+ */
+bool_t	test_tap_mode = false;
 
 /*
  *  テストプログラムの開始
@@ -100,12 +112,24 @@ check_point(uint_t count)
 
 	/*
 	 *  シーケンスチェック
+	 *
+	 *  【asp3_core変更】TAP出力モードの切替えを追加
 	 */
 	if (++check_count == count) {
-		syslog_1(LOG_NOTICE, "Check point %d passed.", count);
+		if (test_tap_mode) {
+			syslog_1(LOG_NOTICE, "ok %d", count);
+		}
+		else {
+			syslog_1(LOG_NOTICE, "Check point %d passed.", count);
+		}
 	}
 	else {
-		syslog_1(LOG_ERROR, "## Unexpected check point %d.\007", count);
+		if (test_tap_mode) {
+			syslog_1(LOG_ERROR, "not ok %d - unexpected check point", count);
+		}
+		else {
+			syslog_1(LOG_ERROR, "## Unexpected check point %d.\007", count);
+		}
 		errorflag = true;
 	}
 
@@ -115,8 +139,15 @@ check_point(uint_t count)
 #ifdef CHECK_BIT_FUNC
 	rercd = CHECK_BIT_FUNC();
 	if (rercd < 0) {
-		syslog_2(LOG_ERROR, "## Internal inconsistency detected (%s, %d).\007",
+		if (test_tap_mode) {
+			syslog_2(LOG_ERROR, "not ok %d - internal inconsistency (%s)",
+										check_count, itron_strerror(rercd));
+		}
+		else {
+			syslog_2(LOG_ERROR,
+						"## Internal inconsistency detected (%s, %d).\007",
 										itron_strerror(rercd), SERCD(rercd));
+		}
 		errorflag = true;
 	}
 #endif /* CHECK_BIT_FUNC */
@@ -142,7 +173,14 @@ check_finish(uint_t count)
 {
 	if (count > 0U) {
 		check_point(count);
-		syslog_0(LOG_NOTICE, "All check points passed.");
+		if (test_tap_mode) {
+			/* 【asp3_core追加】TAPプラン行と完了コメント */
+			syslog_1(LOG_NOTICE, "1..%d", count);
+			syslog_0(LOG_NOTICE, "# All check points passed.");
+		}
+		else {
+			syslog_0(LOG_NOTICE, "All check points passed.");
+		}
 	}
 	test_finish();
 }
@@ -153,8 +191,14 @@ check_finish(uint_t count)
 void
 check_assert_error(const char *expr, const char *file, int_t line)
 {
-	syslog_3(LOG_ERROR, "## Assertion `%s' failed at %s:%u.\007",
-												expr, file, line);
+	if (test_tap_mode) {
+		syslog_4(LOG_ERROR, "not ok %d - assertion `%s' failed at %s:%u",
+									check_count + 1U, expr, file, line);
+	}
+	else {
+		syslog_3(LOG_ERROR, "## Assertion `%s' failed at %s:%u.\007",
+													expr, file, line);
+	}
 	test_finish();
 }
 
@@ -164,8 +208,14 @@ check_assert_error(const char *expr, const char *file, int_t line)
 void
 check_ercd_error(ER ercd, const char *file, int_t line)
 {
-	syslog_3(LOG_ERROR, "## Unexpected error %s detected at %s:%u.\007",
-									itron_strerror(ercd), file, line);
+	if (test_tap_mode) {
+		syslog_4(LOG_ERROR, "not ok %d - unexpected error %s at %s:%u",
+						check_count + 1U, itron_strerror(ercd), file, line);
+	}
+	else {
+		syslog_3(LOG_ERROR, "## Unexpected error %s detected at %s:%u.\007",
+										itron_strerror(ercd), file, line);
+	}
 	test_finish();
 }
 

@@ -52,6 +52,12 @@ extern "C" {
 #include "target_test.h"
 
 /*
+ *  【asp3_core追加】TAP出力モード（trueで合否をTAP形式で出力する．
+ *  linux_gccターゲットの--tapオプションが設定する）
+ */
+extern bool_t	test_tap_mode;
+
+/*
  *  テストプログラム用サービスのサービスコール
  */
 extern void	test_start(const char *progname);

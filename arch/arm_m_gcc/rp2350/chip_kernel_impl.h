@@ -47,10 +47,11 @@
 
 /*
  *  トレースログに関する設定
+ *
+ *  【asp3_core変更】トレースログ機能はTOPPERS_ENABLE_TRACE定義時に
+ *  kernel_impl.hがarch/tracelog/trace_log.hを取り込む方式に統一した
+ *  ため，旧ASP（logtrace/trace_config.h）のincludeを削除．
  */
-#ifdef TOPPERS_ENABLE_TRACE
-#include "logtrace/trace_config.h"
-#endif /* TOPPERS_ENABLE_TRACE */
 
 /*
  *  コア依存モジュール（ARM-M用）

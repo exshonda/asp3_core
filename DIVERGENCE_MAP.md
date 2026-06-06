@@ -15,13 +15,18 @@
 | `syssvc/serial.c` | 上流 `non_tecs` 由来 | TECSレス版を上流拡張から採用 | `extension/non_tecs/syssvc` の更新に追従 | syssvc(EXTENDED) | 3.7.0 |
 | `syssvc/logtask.c` | 上流 `non_tecs` 由来 | 同上 | 同上 | syssvc(EXTENDED) | 3.7.0 |
 | `syssvc/banner.c` | 上流 `non_tecs` 由来 | 同上 | 同上 | syssvc(EXTENDED) | 3.7.0 |
-| `syssvc/syslog.c` | 上流 `non_tecs` 由来（構造化ログ追加は計画中） | TECSレス版を採用（`T=,EV=`構造化ログは未実施） | `extension/non_tecs/syssvc` の更新に追従 | syssvc(EXTENDED) | 3.7.2 |
+| `syssvc/syslog.c` | 上流 `non_tecs` 由来 | TECSレス版を採用（`T=,EV=`構造化ログは`arch/tracelog/`のトレースログで実現） | `extension/non_tecs/syssvc` の更新に追従 | syssvc(EXTENDED) | 3.7.2 |
 | `target/zybo_z7_gcc/`（非TECS化） | 改変＋新規追加 | TECSレス化（`target_serial.{c,h,cfg}`新規・`target_syssvc.h`/`target_kernel_impl.c`/`Makefile.target`/`MANIFEST`改変） | **上流ZYBOターゲットパッケージ由来のため上流更新時要確認** | target | 3.7.2 |
 | `arch/arm_gcc/zynq7000/xuartps.[ch]` | `xuartps.c`新規・`xuartps.h`改変（非TECSドライバAPI追加）・`MANIFEST`改変 | 非TECS版SIOドライバ | 上流zynq7000依存部の`xuartps.h`変更時に要確認 | arch | 3.7.2 |
 | `target/mps2_an521_gcc/`（非TECS化） | 新規追加（`cmsdk_uart.[ch]`・`target_serial.{c,h,cfg}`）＋改変 | TECSレス化 | （ターゲット自体がNEW・上流衝突なし） | target(NEW) | — |
 | `target/stm32mp257f_dk_arm64_gcc/`・`arch/arm64_gcc/stm32mp2/`（非TECS化） | 新規追加（`stm32usart.c`・`target_serial.{c,h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING_ASP3_STM32MP2.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
 | `target/raspberrypi_pico2_gcc/`・`arch/arm_m_gcc/rp2350/`（非TECS化） | 新規追加（`rp2350_uart.[ch]`・`chip_serial.{c,h,cfg}`・`target_serial.{h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
 | `target/linux_gcc/`・`arch/posix_gcc/` | 上流SVN（3.7.2）から取込み | POSIXシミュレーション環境（3.7.2 tarball未収録のため別途取込み） | 上流posix_gccパッケージの更新に追従 | target/arch | 3.7.2 |
+| `target/linux_gcc/target_kernel_impl.c` | 改変（CLIターゲット） | main()のargc/argv化＋`--tap`/`--slog`/`--help`追加（経緯は`docs/dev/cli-target.md`） | 上流posix_gccのmain()変更時に要手動マージ | target | 3.7.2 |
+| `arch/posix_gcc/posix_kernel_impl.c` | 改変（CLIターゲット・上流バグ修正） | LOG_INH_ENTER/LEAVEへ渡す変数の修正（上流は未定義変数inhnoを渡しており，トレース有効時にコンパイル不能．上流報告：`docs/dev/upstream-report-tracelog.md`） | 上流で修正されたら上流版を採用して差分解消 | arch | 3.7.2 |
+| `kernel/sys_manage.c` | **改変（PRISTINE領域・要注意）** | get_lod()のLOG_GET_LOD_ENTERに渡す変数の修正（上流は未定義変数p_tskidを渡しており，トレース有効時にコンパイル不能．ユーザー承認のうえ1行のみ修正．上流報告：`docs/dev/upstream-report-tracelog.md`） | **上流マージ時は必ず本行を確認**．上流で修正されたら上流版を採用して差分解消 | kernel(PRISTINE+1行) | 3.7.2 |
+| `syssvc/test_svc.c`・`test_svc.h` | 上流 `non_tecs` 由来＋改変（CLIターゲット） | TAP出力モード（`test_tap_mode`）を追加（経緯は`docs/dev/cli-target.md`） | `extension/non_tecs/syssvc` の更新時に要手動マージ | syssvc(EXTENDED) | 3.7.2 |
+| `arch/tracelog/` | 全面置換（CLIターゲット） | TECS版`tTraceLog.c`を削除し，FMP3 3.3の非TECS版（`trace_log.[ch]`・`trace_dump.c`）をASP3変換して採用．構造化ログ出力`trace_slog.c`・機能コード`trace_fncode.h`を新規追加 | 上流ASP3のtracelog（TECS版）変更はテキストマージ不可・FMP3側の更新は手動反映 | arch | 3.7.2 / FMP3 3.3 |
 | `syssvc/qemu_exit.c` | 新規追加 | QEMUセミホスティング終了 | （上流に存在せず・衝突なし） | syssvc(NEW) | — |
 | `cfg/cfg.py`・`pass1.py`・`pass2.py`・`gen_file.py`・`srecord.py` | Ruby→Python移植（エンジン，asp3_fsp由来＋1.7.1差分反映） | コンフィギュレータのPython化（Ruby版は残置） | **上流cfg.rb系の挙動変更時はテキスト差分不可・手動再反映（CFG_SPEC_MAP参照）** | cfg | cfg 1.7.1 |
 | `test/testexec.py`・`test_cfg/testcfg.py`・`utils/{genrename,applyrename,gentest}.py` | Ruby→Python移植（.rbツール群）＋テストランナはCMakeベース化 | ビルド・テスト・開発フローからRuby依存を除去 | **上流.rbツール変更時は対応.pyへ手動再反映** | build/test | 3.7.2 |
@@ -52,6 +57,7 @@
 | `tecsgen/`・`tecs_kernel/`・syssvc/arch/targetのTECSセル（`.cdl`・t接頭辞）・`sample/{sample1,tSample2}.cdl`・tSample2系・`test/*.cdl`・`extension/non_tecs/` | TECSレス | `docs/dev/tecs-less.md` の削除リスト参照 |
 | `cfg/*.rb`・`kernel/*.trb`・`arch/**/*.trb`・`target/*/*.trb` | cfgのPython化 | v6m系trbも削除（必要時は上流から取得して.py変換） |
 | `configure.rb`・`test/testexec.rb`・`test_cfg/testcfg.rb`・`utils/*.rb`・`utils/makerelease.py` | .rbツールの.py化 | |
+| `arch/tracelog/tTraceLog.c` | CLIターゲット | TECS版トレースログ．非TECS版`trace_log.c`に置換（`docs/dev/cli-target.md`） |
 | `MANIFEST`・`E_PACKAGE`（全数．extension/内は残置）・`target/{ct11mpcore,gr_peach,macos_xcode,simtimer_ct11mpcore}_gcc/`・`arch/arm_gcc/rza1/`・`arch/simtimer/`・`test/simt_*.c` | ファイルの削除 | `docs/dev/file-cleanup.md` 参照 |
 | `configure.py`・`sample/Makefile`・`kernel/Makefile.kernel`・`arch/*/common/Makefile.core`・`arch/*/*/Makefile.chip`・`target/*/Makefile.target` | ファイルの削除（フェーズ2＝make版ビルド廃止．ビルドはCMakeのみ） | **`kernel/Makefile.kernel` はkernel/領域だが削除（上流マージで復活させない）**．`target/stm32mp257f_dk_arm64_gcc/minimal_boot/Makefile`（実機ブート資材）・`target/zybo_z7_gcc/xilinx_sdk/`（実機JTAG資材）は残置 |
 
