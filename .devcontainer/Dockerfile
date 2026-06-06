@@ -52,8 +52,9 @@ RUN curl -fsSL -o /tmp/toolchain.tar.xz \
 ENV PATH="/opt/${ARM_TOOLCHAIN_NAME}/bin:${PATH}"
 
 #  非rootユーザ（devcontainer用）．ubuntu:26.04既定の ubuntu(UID 1000) を
-#  devcontainers 慣行の vscode に置き換える．CIの container: 実行は
-#  既定どおり root のままで動く（このユーザは使われない）
+#  devcontainers 慣行の vscode に置き換える．末尾の USER vscode が既定の
+#  ため、CIの container: 実行では options: --user root で上書きする
+#  （Actionsのランナーファイルへの書込みにrootが必要）
 RUN userdel -r ubuntu \
     && useradd -m -s /bin/bash -u 1000 vscode \
     && echo 'vscode ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/vscode \
