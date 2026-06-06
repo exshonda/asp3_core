@@ -24,7 +24,8 @@ ER ercd = dly_tsk(RELTIM dlytim);
 | `E_OK` | 正常終了（指定時間が経過した） |
 | `E_PAR` | `dlytim` が `TMAX_RELTIM`（4,000,000,000）を超える |
 | `E_CTX` | 非タスクコンテキスト／CPUロック／ディスパッチ禁止状態 |
-| `E_RLWAI` | 待ち状態が強制解除された（`rel_wai` / `ter_tsk`） |
+| `E_RLWAI` | 待ち状態が強制解除された（`rel_wai`） |
+| `E_RASTER` | 待ち状態の間に自タスクへの終了要求（`ras_ter`）があった |
 
 ## 機能
 自タスクを `dlytim` マイクロ秒の間、時間経過待ち状態に遷移させる。指定した以上の

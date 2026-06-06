@@ -26,7 +26,8 @@ ER ercd = snd_dtq(ID dtqid, intptr_t data);
 | `E_ID` | `dtqid` が不正・範囲外 |
 | `E_CTX` | 非タスクコンテキスト／CPUロック状態／ディスパッチ禁止状態 |
 | `E_NOEXS`〔D〕 | 対象データキューが未登録（動的生成対応カーネル） |
-| `E_RLWAI` | 待ち状態が強制解除された（`rel_wai` / `ter_tsk`） |
+| `E_RLWAI` | 待ち状態が強制解除された（`rel_wai`） |
+| `E_RASTER` | 待ち状態の間に自タスクへの終了要求（`ras_ter`）があった |
 
 ## 機能
 `dtqid` で指定したデータキューに `data` を1件送信する。

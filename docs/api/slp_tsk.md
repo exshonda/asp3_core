@@ -26,7 +26,8 @@ ER ercd = tslp_tsk(TMO tmout);
 |---|---|
 | `E_OK` | 正常終了（`wup_tsk` で起床した） |
 | `E_CTX` | 非タスクコンテキスト／CPUロック状態／ディスパッチ禁止状態 |
-| `E_RLWAI` | 待ち状態が強制解除された（`rel_wai` / `ter_tsk`） |
+| `E_RLWAI` | 待ち状態が強制解除された（`rel_wai`） |
+| `E_RASTER` | 待ち状態の間に自タスクへの終了要求（`ras_ter`）があった |
 | `E_TMOUT` | タイムアウトした（`tslp_tsk` のみ。`TMO_POL` 指定時も含む） |
 | `E_PAR` | `tmout` が不正（`tslp_tsk` のみ） |
 

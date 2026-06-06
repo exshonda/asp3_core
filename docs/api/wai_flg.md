@@ -30,7 +30,8 @@ ER ercd = wai_flg(ID flgid, FLGPTN waiptn, MODE wfmode, FLGPTN *p_flgptn);
 | `E_CTX` | 非タスクコンテキスト／CPUロック状態／ディスパッチ禁止状態 |
 | `E_PAR` | `waiptn` が 0、または `wfmode` が不正 |
 | `E_NOEXS`〔D〕 | 対象イベントフラグが未登録（動的生成対応カーネル） |
-| `E_RLWAI` | 待ち状態が強制解除された（`rel_wai` / `ter_tsk`） |
+| `E_RLWAI` | 待ち状態が強制解除された（`rel_wai`） |
+| `E_RASTER` | 待ち状態の間に自タスクへの終了要求（`ras_ter`）があった |
 
 ## 機能
 `flgid` で指定したイベントフラグの、`waiptn` と `wfmode` で指定した待ち条件が成立するまで

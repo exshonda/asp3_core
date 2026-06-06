@@ -349,7 +349,7 @@ scope: target / syssvc / cfg / cmake / upstream / ci
 | `fch_hrt()` | 高分解能タイマ取得（μs） |
 | `loc_cpu()` / `unl_cpu()` | CPUロック / 解除 |
 
-静的API（`.cfg`に記述）：`CRE_TSK` / `CRE_SEM` / `CRE_FLG` / `CRE_DTQ` / `CRE_ALM` / `CRE_CYC` / `DEF_INH` / `ATT_ISR` ほか。構造の正本は `kernel/kernel_api.def`。
+静的API（`.cfg`に記述）：`CRE_TSK` / `CRE_SEM` / `CRE_FLG` / `CRE_DTQ` / `CRE_ALM` / `CRE_CYC` / `DEF_INH` / `CRE_ISR` ほか。構造の正本は `kernel/kernel_api.def`。
 
 ---
 

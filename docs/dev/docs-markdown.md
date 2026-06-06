@@ -92,4 +92,43 @@
 
 ## 実施結果
 
-（完了時に記載）
+（完了時に記載。以下は手順ごとの中間記録＝セッション再開点）
+
+### 手順1：docs/api/ の完成（2026-06-07 完了）
+
+**棚卸し**：`include/kernel.h` の extern 宣言＝サービスコール95本、
+`kernel/kernel_api.def`＝静的API 16本が正本。完成形は **111本＋README** で、
+全ファイルが正本と1対1対応（`comm` で機械突合・差分ゼロを確認）。
+
+**作成**：未整備の82本（サービスコール80本＋静的API `CRE_ISR`・`DEF_ICS`）を
+既存フォーマットで新規作成。エラーコード・種別（〔T〕/〔I〕/〔TI〕）はカーネル
+ソースの `CHECK_*` マクロ・実装分岐から導出（推測記述なし）。
+
+**削除**（asp3_coreに存在しないAPIの誤doc・ユーザー確認済み）：
+- `docs/api/ATT_ISR.md` — ASP3では `CRE_ISR`（ID付きオブジェクト生成）に置換済み
+- `docs/api/DEF_SVC.md` — 拡張サービスコールはHRP3の機能（`cal_svc` も不存在）
+
+**既存docの修正**（検証パスで検出した仕様誤り）：
+- `get_tim.md` — 単位ms→**μs**（ASP3はSYSTIM/RELTIM/TMOすべてμs。
+  `doc/asp_spec.txt` (4-7)）・種別〔TI〕→**〔T〕**（`CHECK_TSKCTX_UNL`）・
+  ティック更新→ティックレスの記述修正・不存在の `get_utm` 言及除去
+- ブロッキング系19本 — `E_RASTER`（待ち中の `ras_ter`）の漏れを追加、
+  `E_RLWAI` の原因から `ter_tsk` 併記を除去（強制終了であり復帰しない）
+- `AGENTS.md` §12・`DEF_INH.md`・`CFG_INT.md` — `ATT_ISR`/`DEF_SVC` 参照を
+  `CRE_ISR` へ張り替え
+- `README.md` — 索引を全111本のリンクに更新。不存在の `get_utm`・`get_did` を
+  削除し `get_tid`/`get_lod`/`get_nth`・ini_*系・CPU例外管理（`xsns_dpn`）等を追加
+
+**検証**：生成84本全数を3並列の独立検証（プロトタイプ＝kernel.h／種別＝CHECK_*
+マクロ／エラーコード網羅性／時間単位／不存在機能への言及）で突合し、検出された
+E_RASTER漏れ6本を修正。README索引⇔ファイルのリンク切れゼロを機械確認。
+
+**Git情報**：ベース `e12e68d`。ファイルリスト再現：
+`git diff --stat HEAD -- docs/api/ AGENTS.md`（コミット後は該当コミット参照）
+
+### 残り手順（未着手）
+
+- 手順2：docs/spec/ への変換（user.txt から順次）
+- 手順3：simtimer.txt の削除
+- 手順4：参照の張り替え
+- 手順5：記録（最終）

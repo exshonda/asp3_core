@@ -49,7 +49,7 @@ CFG_INT .intno* { .intatr +intpri }
 ## 機能
 `intno` で指定した割込み要求ラインのトリガ種別と優先度を設定する。
 
-`DEF_INH` や `ATT_ISR` で割込みハンドラを登録する際に必ず `CFG_INT` を組み合わせて使う。
+`DEF_INH` や `CRE_ISR` で割込みハンドラを登録する際に必ず `CFG_INT` を組み合わせて使う。
 `TA_ENAINT` を指定しない場合、割込みは初期状態で禁止（`ena_int` で有効化が必要）。
 
 割込み優先度は負値で表し、絶対値が大きいほど高優先度（例：-5 は -3 より高優先）。
@@ -65,7 +65,7 @@ CFG_INT(INTNO_GPIO, { TA_LEVEL, -3 });
 
 ## 関連
 - [DEF_INH](DEF_INH.md) — 割込みハンドラの定義
-- [ATT_ISR](ATT_ISR.md) — 割込みサービスルーチンの追加
-- `dis_int` / `ena_int` — 割込みの禁止・許可
+- [CRE_ISR](CRE_ISR.md) — 割込みサービスルーチンの生成
+- [dis_int](dis_int.md) / [ena_int](ena_int.md) — 割込みの禁止・許可
 - `kernel/kernel_api.def` — cfgが読む構造定義
 - 仕様書 4.9 割込み管理機能 / 5.2 静的API一覧
