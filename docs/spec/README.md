@@ -24,11 +24,11 @@
 | `06_makefile.md` | Makefile修正方法 | user.txt §6 | 🟢 | **asp3_core注**: CMake対応表を注記（Makefile版は廃止） |
 | `07_configurator.md` | コンフィギュレータ | user.txt §7 | 🟢 | cfg.py（Python版）とのCLI差異を注記 |
 | `08_system_services.md` | システムサービス | user.txt §8 | 🟢 | 8.1〜8.5: ログ・シリアル・ログタスク・histogram・banner。非TECS版の組込み手順を注記 |
-| `09_support_libraries.md` | サポートライブラリ | user.txt §9 | ⚪ | |
-| `10_test_program.md` | テストプログラム | user.txt §10 | ⚪ | |
-| `11_usage_notes.md` | 使用上の注意とヒント | user.txt §11 | ⚪ | |
-| `12_reference.md` | 参考情報 | user.txt §12 | ⚪ | |
-| `13_reference_detail.md` | リファレンス | user.txt §13 | ⚪ | 詳細API仕様（docs/api/ へリンク） |
+| `09_support_libraries.md` | サポートライブラリ | user.txt §9 | 🟢 | 9.1〜9.3: strerror・キュー操作・ログ出力。PRISTINE（そのまま有効） |
+| `10_test_program.md` | テストプログラム | user.txt §10 | 🟢 | 10.1〜10.7: test_svc・機能/性能テスト・testexec。testexec.py（CMake版）の差異を注記 |
+| `11_usage_notes.md` | 使用上の注意とヒント | user.txt §11 | 🟢 | 11.1〜11.9: 実行時間特性・ID管理・リネーム。slog方式への変更を注記 |
+| `12_reference.md` | 参考情報 | user.txt §12 | 🟢 | 12.1〜12.7: 利用条件・サポート窓口。改変版の位置付けを注記 |
+| `13_reference_detail.md` | リファレンス | user.txt §13 | 🟢 | 13.1〜13.3: サービスコール/静的API早見表・版歴。詳細は docs/api/ |
 
 ### 他の仕様文書
 
@@ -96,12 +96,14 @@ python3 scripts/check_spec_conversion.py doc/user.txt <開始行>:<終了行> do
 ## 変換進捗
 
 - **手順1（2026-06-07 完了）**: docs/api/ 完成 → 95サービスコール + 16静的API 100% 対応
-- **手順2（進行中）**: docs/spec/ user.txt 変換
+- **手順2（進行中）**: docs/spec/ 変換
   - Phase 1（2026-06-07 完了）: 01_overview.md, 02_target_overview.md
-  - Phase 2（2026-06-07 完了）: 03_quickstart.md ～ 08_system_services.md（機械突合・欠落ゼロ確認済み）
-  - Phase 3: 09_support_libraries.md ～ 13_reference_detail.md
+  - Phase 2（2026-06-07 完了）: 03_quickstart.md ～ 08_system_services.md
+  - Phase 3（2026-06-07 完了）: 09_support_libraries.md ～ 13_reference_detail.md
+    — **user.txt 全13章の変換完了**（全章機械突合・911トークン欠落ゼロ）
+  - 次: configurator.txt → design系3本 → asp_spec/non_tecs/extension → porting.txt → migration
 - **手順3（計画中）**: simtimer.txt 削除、参照張り替え
 
 ---
 
-**最終更新**: 2026-06-07（手順2 Phase 2 完了）
+**最終更新**: 2026-06-07（手順2 Phase 3 完了＝user.txt 全章変換済み）
