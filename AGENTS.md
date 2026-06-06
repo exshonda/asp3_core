@@ -165,6 +165,7 @@ cmake --preset stm32mp257f_dk_arm64 -B build/stm32mp257f_dk_arm64 && cmake --bui
 > - ビルドは **CMakeのみ**（Makefile版は廃止済み。詳細は `docs/building.md`）。**プリセット名＝ターゲット名から `_gcc` を除いたもの**（QEMU/実機両対応のターゲットはQEMU側を `<プリセット名>-qemu`）。一覧は `cmake --list-presets`。
 > - `linux` プリセットの実体は **ホストシミュレーション**（`target/linux_gcc`＝上流SVNの `asp3_arch_posix_gcc` パッケージ由来）。
 > - QEMUマシン名は `mps2-an521`（ハイフン）だが、ASP3ターゲット名は `mps2_an521_gcc`（アンダースコア）。
+> - ツールチェーン・QEMUをピン留めした**開発コンテナ**（`ghcr.io/exshonda/asp3_core-dev`・`.devcontainer/`）があり、CIも同一イメージで実行する。手順は `docs/building.md` §6、設計は `docs/dev/devcontainer.md`。
 
 ### 検証の鉄則
 

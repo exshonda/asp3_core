@@ -1,0 +1,47 @@
+#
+#		開発コンテナイメージのGHCR publish
+#
+#  設計・経緯は docs/dev/devcontainer.md を参照．
+#  - .devcontainer/Dockerfile 変更時にビルドして GHCR へ push する
+#  - タグは latest＋日付（YYYYMMDD）．CI・devcontainer.json は日付タグを
+#    参照する（暗黙の更新を防ぐ）ため，イメージ更新時は参照側のタグも
+#    合わせて更新すること
+#
+name: Container
+
+on:
+  push:
+    branches: [main, 'feat/**']
+    paths:
+      - '.devcontainer/Dockerfile'
+      - '.github/workflows/container.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-push:
+    name: Build & push dev image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set date tag
+        id: date
+        run: echo "tag=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .devcontainer
+          push: true
+          tags: |
+            ghcr.io/exshonda/asp3_core-dev:latest
+            ghcr.io/exshonda/asp3_core-dev:${{ steps.date.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

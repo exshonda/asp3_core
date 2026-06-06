@@ -1,0 +1,30 @@
+{
+	// TOPPERS/ASP3 Core 開発コンテナ（設計・経緯は docs/dev/devcontainer.md）
+	//
+	// GHCRのイメージは日付タグで参照する（暗黙の更新を防ぐ）。
+	// Dockerfile変更時は .github/workflows/container.yml が新しい日付タグを
+	// push するので、ここのタグも合わせて更新すること。
+	//
+	// privateリポジトリのGHCRイメージをpullするには事前にdocker loginが必要：
+	//   gh auth token | docker login ghcr.io -u <github-user> --password-stdin
+	"name": "TOPPERS/ASP3 Core",
+	"image": "ghcr.io/exshonda/asp3_core-dev:20260606",
+	"remoteUser": "vscode",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"llvm-vs-code-extensions.vscode-clangd"
+			],
+			"settings": {
+				// .clangd 末尾の注意書きどおり query-driver を付与
+				// （コンテナ内の3系統クロスコンパイラを認識させる）
+				"clangd.arguments": [
+					"--query-driver=/usr/bin/arm-none-eabi-gcc,/usr/bin/riscv64-unknown-elf-gcc,/opt/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-elf/bin/aarch64-none-elf-gcc"
+				]
+			}
+		}
+	},
+	// compile_commands.json のルートへのリンクを維持（AGENTS.md §5）。
+	// 初回はビルド前でリンク先が無くてもよい（ビルド後に解決される）
+	"postCreateCommand": "ln -sf build/linux/compile_commands.json compile_commands.json"
+}

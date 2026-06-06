@@ -199,3 +199,39 @@ python3 ../test_cfg/testcfg.py all
 | rp2350-riscv_pico_sdk | rp2350-riscv_pico_sdk（予約） | チップ依存部（Hazard3）未実装（コア依存部 arch/riscv_gcc/common は実装済み） |
 
 CMake対応の経緯は `docs/dev/cmake.md` を参照。
+
+---
+
+## 6. 開発コンテナでのビルド
+
+ツールチェーン・QEMU・Pythonをピン留めした開発コンテナ
+（`ghcr.io/exshonda/asp3_core-dev`）を用意している。CIも同一イメージで
+実行するため、コンテナ内で通ればCIでも通る（設計は `docs/dev/devcontainer.md`）。
+
+### VS Code / Claude Code（devcontainer）
+
+`.devcontainer/devcontainer.json` がイメージ・clangd拡張・postCreateを
+定義済み。「Reopen in Container」だけで全7ターゲットのbuild→run→test
+ループが揃う。
+
+privateリポジトリのGHCRイメージのため、初回は docker login が必要：
+
+```bash
+gh auth token | docker login ghcr.io -u <github-user> --password-stdin
+```
+
+### docker run で直接使う
+
+```bash
+docker run --rm -it -v "$PWD":/workspaces/asp3_core -w /workspaces/asp3_core \
+  ghcr.io/exshonda/asp3_core-dev:20260606
+# コンテナ内（aarch64-none-elf同梱＝zcu102/stm32もプリセット素のままで通る）
+cmake --preset linux -B build/linux && cmake --build build/linux
+```
+
+- 非rootユーザ `vscode`（UID 1000）で動作する。ホストのUIDが1000なら
+  ボリュームマウントした生成物の所有者問題は起きない
+- 同梱ツールのバージョン一覧はコンテナ内 `/etc/asp3_core-toolchain-versions.txt`
+- イメージの更新（Dockerfile変更）は `.github/workflows/container.yml` が
+  GHCRへ自動push（latest＋日付タグ）。参照側（devcontainer.json・ci.yml・
+  nightly.yml・本節）は日付タグを使うため、更新時はタグを一括置換する
