@@ -25,6 +25,9 @@ test/OBJ-*/
 test/TARGET_OPTIONS
 test/TARGET_RUN
 
+# AIツールのローカル状態
+.claude/
+
 # エディタ
 .vscode/settings.json
 .idea/
