@@ -24,6 +24,7 @@
 | CLIターゲット | `cli-target.md` | 完了 |
 | CI整備 | `ci.md` | 完了 |
 | ドキュメントMarkdown化 | `docs-markdown.md` | 計画中 |
+| devcontainer / Docker | `devcontainer.md` | 計画中 |
 | skillパッケージ | `skill-package.md` | 計画中 |
 
 状態：計画中 → 実施中 → 完了（各項目の進行に合わせて更新する）
