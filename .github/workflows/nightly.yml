@@ -1,0 +1,91 @@
+#
+#		Nightly（QEMU 3ターゲットで機能テスト全件）
+#
+#  設計・経緯は docs/dev/ci.md を参照．PR毎に回すには重いため夜間に分離
+#  （workflow_dispatchで手動実行も可能）．
+#
+#  テスト対象は test/testexec.py TEST_SPEC の機能テスト全件から，
+#  ターゲット毎に以下を除外したもの（2026-06-06 開発機での全件実行結果）：
+#  - dlynse（全QEMUターゲット）：sil_dly_nseの実時間較正テスト．QEMUは
+#    サイクル精度をもたないため成立しない（実機でのみ有意味）
+#  - int1（mps2・polarfire）：target_test.hに割込み発生機構（INTNO1等）が
+#    未定義でビルド不可（ターゲット移植の既存ギャップ・要整備）
+#  - cpuexc1・cpuexc4（mps2）：CPU例外がHardFaultへエスカレートし
+#    Unregistered Exceptionとなる既存挙動（要調査）
+#
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 18 * * *'   # 03:00 JST
+  workflow_dispatch:
+
+jobs:
+  testexec-full:
+    name: testexec full (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: mps2-qemu
+            packages: gcc-arm-none-eabi qemu-system-arm
+            options: --preset mps2_an521-qemu
+            run: >-
+              timeout 60 qemu-system-arm -machine mps2-an521 -nographic
+              -semihosting-config enable=on,target=native -kernel asp.elf
+            tests: >-
+              cpuexc2 cpuexc3 cpuexc5 cpuexc6 cpuexc7 cpuexc8 cpuexc9 cpuexc10
+              dtq1 exttsk flg1 hrt1 mpf1
+              mutex1 mutex2 mutex3 mutex4 mutex5 mutex6 mutex7 mutex8
+              notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
+              sysman1 sysstat1 task1 tmevt1
+          - name: zcu102-qemu
+            packages: gcc-aarch64-linux-gnu qemu-system-arm
+            options: >-
+              --preset zcu102_arm64-qemu -DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-
+            run: >-
+              timeout 60 qemu-system-aarch64 -machine xlnx-zcu102,secure=on
+              -nographic -semihosting-config enable=on,target=native
+              -kernel asp.elf
+            tests: >-
+              cpuexc1 cpuexc2 cpuexc3 cpuexc4 cpuexc5 cpuexc6 cpuexc7 cpuexc8
+              cpuexc9 cpuexc10
+              dtq1 exttsk flg1 hrt1 int1 mpf1
+              mutex1 mutex2 mutex3 mutex4 mutex5 mutex6 mutex7 mutex8
+              notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
+              sysman1 sysstat1 task1 tmevt1
+          - name: polarfire-qemu
+            packages: gcc-riscv64-unknown-elf qemu-system-misc
+            options: --preset polarfire_soc_kit-qemu
+            run: >-
+              timeout 60 qemu-system-riscv64 -machine microchip-icicle-kit
+              -nographic -semihosting-config enable=on,target=native
+              -bios none -kernel asp.elf
+            tests: >-
+              cpuexc1 cpuexc2 cpuexc3 cpuexc4 cpuexc5 cpuexc6 cpuexc7 cpuexc8
+              cpuexc9 cpuexc10
+              dtq1 exttsk flg1 hrt1 mpf1
+              mutex1 mutex2 mutex3 mutex4 mutex5 mutex6 mutex7 mutex8
+              notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
+              sysman1 sysstat1 task1 tmevt1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build ${{ matrix.packages }}
+      - name: Function tests (testexec.py)
+        run: |
+          scripts/ci/run_testexec.py --options "${{ matrix.options }}" \
+            --run "${{ matrix.run }}" \
+            --workdir build/testexec-${{ matrix.name }} \
+            ${{ matrix.tests }}
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-${{ matrix.name }}-logs
+          path: build/testexec-${{ matrix.name }}/testexec.log
+          if-no-files-found: ignore

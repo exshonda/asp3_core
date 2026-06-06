@@ -1,0 +1,288 @@
+#
+#		CI（全ターゲットbuild＋POSIX/QEMUテスト実行）
+#
+#  設計・経緯は docs/dev/ci.md を参照．
+#  - PR/push：全ターゲットbuild＋各QEMUスモーク（10分以内目標）
+#  - 全件テストは nightly.yml（schedule＋手動dispatch）
+#  - 合否判定スクリプトは scripts/ci/（ローカルでも実行可能）
+#
+name: CI
+
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  #  POSIXで実行する機能テスト（test/testexec.py TEST_SPECの機能テスト全件．
+  #  dlynse・hrt1はホストのスケジューリングの影響を受ける測定系のため除外）
+  POSIX_TESTS: >-
+    cpuexc1 cpuexc2 cpuexc3 cpuexc4 cpuexc5 cpuexc6 cpuexc7 cpuexc8 cpuexc9 cpuexc10
+    dtq1 exttsk flg1 int1 mpf1
+    mutex1 mutex2 mutex3 mutex4 mutex5 mutex6 mutex7 mutex8
+    notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
+    sysman1 sysstat1 task1 tmevt1
+
+jobs:
+  #
+  #  POSIX（linux preset）：build → ctest → 機能テスト全件 → cfgテスト
+  #
+  posix:
+    name: POSIX (linux)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build
+      - name: Build (sample1)
+        run: |
+          cmake --preset linux -B build/linux
+          cmake --build build/linux
+      - name: ctest (sample1 run + slog check, JUnit)
+        run: ctest --preset linux --output-junit ctest-junit.xml
+      - name: Function tests (testexec.py)
+        run: |
+          scripts/ci/run_testexec.py --options "--preset linux" \
+            --run "timeout 20 ./asp" --workdir build/testexec-linux \
+            ${{ env.POSIX_TESTS }}
+      - name: cfg tests (dummy target)
+        run: scripts/ci/run_testcfg.sh build/testcfg
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: posix-logs
+          path: |
+            build/linux/ctest-junit.xml
+            build/linux/sample1_actual.jsonl
+            build/testexec-linux/testexec.log
+            build/testcfg/testcfg.log
+          if-no-files-found: ignore
+
+  #
+  #  QEMU Cortex-M33（mps2-an521）：build → testexecスモーク
+  #
+  mps2-qemu:
+    name: QEMU mps2-an521 (Cortex-M33)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build gcc-arm-none-eabi qemu-system-arm
+      - name: Build (sample1)
+        run: |
+          cmake --preset mps2_an521-qemu -B build/mps2_an521-qemu
+          cmake --build build/mps2_an521-qemu
+      - name: Smoke tests (testexec.py)
+        run: |
+          scripts/ci/run_testexec.py --options "--preset mps2_an521-qemu" \
+            --run "timeout 60 qemu-system-arm -machine mps2-an521 -nographic \
+                   -semihosting-config enable=on,target=native -kernel asp.elf" \
+            --workdir build/testexec-mps2 \
+            task1 sem1 flg1 tmevt1 hrt1
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mps2-qemu-logs
+          path: build/testexec-mps2/testexec.log
+          if-no-files-found: ignore
+
+  #
+  #  QEMU Cortex-A9（zybo_z7／xilinx-zynq-a9）：build → sample1スモーク
+  #
+  zybo-qemu:
+    name: QEMU zybo_z7 (Cortex-A9)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build gcc-arm-none-eabi qemu-system-arm
+      - name: Build (sample1)
+        run: |
+          cmake --preset zybo_z7-qemu -B build/zybo_z7-qemu
+          cmake --build build/zybo_z7-qemu
+      - name: Smoke test (sample1)
+        run: |
+          scripts/ci/smoke_sample1.sh 30 qemu-system-arm -M xilinx-zynq-a9 \
+            -semihosting -nographic -serial /dev/null -serial mon:stdio \
+            -kernel build/zybo_z7-qemu/asp.elf
+
+  #
+  #  QEMU Cortex-A53（zcu102／xlnx-zcu102）：build → sample1＋testexecスモーク
+  #  ベアメタル用aarch64-none-elfの代わりにapt aarch64-linux-gnuを使用
+  #  （-nostdlib対応済み．A35_TOOLCHAIN_PREFIXで切替）
+  #
+  zcu102-qemu:
+    name: QEMU zcu102 (Cortex-A53)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build gcc-aarch64-linux-gnu qemu-system-arm
+      - name: Build (sample1)
+        run: |
+          cmake --preset zcu102_arm64-qemu -B build/zcu102_arm64-qemu \
+            -DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-
+          cmake --build build/zcu102_arm64-qemu
+      - name: Smoke test (sample1)
+        run: |
+          scripts/ci/smoke_sample1.sh 30 qemu-system-aarch64 \
+            -machine xlnx-zcu102,secure=on -nographic \
+            -semihosting-config enable=on,target=native \
+            -kernel build/zcu102_arm64-qemu/asp.elf
+      - name: Smoke test (testexec.py sem1)
+        run: |
+          scripts/ci/run_testexec.py \
+            --options "--preset zcu102_arm64-qemu -DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-" \
+            --run "timeout 60 qemu-system-aarch64 -machine xlnx-zcu102,secure=on -nographic \
+                   -semihosting-config enable=on,target=native -kernel asp.elf" \
+            --workdir build/testexec-zcu102 \
+            sem1
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zcu102-qemu-logs
+          path: build/testexec-zcu102/testexec.log
+          if-no-files-found: ignore
+
+  #
+  #  QEMU RV64GC（polarfire／microchip-icicle-kit）：build → sample1スモーク
+  #  ※開発機はQEMU 11で検証済み．ランナーのQEMU 8.2での動作確認を兼ねる
+  #    （NGの場合の対処は docs/dev/ci.md を参照）
+  #
+  polarfire-qemu:
+    name: QEMU polarfire (RV64GC)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build gcc-riscv64-unknown-elf qemu-system-misc
+      - name: Build (sample1)
+        run: |
+          cmake --preset polarfire_soc_kit-qemu -B build/polarfire_soc_kit-qemu
+          cmake --build build/polarfire_soc_kit-qemu
+      - name: Smoke test (sample1)
+        run: |
+          scripts/ci/smoke_sample1.sh 60 qemu-system-riscv64 \
+            -machine microchip-icicle-kit -nographic \
+            -semihosting-config enable=on,target=native \
+            -bios none -kernel build/polarfire_soc_kit-qemu/asp.elf
+
+  #
+  #  Raspberry Pi PICO2（実機ターゲット）：build only
+  #
+  pico2:
+    name: Build raspberrypi_pico2 (Cortex-M33)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build gcc-arm-none-eabi
+      - name: Build (sample1)
+        run: |
+          cmake --preset raspberrypi_pico2 -B build/raspberrypi_pico2
+          cmake --build build/raspberrypi_pico2
+
+  #
+  #  STM32MP257F-DK（実機ターゲット）：build only（リンクまで）
+  #  ベアメタル用aarch64-none-elfをARM公式tarballから導入（actions/cache）
+  #
+  stm32mp257:
+    name: Build stm32mp257f_dk (Cortex-A35)
+    runs-on: ubuntu-24.04
+    env:
+      TOOLCHAIN_NAME: arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-elf
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build
+      - name: Cache aarch64-none-elf toolchain
+        id: cache-toolchain
+        uses: actions/cache@v4
+        with:
+          path: ~/toolchain/${{ env.TOOLCHAIN_NAME }}
+          key: ${{ env.TOOLCHAIN_NAME }}
+      - name: Download aarch64-none-elf toolchain
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/toolchain && cd ~/toolchain
+          curl -fsSL -o toolchain.tar.xz \
+            "https://developer.arm.com/-/media/Files/downloads/gnu/13.3.rel1/binrel/${TOOLCHAIN_NAME}.tar.xz"
+          tar xf toolchain.tar.xz && rm toolchain.tar.xz
+      - name: Add toolchain to PATH
+        run: echo "$HOME/toolchain/${TOOLCHAIN_NAME}/bin" >> "$GITHUB_PATH"
+      - name: Build (sample1)
+        run: |
+          cmake --preset stm32mp257f_dk_arm64 -B build/stm32mp257f_dk_arm64
+          cmake --build build/stm32mp257f_dk_arm64
+
+  #
+  #  静的解析（EXTENDED/NEW領域のみ．kernel/・include/・library/はPRISTINE
+  #  のため対象外）．当面はwarning運用（non-blocking）＝AGENTS.md §6の段階導入
+  #
+  static-analysis:
+    name: Static analysis (cppcheck / clang-tidy)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build cppcheck clang-tidy
+      - name: cppcheck (syssvc/ target/ arch/)
+        continue-on-error: true
+        run: |
+          cppcheck --enable=warning,portability --std=c99 --inline-suppr \
+            --suppress=unknownMacro --inconclusive \
+            --xml --output-file=cppcheck-report.xml \
+            syssvc target arch
+          cppcheck --enable=warning,portability --std=c99 --inline-suppr \
+            --suppress=unknownMacro \
+            --template='{file}:{line}: {severity}: {id}: {message}' \
+            syssvc target arch 2>&1 | tee cppcheck-report.txt
+      - name: clang-tidy (POSIX compile_commands.json, syssvc/ + linux_gcc + tracelog)
+        continue-on-error: true
+        run: |
+          cmake --preset linux -B build/linux
+          cmake --build build/linux
+          files=$(jq -r '.[].file
+              | select(test("/(syssvc|target/linux_gcc|arch/tracelog)/"))' \
+              build/linux/compile_commands.json | sort -u)
+          clang-tidy -p build/linux --quiet $files 2>&1 | tee clang-tidy-report.txt
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-analysis-reports
+          path: |
+            cppcheck-report.xml
+            cppcheck-report.txt
+            clang-tidy-report.txt
+          if-no-files-found: ignore
