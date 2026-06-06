@@ -16,14 +16,14 @@
 
 | ファイル | 内容 | 対応元 | 状態 | 備考 |
 |---------|------|--------|------|------|
-| `01_overview.md` | TOPPERS/ASP3カーネル概要 | user.txt §1 | 🟡 | 1.1〜1.6: 位置付け・仕様・マイグレーション・既知問題など |
-| `02_target_overview.md` | ターゲット依存部概要 | user.txt §2 | ⚪ | 2.1〜2.3: 簡易/個別パッケージなど |
-| `03_quickstart.md` | クイックスタートガイド | user.txt §3 | ⚪ | 3.1〜3.5: 開発環境・TECSジェネレータ・ビルド・ライブラリ化など |
-| `04_directory_structure.md` | ディレクトリ構成 | user.txt §4 | ⚪ | 4.1〜4.2: パッケージ・ファイル構成 |
-| `05_configuration_script.md` | コンフィギュレーションスクリプト | user.txt §5 | ⚪ | Ruby→Python化による手順変更あり |
-| `06_makefile.md` | Makefile修正方法 | user.txt §6 | ⚪ | **asp3_core注**: CMake推奨（Makefile版は廃止） |
-| `07_configurator.md` | コンフィギュレータ | user.txt §7 | ⚪ | cfg.py（Python版）での手順 |
-| `08_system_services.md` | システムサービス | user.txt §8 | ⚪ | 8.1〜8.2: ログ・シリアル・など |
+| `01_overview.md` | TOPPERS/ASP3カーネル概要 | user.txt §1 | 🟢 | 1.1〜1.6: 位置付け・仕様・マイグレーション・既知問題など |
+| `02_target_overview.md` | ターゲット依存部概要 | user.txt §2 | 🟢 | 2.1〜2.3: 簡易/個別パッケージなど |
+| `03_quickstart.md` | クイックスタートガイド | user.txt §3 | 🟢 | 3.1〜3.5: 開発環境・TECSジェネレータ・ビルド・ライブラリ化など |
+| `04_directory_structure.md` | ディレクトリ構成 | user.txt §4 | 🟢 | 4.1〜4.2: パッケージ・ファイル構成 |
+| `05_configuration_script.md` | コンフィギュレーションスクリプト | user.txt §5 | 🟢 | configure.rbは削除済み（CMake対応表を注記） |
+| `06_makefile.md` | Makefile修正方法 | user.txt §6 | 🟢 | **asp3_core注**: CMake対応表を注記（Makefile版は廃止） |
+| `07_configurator.md` | コンフィギュレータ | user.txt §7 | 🟢 | cfg.py（Python版）とのCLI差異を注記 |
+| `08_system_services.md` | システムサービス | user.txt §8 | 🟢 | 8.1〜8.5: ログ・シリアル・ログタスク・histogram・banner。非TECS版の組込み手順を注記 |
 | `09_support_libraries.md` | サポートライブラリ | user.txt §9 | ⚪ | |
 | `10_test_program.md` | テストプログラム | user.txt §10 | ⚪ | |
 | `11_usage_notes.md` | 使用上の注意とヒント | user.txt §11 | ⚪ | |
@@ -83,15 +83,25 @@ asp3_coreでの差異を以下フォーマットで付記：
 - `docs/building.md` — ビルド手順（CMake中心）
 - `AGENTS.md` — 開発規約
 
+## 検証（機械突合）
+
+各章の変換後，`scripts/check_spec_conversion.py` で原本との突合を行う
+（識別子・3桁以上の数値・節番号が変換後Markdownにすべて含まれるかをチェック）。
+
+```bash
+python3 scripts/check_spec_conversion.py doc/user.txt <開始行>:<終了行> docs/spec/<変換先>.md
+# 例: python3 scripts/check_spec_conversion.py doc/user.txt 1063:1729 docs/spec/08_system_services.md
+```
+
 ## 変換進捗
 
 - **手順1（2026-06-07 完了）**: docs/api/ 完成 → 95サービスコール + 16静的API 100% 対応
-- **手順2（進行中）**: docs/spec/ user.txt 変換開始
-  - Phase 1: 01_overview.md, 02_target_overview.md
-  - Phase 2: 03_quickstart.md ～ 08_system_services.md
+- **手順2（進行中）**: docs/spec/ user.txt 変換
+  - Phase 1（2026-06-07 完了）: 01_overview.md, 02_target_overview.md
+  - Phase 2（2026-06-07 完了）: 03_quickstart.md ～ 08_system_services.md（機械突合・欠落ゼロ確認済み）
   - Phase 3: 09_support_libraries.md ～ 13_reference_detail.md
 - **手順3（計画中）**: simtimer.txt 削除、参照張り替え
 
 ---
 
-**最終更新**: 2026-06-07（手順2開始）
+**最終更新**: 2026-06-07（手順2 Phase 2 完了）
