@@ -55,15 +55,23 @@ AGENTS.md には以下が**先行記述**されているが、出力側・実行
    - syssvc は EXTENDED（上流 non_tecs 由来）のため変更箇所に
      【asp3_core変更】コメントを付け、DIVERGENCE_MAP の syssvc 行を更新
 
-3. **構造化ログ＝トレースログの非TECS実装**（`arch/tracelog/`）
-   - `trace_log.c` を新規実装（**TECS版 `tTraceLog.c` は削除**＝TECS残骸）：
-     - リングバッファ蓄積ではなく**逐次出力**（`T=<hrtcnt>,EV=<event>,...` を
-       低レベル出力へ）。エージェント/CIがパイプで読む用途のため
-     - 対象イベント（最小セット）：`TSK_STA`（状態変化）・`DSP_ENTER/LEAVE`・
-       `SVC_ENTER/LEAVE`（主要サービスコール）・`ERR`（E_*負値リターン）
+3. **構造化ログ＝トレースログの非TECS実装**（`arch/tracelog/`・**FMP3ベース**）
+   - **FMP3の `arch/tracelog/` 一式をASP3変換して流用**
+     （`/home/honda/TOPPERS/fmp3_pfsoc/fmp3_3.3/arch/tracelog/`）：
+     - `trace_log.h`（712行・**LOG_\*フック250定義＝全サービスコール網羅**）
+     - `trace_log.c`（236行・リングバッファ＋trace_wri_log）
+     - `trace_dump.c`（**2,187行・全イベントのデコード表**＝新規に書かずに済む）
+   - FMP3→ASP3変換（軽微・prcid依存は計45箇所）：
+     - `SIL_LOC_SPN`→`SIL_LOC_INT`・プロセッサID欄/引数の削除・`pcb.h` include削除
+     - FMP3専用フック（mact_tsk等のマイグレーション系）のcaseは削除
+     - ASP3カーネル側のLOG_\*呼出しと突合（未定義フックはカーネル側の
+       `#ifndef`ガードで空になるため安全）
+   - **TECS版 `tTraceLog.c` と既存の最小版 `trace_log.h`（13定義）は置換・削除**
+   - 出力形式：trace_dump の人間可読出力に加えて **`T=,EV=` 形式の出力関数を追加**
+     （`scripts/parse_slog.py` の既存仕様に一致させる）。出力タイミングは
+     リングバッファ＋終了時ダンプ（上流流・既定）と逐次出力モードの両対応を検討
    - CMakeオプション `ASP3_ENABLE_TRACE=ON` で `TOPPERS_ENABLE_TRACE` を定義し
-     `trace_log.c` をリンク（既定OFF＝オーバヘッドなし）
-   - `scripts/parse_slog.py` の既存仕様（`T=,EV=`・`--json`）に出力を合わせる
+     `trace_log.c`／`trace_dump.c` をリンク（既定OFF＝オーバヘッドなし）
 
 4. **期待イベント列の整備**（`test/porting/expected/`）
    - `sample1.json` を作成（起動〜タスク切替の主要列＋forbidden=ERR）
