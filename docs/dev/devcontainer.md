@@ -40,36 +40,51 @@ devcontainer / Docker（AGENTS.md §1 機能追加計画、優先度：中）
 | CIとの乖離 | QEMU（11.0 vs 8.2）・cppcheck（開発機に無し）・aarch64-none-elf（CIはtarball+cache） |
 | イメージ配布先 | GHCR（`ghcr.io/exshonda/asp3_core-dev`）。privateリポジトリのGHCRはActionsの`GITHUB_TOKEN`でpush/pull可 |
 
-### 構成
+### 再検討：ベースを ubuntu:26.04 にする（2026-06-06・実地検証済み）
+
+**ubuntu:26.04 をベースにすると QEMU ソースビルド（最重量ステージ）が丸ごと
+不要になる**ことを、開発機の Docker で実地検証した：
+
+| 検証項目 | 結果 |
+|---|---|
+| apt の QEMU | **10.2.1**（icicle-kit直接ブート対応＝CIのpolarfireジョブで実績あり） |
+| ツールチェーン | host gcc 15.2／arm-none-eabi **14.2**／aarch64-linux-gnu 15.2／riscv64-unknown-elf 14.2／CMake **4.2**／Python **3.14**／cppcheck 2.19 |
+| ビルド | **linux・mps2・zcu102・polarfire の4プリセットすべてBUILD OK**（CMake 4でも`cmake_minimum_required 3.16`はそのまま通る） |
+| QEMU実行 | mps2・zcu102・polarfire の sample1 バナー確認（icicle-kit含む） |
+| ⚠️ パッケージ名変更 | 26.04では riscv が `qemu-system-misc` から分離→ **`qemu-system-riscv`**（CIのpolarfireジョブと同じ） |
+
+これにより：**Dockerfileはaptインストール＋tarball展開のみのシングルステージ**
+（イメージビルド数分・BuildKitキャッシュ不要級）になり、CIのpolarfireジョブ
+（ubuntu:26.04）とベースOSも統一される。
+
+### 構成（ubuntu:26.04ベース・シングルステージ）
 
 ```
 .devcontainer/
 ├── devcontainer.json   ← VS Code / Claude Code 用（image参照・clangd拡張・
 │                          postCreateでcompile_commands.jsonリンク）
-└── Dockerfile          ← ubuntu:24.04ベース・マルチステージ
-                           stage1: QEMUソースビルド（arm/aarch64/riscv64）
-                           stage2: ツールチェーン一式＋stage1のQEMU＋
-                                   aarch64-none-elf tarball＋解析ツール
+└── Dockerfile          ← ubuntu:26.04ベース・シングルステージ
+                           apt一式（QEMU 10.2含む）＋aarch64-none-elf tarball
 .github/workflows/container.yml ← Dockerfile変更時にGHCRへbuild&push
 ```
 
-- **QEMUのピン**：11.0.0をソースビルド（3ターゲット
-  `arm-softmmu,aarch64-softmmu,riscv64-softmmu`）。開発機の検証済み
-  バージョンと一致させ、icicle-kit直接ブート対応を確保
+- **QEMUのピン**：apt版10.2.1（ソースビルド廃止。開発機の11.0との差は
+  検証済み機能の範囲では影響なし）
 - **タグ運用**：`ghcr.io/...:latest`＋日付タグ（`:20260606`）。
   CI・devcontainer.jsonは日付タグを参照（暗黙の更新を防ぐ）
 
 ## 実施プラン
 
 1. **Dockerfile作成**（`.devcontainer/Dockerfile`）
-   - ubuntu:24.04・apt（バージョン明示）：build-essential, cmake, ninja-build,
+   - **ubuntu:26.04**・apt（バージョン明示）：build-essential, cmake, ninja-build,
      python3, gcc-arm-none-eabi＋libnewlib, gcc-aarch64-linux-gnu＋
      libc6-dev-arm64-cross, gcc-riscv64-unknown-elf＋picolibc,
-     cppcheck, clang-tidy, dtc, git, gh
-   - QEMU 11.0.0 マルチステージビルド（--target-list=3種・最小構成
-     `--disable-gtk --disable-sdl` 等でサイズ抑制）
+     **qemu-system-arm, qemu-system-riscv**（26.04の分割名に注意）,
+     cppcheck, clang-tidy, dtc, git, gh, gdb-multiarch
    - ARM公式 aarch64-none-elf tarball を /opt へ展開・PATH追加
    - 非rootユーザ（vscode）・ワークスペース権限
+   - ツールチェーンが一段新しくなる（gcc15/arm-none-eabi14.2等）ため、
+     **全ターゲットの警告ゼロ確認**をローカル検証に含める
 2. **ローカル検証**（開発機のDockerで）
    - イメージビルド → コンテナ内で：
      linux（ctest＋testexec数本）／mps2・zcu102・polarfire 各QEMUスモーク／
@@ -100,11 +115,11 @@ devcontainer / Docker（AGENTS.md §1 機能追加計画、優先度：中）
 
 ### リスク・確認事項
 
-- **イメージサイズ**：ツールチェーン4系統＋QEMU3種で2〜3GB級になる見込み。
+- **イメージサイズ**：ツールチェーン4系統＋QEMU（apt）で1.5〜2.5GB級の見込み
+  （ソースビルド廃止でステージング不要に）。
   CIのpull時間（GHCR→ランナー）が毎ジョブ発生するため、現行（apt install
   約1分）との比較で採否を判断（イメージはdevcontainer用とし、CIは従来方式の
   まま＋QEMUだけイメージから取り出す折衷もあり得る）
-- QEMU 11のビルド依存（ninja/meson/glib等）はstage1のみに閉じる
 - GHCR privateイメージのpullはdevcontainer利用時に `gh auth token` 等での
   docker loginが必要（手順をdevcontainer.json/READMEに記載）
 
