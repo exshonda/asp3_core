@@ -1,0 +1,26 @@
+#
+#		ツールチェーンファイル（RISC-Vベアメタル：RV64GC用）
+#
+#  既定は riscv64-unknown-elf．別のプレフィックスを使う場合は
+#  -DRISCV64_TOOLCHAIN_PREFIX=riscv64-linux-gnu- 等で上書きできる．
+#
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR riscv64)
+
+if(NOT DEFINED RISCV64_TOOLCHAIN_PREFIX)
+    set(RISCV64_TOOLCHAIN_PREFIX riscv64-unknown-elf-)
+endif()
+
+set(CMAKE_C_COMPILER ${RISCV64_TOOLCHAIN_PREFIX}gcc)
+set(CMAKE_CXX_COMPILER ${RISCV64_TOOLCHAIN_PREFIX}g++)
+set(CMAKE_ASM_COMPILER ${RISCV64_TOOLCHAIN_PREFIX}gcc)
+set(CMAKE_OBJCOPY ${RISCV64_TOOLCHAIN_PREFIX}objcopy)
+set(CMAKE_NM ${RISCV64_TOOLCHAIN_PREFIX}nm)
+
+#  try_compileはリンク不要のスタティックライブラリで行う
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+#  実行ファイルの拡張子
+set(CMAKE_EXECUTABLE_SUFFIX_C ".elf")
+set(CMAKE_EXECUTABLE_SUFFIX_CXX ".elf")
+set(CMAKE_EXECUTABLE_SUFFIX_ASM ".elf")
