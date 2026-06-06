@@ -44,7 +44,7 @@
 | `porting_01_common.md` | 上流ポーティングガイド(1/3)：共通事項・構築環境・共通定義・SIL・カーネルAPI | porting.txt §1〜§5 | 🟢 |
 | `porting_02_kernel_impl.md` | 上流ポーティングガイド(2/3)：カーネル実装の依存部（ディスパッチャ・割込み/CPU例外出入口・タイマ） | porting.txt §6 | 🟢 |
 | `porting_03_cfg_syssvc.md` | 上流ポーティングガイド(3/3)：cfg設定ファイル・システムサービス・ファイル一覧 | porting.txt §7〜§10 | 🟢 |
-| `migration_guide.md` | マイグレーション | migration.txt | ⚪ |
+| `migration_guide.md` | マイグレーション（ASP1/JSP/μITRON4.0からの移行） | migration.txt | 🟢 |
 | `version_history.md` | 変更履歴 | version.txt | ⚪ |
 
 ## 変換ルール
@@ -110,9 +110,10 @@ python3 scripts/check_spec_conversion.py doc/user.txt <開始行>:<終了行> do
     non_tecs_services.md・extension_guide.md（機械突合 計619トークン欠落ゼロ）
   - porting.txt（2026-06-07 完了）: porting_01_common.md・porting_02_kernel_impl.md・
     porting_03_cfg_syssvc.md の3分割（機械突合 分冊毎＋全文一括 計982トークン欠落ゼロ）
-  - 次: migration.txt（低優先・最後の1本）
+  - migration.txt（2026-06-07 完了）: migration_guide.md（機械突合 158トークン欠落ゼロ）
+    — **変換対象の全仕様文書が完了**（残置はversion.txtのみ＝計画どおり）
 - **手順3（計画中）**: simtimer.txt 削除、参照張り替え
 
 ---
 
-**最終更新**: 2026-06-07（porting.txt 変換完了＝残り migration.txt のみ）
+**最終更新**: 2026-06-07（手順2 完了＝変換対象の全仕様文書をMarkdown化）
