@@ -86,7 +86,7 @@ jobs:
             ${{ matrix.tests }}
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-${{ matrix.name }}-logs
           path: build/testexec-${{ matrix.name }}/testexec.log

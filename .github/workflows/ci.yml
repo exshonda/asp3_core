@@ -71,7 +71,7 @@ jobs:
         run: scripts/ci/run_testcfg.sh build/testcfg
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: posix-logs
           path: |
@@ -110,7 +110,7 @@ jobs:
             task1 sem1 flg1 tmevt1 hrt1
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: mps2-qemu-logs
           path: build/testexec-mps2/testexec.log
@@ -181,7 +181,7 @@ jobs:
             sem1
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: zcu102-qemu-logs
           path: build/testexec-zcu102/testexec.log
@@ -334,7 +334,7 @@ jobs:
           clang-tidy -p build/linux --quiet $files 2>&1 | tee clang-tidy-report.txt
       - name: Upload reports
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: static-analysis-reports
           path: |
