@@ -44,7 +44,13 @@ Raspberry Pi PICO2（RP2350）の **RISC-Vコア（Hazard3×2・RV32IMAC系）**
 > QEMUにRP2350/Hazard3のモデルは無く、検証は実機のみ。
 > 以下に環境構築含め必要な情報をすべて記載する。
 
-### 0. 環境構築（実機接続PC）
+### 0. 環境構築（実機接続PC・**Ubuntu 24.04**）
+
+対象OSは **Ubuntu 24.04**（ネイティブ実行。実機書込み＝USB/SWDのため
+開発コンテナは使わない）。本計画の事前検証も Ubuntu 24.04 の apt
+パッケージで実施済みであり、**以下のバージョンで動作確認済みの構成**となる：
+gcc-riscv64-unknown-elf **13.2.0**（rv32imac/ilp32マルチリブ同梱）・
+CMake 3.28・Ninja 1.11・Python 3.12。
 
 ARM版pico2で構築済みの環境（Debugprobe配線・udev・OpenOCD RPiフォーク・
 picocom）をそのまま使う。詳細手順は
@@ -52,7 +58,7 @@ picocom）をそのまま使う。詳細手順は
 追加で必要なのは以下のみ：
 
 ```bash
-# RISC-Vツールチェーン（rv32マルチリブ同梱・PolarFireと同一パッケージ）
+# RISC-Vツールチェーン（rv32マルチリブ同梱・PolarFireと同一パッケージ．24.04のaptで13.2.0）
 sudo apt-get install -y gcc-riscv64-unknown-elf picolibc-riscv64-unknown-elf
 riscv64-unknown-elf-gcc -print-multi-lib | grep rv32imac   # rv32imac/ilp32 があること
 
