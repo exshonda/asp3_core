@@ -92,6 +92,21 @@ endif()
 if(NOT DEFINED ASP3_APPLDIR)
     set(ASP3_APPLDIR ${ASP3_ROOT_DIR}/sample)
 endif()
+#  相対パス指定（例：-DASP3_APPLDIR=test/porting）はソースルート基準で解決する
+if(NOT IS_ABSOLUTE ${ASP3_APPLDIR})
+    set(ASP3_APPLDIR ${ASP3_ROOT_DIR}/${ASP3_APPLDIR})
+endif()
+#  追加アプリソース（ASP3_EXTRA_APP_C_FILES）の相対パスも同様に解決する
+if(DEFINED ASP3_EXTRA_APP_C_FILES)
+    set(_extra_app_c_files "")
+    foreach(path IN LISTS ASP3_EXTRA_APP_C_FILES)
+        if(NOT IS_ABSOLUTE ${path})
+            set(path ${ASP3_ROOT_DIR}/${path})
+        endif()
+        list(APPEND _extra_app_c_files ${path})
+    endforeach()
+    set(ASP3_EXTRA_APP_C_FILES ${_extra_app_c_files})
+endif()
 #  .cfgファイル名がアプリ名と異なる場合は ASP3_APPCFGNAME で指定する
 if(DEFINED ASP3_APPCFGNAME)
     set(ASP3_APP_CFG_FILE ${ASP3_APPLDIR}/${ASP3_APPCFGNAME}.cfg)
@@ -419,6 +434,26 @@ if(ASP3_TARGET STREQUAL "linux_gcc" AND ASP3_APPLNAME STREQUAL "sample1")
         )
         set_tests_properties(sample1.slog_check PROPERTIES TIMEOUT 30)
     endif()
+endif()
+
+#
+#  ctest（移植検証テスト test/porting．経緯はdocs/dev/porting-test.md）
+#
+#  ホスト実行可能なlinux_gccでのみ登録する．合否はTAPサマリ行
+#  （"# 6/6 passed"）の出力照合で判定する（全ターゲット共通の判定方式を
+#  ctestに直結したもの）．
+#
+if(ASP3_TARGET STREQUAL "linux_gcc" AND ASP3_APPLNAME STREQUAL "test_porting")
+    enable_testing()
+
+    add_test(NAME test_porting.run
+        COMMAND bash -c "timeout 10 $<TARGET_FILE:asp> 2>&1"
+    )
+    set_tests_properties(test_porting.run PROPERTIES
+        PASS_REGULAR_EXPRESSION "# 6/6 passed"
+        FAIL_REGULAR_EXPRESSION "not ok"
+        TIMEOUT 30
+    )
 endif()
 
 #

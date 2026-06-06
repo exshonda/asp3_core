@@ -471,15 +471,20 @@ Hello from <TARGET_NAME>!
 
 ### 8-2. TAP移植検証テストの実行
 
+`test/porting/` の6項目テストを，既存の `ASP3_APPLDIR`/`ASP3_APPLNAME`
+機構でビルドして実行する（詳細は `test/porting/README.md`）：
+
 ```bash
-# test/porting/ の移植確認テストを実行
-cmake --build build/<name> --target test_porting
-# 実機またはQEMUで実行
+cmake --preset <プリセット名> -B build/test_porting-<name> \
+  -DASP3_APPLDIR=test/porting -DASP3_APPLNAME=test_porting \
+  -DASP3_EXTRA_APP_C_FILES=test/porting/tap.c
+cmake --build build/test_porting-<name>
+# QEMUターゲット：AGENTS.md §4のQEMUコマンドで実行
+# 実機ターゲット：--target run（書込み）＋ --target console（シリアル）
 ```
 
-期待TAP出力（最低限）：
+期待TAP出力：
 ```
-TAP version 13
 1..6
 ok 1 - syslog_output
 ok 2 - tick_timer_basic
@@ -487,14 +492,23 @@ ok 3 - task_create_activate
 ok 4 - semaphore_signal_wait
 ok 5 - eventflag_set_wait
 ok 6 - alarm_handler
+# 6/6 passed
 ```
+
+**合格＝`# 6/6 passed` 行があること**（全ターゲット共通の機械判定）。
+項目の並びは故障切り分けの順序（①ブート/UART → ②タイマ歩進 →
+③ディスパッチャ → ④⑤カーネル本体 → ⑥タイマ割込み経路）に
+なっている．落ちた項目から疑う場所は `test/porting/README.md` の表を参照．
 
 ### 8-3. POSIX simとのクロスチェック
 
 ```bash
-# POSIXで同じテストを実行して結果を比較
-cmake --build build/linux --target test_porting
-diff <(./build/linux/asp_test --tap) <(./serial_capture.py /dev/ttyUSB0)
+# POSIXで同じテストを実行して合否を確認（ctest登録済み）
+cmake --preset linux -B build/test_porting-linux \
+  -DASP3_APPLDIR=test/porting -DASP3_APPLNAME=test_porting \
+  -DASP3_EXTRA_APP_C_FILES=test/porting/tap.c
+cmake --build build/test_porting-linux
+ctest --test-dir build/test_porting-linux
 ```
 
 ---

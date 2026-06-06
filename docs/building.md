@@ -165,6 +165,14 @@ qemu-system-arm -M xilinx-zynq-a9 -semihosting -nographic \
 ## 4. テストランナ
 
 ```bash
+# 移植検証テスト（新ターゲット移植の最初の動作確認．6項目TAP．
+# 詳細は test/porting/README.md・docs/dev/porting-test.md）
+cmake --preset linux -B build/test_porting-linux \
+  -DASP3_APPLDIR=test/porting -DASP3_APPLNAME=test_porting \
+  -DASP3_EXTRA_APP_C_FILES=test/porting/tap.c
+cmake --build build/test_porting-linux
+ctest --test-dir build/test_porting-linux   # linuxのみctest登録（# 6/6 passed照合）
+
 # 機能テスト（QEMU mps2の例）：作業ディレクトリを作って実行
 mkdir TEST-MPS2 && cd TEST-MPS2
 echo '--preset mps2_an521-qemu' > TARGET_OPTIONS
@@ -196,7 +204,7 @@ python3 ../test_cfg/testcfg.py all
 | stm32mp257f_dk_arm64_gcc | stm32mp257f_dk_arm64 | 実機（swd-run/osdebug/console等．リンクは aarch64-none-elf 環境） |
 | polarfire_soc_kit_gcc | polarfire_soc_kit／**polarfire_soc_kit-qemu** | 実機（実行手段は今後整備）／QEMU（run）．qemu-system-riscv64 がPATHにない場合は `-DQEMU_SYSTEM_RISCV64=...` を付与 |
 | dummy_gcc | （プリセット無し．`-DASP3_TARGET=dummy_gcc`） | cfgテスト用ホストビルド |
-| rp2350-riscv_pico_sdk | rp2350-riscv_pico_sdk（予約） | チップ依存部（Hazard3）未実装（コア依存部 arch/riscv_gcc/common は実装済み） |
+| raspberrypi_pico2_riscv_gcc | raspberrypi_pico2_riscv | 実機（run=OpenOCD書込み（rp2350-riscv.cfg）．gdb/console等）．SDK非依存ベアメタル（Xh3irq） |
 
 CMake対応の経緯は `docs/dev/cmake.md` を参照。
 

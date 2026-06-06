@@ -59,4 +59,42 @@ test_porting.cfg／test_porting_cfg.h・README.md。計約290行）
 
 ## 実施結果
 
-（完了時に記載）
+（2026-06-06・実機接続PC（Ubuntu 24.04）で実施）
+
+### 変更したファイル
+
+| ファイル | 内容 |
+|---|---|
+| `test/porting/tap.[ch]`（新規） | 最小TAPフレームワーク（syslog出力・`tap_done()`＝`# N/N passed`＋`syslog_fls_log()`＋`ext_ker()`．`qemu_exit`依存なし） |
+| `test/porting/test_porting.c`（新規） | テスト本体（6項目．②⑥の待ちループは時間＋回数の二重バウンド） |
+| `test/porting/test_porting.cfg`・`test_porting_cfg.h`（新規） | 静的構成（タスク4・SEM・FLG・ALM）・共有ヘッダ |
+| `test/porting/README.md`（新規） | 項目表（故障切り分け対応）・ビルド/実行手順・判定基準 |
+| `CMakeLists.txt`（改変） | ①`ASP3_APPLDIR`/`ASP3_EXTRA_APP_C_FILES`の相対パス指定をソースルート基準で解決 ②linux_gcc＋test_portingビルドでctest登録（`# 6/6 passed`照合） |
+| `docs/porting/PORTING_GUIDE.md`（改変） | Step 8-2/8-3を実手順（APPLDIR方式＋ctest）に更新 |
+
+プロトタイプ（旧ツリー）は実機接続PCに存在しなかったため，計画の
+修正ポイントを仕様として新規作成した（結果的に取込みと同等）．
+
+### 検証結果
+
+| 環境 | 結果 |
+|---|---|
+| linux（ネイティブ） | **6/6 passed**＋ctest 1/1 Passed |
+| QEMU mps2-an521（M33） | **6/6 passed** |
+| QEMU xilinx-zynq-a9（zybo） | **6/6 passed** |
+| QEMU xlnx-zcu102（A53） | **6/6 passed** |
+| QEMU microchip-icicle-kit（polarfire） | ビルド成功．実行は**実施PCのQEMU 8.2.2でsample1含め無出力**（本変更と無関係の環境制約）→ ピン留めコンテナのCIで確認する |
+| 実機 raspberrypi_pico2_riscv | **6/6 passed**（`docs/dev/pico2-riscv.md` 参照） |
+
+### Git情報
+
+- ベースコミット：`7f8213b`
+- ファイルリスト再現：`git diff --stat <base> main -- test/porting CMakeLists.txt docs/porting/PORTING_GUIDE.md`
+
+### 知見
+
+- 実機（pico2）で**テスト末尾の出力（`# 6/6 passed`）が欠落**する事象が
+  あり，原因は終了処理（ATT_TER→`sio_terminate`）が送信FIFOのドレイン
+  前にUARTをディスエーブルすることだった．`rp2350_uart_cls_por()` に
+  FR.BUSYの待ちを追加して解消（ARM版にも共通の潜在不具合．
+  `DIVERGENCE_MAP.md` 参照）．QEMUでは送信が瞬時のため顕在化しない．
