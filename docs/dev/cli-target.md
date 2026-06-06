@@ -217,7 +217,7 @@ AGENTS.md には以下が**先行記述**されているが、出力側・実行
 ### Git情報
 
 - ベースコミット：`8469d30`
-- 関連コミット範囲：（コミット時に記載）
+- 関連コミット範囲：`2e43d2f`（feat(target): add CLI target）＋本記録確定コミット
 - ファイルリスト再現コマンド例：
   `git diff --stat 8469d30 HEAD -- arch/tracelog syssvc/test_svc.c syssvc/test_svc.h target/linux_gcc arch/posix_gcc/posix_kernel_impl.c CMakeLists.txt scripts/parse_slog.py test/porting`
 
