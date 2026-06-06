@@ -95,6 +95,16 @@ python3 scripts/check_spec_conversion.py doc/user.txt <開始行>:<終了行> do
 # 例: python3 scripts/check_spec_conversion.py doc/user.txt 1063:1729 docs/spec/08_system_services.md
 ```
 
+> **注**: 原本 `doc/*.txt` は全変換完了に伴い削除済み（`version.txt` のみ残置）。
+> 照合を再実行する場合は，`upstream` ブランチまたは削除前コミットから原本を取得する：
+>
+> ```bash
+> git show upstream:doc/user.txt > /tmp/user.txt
+> python3 scripts/check_spec_conversion.py /tmp/user.txt <開始行>:<終了行> docs/spec/<変換先>.md
+> ```
+>
+> 上流マージ時は，上流 `doc/*.txt` のdiffを `docs/spec/` へ手動反映する（`DIVERGENCE_MAP.md` 削除済み節参照）。
+
 ## 変換進捗
 
 - **手順1（2026-06-07 完了）**: docs/api/ 完成 → 95サービスコール + 16静的API 100% 対応
@@ -112,8 +122,9 @@ python3 scripts/check_spec_conversion.py doc/user.txt <開始行>:<終了行> do
     porting_03_cfg_syssvc.md の3分割（機械突合 分冊毎＋全文一括 計982トークン欠落ゼロ）
   - migration.txt（2026-06-07 完了）: migration_guide.md（機械突合 158トークン欠落ゼロ）
     — **変換対象の全仕様文書が完了**（残置はversion.txtのみ＝計画どおり）
-- **手順3（計画中）**: simtimer.txt 削除、参照張り替え
+- **手順3〜5（2026-06-07 完了）**: simtimer.txt 削除・参照張り替え・doc/原本11本削除
+  （`version.txt` のみ残置）・台帳記録（DIVERGENCE_MAP「削除済み」節）
 
 ---
 
-**最終更新**: 2026-06-07（手順2 完了＝変換対象の全仕様文書をMarkdown化）
+**最終更新**: 2026-06-07（**全手順完了**＝本ディレクトリのMarkdown版が仕様文書の正本）

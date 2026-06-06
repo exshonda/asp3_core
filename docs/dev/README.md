@@ -26,7 +26,7 @@
 | OS Awareness 対応 | `os-awareness.md` | 完了 |
 | 移植検証テスト | `porting-test.md` | 完了（polarfire QEMUのみCIで確認） |
 | RISC-V Hazard3ターゲット | `pico2-riscv.md` | 完了（dlynse較正・testexec全件・OS Awarenessは残課題） |
-| ドキュメントMarkdown化 | `docs-markdown.md` | 計画中 |
+| ドキュメントMarkdown化 | `docs-markdown.md` | 完了 |
 | devcontainer / Docker | `devcontainer.md` | 完了 |
 | skillパッケージ | `skill-package.md` | 計画中 |
 

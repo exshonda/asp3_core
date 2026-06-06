@@ -64,7 +64,7 @@
 | `simtimer.txt` | タイマドライバシミュレータを用いたカーネルのテスト手法 |
 | `version.txt` | 変更履歴 |
 
-> **asp3_core注**: これらのMarkdown版が本ディレクトリ（`docs/spec/`）に順次整備されます（索引は [README.md](README.md)）。`simtimer.txt` は機能自体の削除に伴い削除予定です。
+> **asp3_core注**: これらのMarkdown版は本ディレクトリ（`docs/spec/`）に**整備完了**しています（索引は [README.md](README.md)）。原本 `doc/*.txt` は変換完了に伴い削除済み（`simtimer.txt` は機能自体の削除に伴い変換せず削除）。`doc/version.txt` のみ上流マージ追従のため残置。
 
 ### include/
 

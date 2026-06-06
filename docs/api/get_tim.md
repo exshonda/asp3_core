@@ -29,7 +29,7 @@ ER ercd = get_tim(SYSTIM *p_systim);
 カーネルが管理するシステム時刻を `*p_systim` に格納して返す。
 
 `SYSTIM` は `uint64_t` であり、単位は**マイクロ秒**（ASP3でμITRON4.0のミリ秒から変更。
-`doc/asp_spec.txt` (4-7)）。カーネル起動からの経過時間に `set_tim` による設定値を
+`docs/spec/asp3_spec_overview.md` (4-7)）。カーネル起動からの経過時間に `set_tim` による設定値を
 加味した値を表す。64ビットのため、オーバーフローまで約58万年であり実用上考慮不要。
 
 ASP3はティックレスカーネルであり、システム時刻は高分解能タイマ（`fch_hrt` と同じ

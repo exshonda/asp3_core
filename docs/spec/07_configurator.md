@@ -13,7 +13,7 @@
 
 なお，コンフィギュレータの使用方法に関する詳細は，「TOPPERS第3世代カーネル向け Ruby版コンフィギュレータ ユーザーズマニュアル」を参照すること。
 
-> **asp3_core注**: コンフィギュレータ仕様の詳細は `doc/configurator.txt`（Markdown化後は `docs/spec/configurator_spec.md`）を参照。
+> **asp3_core注**: コンフィギュレータ仕様の詳細は [configurator_spec.md](configurator_spec.md) を参照（原本 `doc/configurator.txt` は変換完了に伴い削除済み）。
 
 ## 7.1 コンフィギュレータの起動
 
