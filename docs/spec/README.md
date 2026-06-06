@@ -35,9 +35,9 @@
 | ファイル | 内容 | 対応元 | 状態 |
 |---------|------|--------|------|
 | `configurator_spec.md` | cfg仕様詳細（kernel_cfg.c/h 生成仕様・エラー条件） | configurator.txt | 🟢 |
-| `design_overview.md` | カーネル内部設計 | design.txt | ⚪ |
-| `design_mutex.md` | ミューテックス設計 | mutex_design.txt | ⚪ |
-| `design_inherit.md` | 優先度継承設計 | inherit_design.txt | ⚪ |
+| `design_overview.md` | カーネル内部設計（設計方針・ディスパッチャ・CHECKマクロ等） | design.txt | 🟢 |
+| `design_mutex.md` | ミューテックス設計（優先度上限・標準構成） | mutex_design.txt | 🟢 |
+| `design_inherit.md` | 優先度継承設計（extension/inherit/・推移的継承） | inherit_design.txt | 🟢 |
 | `asp3_spec_overview.md` | ASP3仕様概要 | asp_spec.txt | ⚪ |
 | `extension_guide.md` | 拡張パッケージガイド | extension.txt | ⚪ |
 | `non_tecs_services.md` | 非TECS版システムサービス | non_tecs.txt | ⚪ |
@@ -102,7 +102,9 @@ python3 scripts/check_spec_conversion.py doc/user.txt <開始行>:<終了行> do
   - Phase 3（2026-06-07 完了）: 09_support_libraries.md ～ 13_reference_detail.md
     — **user.txt 全13章の変換完了**（全章機械突合・911トークン欠落ゼロ）
   - configurator.txt（2026-06-07 完了）: configurator_spec.md（機械突合516トークン欠落ゼロ）
-  - 次: design系3本 → asp_spec/non_tecs/extension → porting.txt → migration
+  - design系3本（2026-06-07 完了）: design_overview.md・design_mutex.md・design_inherit.md
+    （機械突合 計420トークン欠落ゼロ）
+  - 次: asp_spec/non_tecs/extension → porting.txt → migration
 - **手順3（計画中）**: simtimer.txt 削除、参照張り替え
 
 ---
