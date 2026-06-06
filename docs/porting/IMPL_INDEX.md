@@ -46,6 +46,26 @@
 
 ---
 
+## デバッグ支援（gdb OS-awareness）
+
+エンジンは `scripts/gdb_os_aware/os_awareness.py`（全ターゲット共通）。
+ターゲット依存部は target→chip→core の3層（ソース階層に対応）で、新ターゲット
+追加時は `target_os_awareness.py`（＋必要なら chip/core 層）を実装する。
+経緯・検証は `docs/dev/os-awareness.md`。
+
+| 実装したいもの | 参照 | ファイル | パターン |
+|---|---|---|---|
+| GICv2 割込み状態（arm64） | `arch/arm64_gcc/common` | `core_os_awareness.py` | GICD_ISENABLER/ISPENDR読出し・primap=MSB詰め |
+| GICv2 割込み状態（arm） | `arch/arm_gcc/common` | `core_os_awareness.py` | 同上（32bit） |
+| NVIC 割込み状態（arm_m） | `arch/arm_m_gcc/common` | `core_os_awareness.py` | ISER/ISPR・SysTickはSYST_CSR/ICSR・primap=LSB |
+| PLIC 割込み状態（riscv） | `arch/riscv_gcc/common` | `core_os_awareness.py` | IEM/IPEND読出し（base/cidxはchip層から）・primap=LSB |
+| chip層（GICDベース等の定数） | `arch/arm64_gcc/zynqmp` ほか | `chip_os_awareness.py` | ベースアドレスを持ちcore層を呼ぶ |
+| target層（再エクスポート） | `target/zcu102_arm64_gcc` ほか | `target_os_awareness.py` | chip（無ければcore）のAPIを公開 |
+| デバイス読出しの安全ガード | `target/zcu102_arm64_gcc` | `target_os_awareness.py` | QEMU不具合時に環境変数でオプトイン |
+| マルチクラスタQEMUへのgdb接続 | `target/polarfire_soc_kit_gcc` | `target.cmake`（ASP3_OSDEBUG_GDB_CONNECT） | inferior 2へattach後にfile |
+
+---
+
 ## システムサービス（syssvc／TECSレス版）
 
 | 機能 | ファイル | 備考 |

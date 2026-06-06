@@ -112,6 +112,25 @@ ninja -C build/raspberrypi_pico2 run    # 実機書込み（OpenOCD program）
 
 テストプログラムは `ext_ker` 時にセミホスティングで QEMU が自動終了する。
 
+### osdebug ターゲット（QEMU＋OS-awareness）
+
+QEMU で実行するターゲット（`ASP3_RUN_COMMAND` が qemu-system 系）では、
+`osdebug` で QEMU を gdbserver 付き（`-s -S`）で起動し、`gdb-multiarch` から
+OS-awareness（`scripts/gdb_os_aware/os_awareness.py`）を読み込んで接続できる。
+
+```bash
+ninja -C build/mps2_an521-qemu osdebug
+# gdb内: continue →（実行中に）Ctrl-C → atask / stask / sem / cyc / intr 等
+```
+
+- コマンド一覧・ターゲット依存部の仕組みは `scripts/gdb_os_aware/README.md` を参照。
+- QEMU の出力はビルドディレクトリの `qemu-osdebug.log` に出る。
+- linux（ホスト実行）はネイティブ gdb でそのまま使える：
+  `gdb ./build/linux/asp -ex 'source scripts/gdb_os_aware/os_awareness.py'`
+- 制約: zcu102 は QEMU 8.2 の不具合により `intr` の ena/pend 列を既定無効
+  （詳細は `target/zcu102_arm64_gcc/target_os_awareness.py`）。polarfire は
+  マルチクラスタ構成のため接続手順を差し替えている（`target.cmake` 参照）。
+
 ### 実機デバッグ系ターゲット（pico2／stm32mp257）
 
 `target/<name>/run.cmake` が定義する（`ninja -C build/<dir> <target>`）：
@@ -120,7 +139,7 @@ ninja -C build/raspberrypi_pico2 run    # 実機書込み（OpenOCD program）
 |---|---|---|---|
 | `run`／`swd-run` | run | swd-run | OpenOCDで書込み・実行 |
 | `openocd`・`gdb`・`swd-debug` | ○ | ○ | デバッグセッション |
-| `osdebug` | − | ○ | OS-awareness付き（gdb-multiarch） |
+| `osdebug` | − | ○ | OS-awareness付き（gdb-multiarch．QEMUターゲットの osdebug は上記） |
 | `console` | ○ | ○ | UARTコンソール（picocom等自動選択） |
 
 ### QEMUを直接起動

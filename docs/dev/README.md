@@ -23,7 +23,7 @@
 | QEMUターゲット(RISC-V) | `qemu-target-riscv.md` | 完了 |
 | CLIターゲット | `cli-target.md` | 完了 |
 | CI整備 | `ci.md` | 完了 |
-| OS Awareness 対応 | `os-awareness.md` | 計画中 |
+| OS Awareness 対応 | `os-awareness.md` | 完了（stm32実機回帰・pico2実機確認のみ実機側PCで実施） |
 | ドキュメントMarkdown化 | `docs-markdown.md` | 計画中 |
 | devcontainer / Docker | `devcontainer.md` | 計画中 |
 | skillパッケージ | `skill-package.md` | 計画中 |
