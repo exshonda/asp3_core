@@ -14,8 +14,8 @@
 #    Unregistered Exceptionとなる既存挙動（要調査）
 #
 #  polarfireはランナーのQEMU 8.2がmicrochip-icicle-kitの直接カーネル
-#  ブート（-bios none）未対応のため対象外（ci.ymlのbuild-onlyのみ．
-#  経緯は docs/dev/ci.md）．
+#  ブート（-bios none）未対応のため、ubuntu:26.04コンテナ（QEMU 10.2）で
+#  実行する別ジョブとする（経緯は docs/dev/ci.md）．
 #
 name: Nightly
 
@@ -78,4 +78,41 @@ jobs:
         with:
           name: nightly-${{ matrix.name }}-logs
           path: build/testexec-${{ matrix.name }}/testexec.log
+          if-no-files-found: ignore
+
+  #
+  #  polarfire：ubuntu:26.04コンテナ（QEMU 10.2）でtestexec全件
+  #  （除外：dlynse・int1．理由は冒頭コメント）
+  #
+  testexec-full-polarfire:
+    name: testexec full (polarfire-qemu)
+    runs-on: ubuntu-24.04
+    container: ubuntu:26.04
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates git cmake ninja-build python3 \
+            gcc-riscv64-unknown-elf qemu-system-riscv
+      - uses: actions/checkout@v4
+      - name: Function tests (testexec.py)
+        run: |
+          scripts/ci/run_testexec.py --options "--preset polarfire_soc_kit-qemu" \
+            --run "timeout 60 qemu-system-riscv64 -machine microchip-icicle-kit \
+                   -nographic -semihosting-config enable=on,target=native \
+                   -bios none -kernel asp.elf" \
+            --workdir build/testexec-polarfire-qemu \
+            cpuexc1 cpuexc2 cpuexc3 cpuexc4 cpuexc5 cpuexc6 cpuexc7 cpuexc8 \
+            cpuexc9 cpuexc10 \
+            dtq1 exttsk flg1 hrt1 mpf1 \
+            mutex1 mutex2 mutex3 mutex4 mutex5 mutex6 mutex7 mutex8 \
+            notify1 pdq1 raster1 raster2 sem1 sem2 suspend1 \
+            sysman1 sysstat1 task1 tmevt1
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-polarfire-qemu-logs
+          path: build/testexec-polarfire-qemu/testexec.log
           if-no-files-found: ignore

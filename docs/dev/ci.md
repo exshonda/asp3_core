@@ -142,15 +142,21 @@ zcu102／polarfire）、③build-onlyジョブ（pico2／stm32mp257）、
   （arm-none-eabi系）・**`libc6-dev-arm64-cross`**（aarch64-linux-gnu）が
   Recommendsのため入らず、ホストの`/usr/include`への流れ込みや`-lc`不在で
   ビルドが失敗する。明示インストールで解決
-- **polarfireはbuild-onlyに切替**（計画段階の最大リスクが発現）：
+- **polarfireはubuntu:26.04コンテナで実行**（計画段階の最大リスクが発現
+  →コンテナで解決）：
   ランナーのQEMU 8.2は `microchip-icicle-kit` の直接Mモードブート
   （`-bios none -kernel`）**未対応**。8.2ではリセットベクタがeNVM固定で、
   `-bios none`だと何もロードされない（QEMU 8.2の
   `hw/riscv/microchip_pfsoc.c` で確認。カーネルエントリへジャンプする
-  リセットベクタROM生成（`riscv_setup_rom_reset_vec`）はQEMU 11系の
-  実装）。開発機でもapt版8.2のdebを展開して無出力を再現済み。
-  **将来の代替案**：QEMU（≥9系）をソースビルド＋`actions/cache`して
-  nightlyでpolarfireのフルテストを回す（必要になったら実施）
+  リセットベクタROM生成は**QEMU 10.1で追加**）。開発機でもapt版8.2の
+  debを展開して無出力を再現済み。いったんbuild-onlyに切替えた後、
+  `runs-on: ubuntu-24.04`＋**`container: ubuntu:26.04`（QEMU 10.2.1）**で
+  スモーク・nightly全件とも復活（開発機のdockerで build→smoke→testexec
+  を事前検証）。GitHub Actionsにubuntu-26.04ランナーイメージが提供されたら
+  `runs-on` 切替でコンテナを外せる。
+  **26.04の注意**：riscvは `qemu-system-misc` から **`qemu-system-riscv`**
+  パッケージに分離。コンテナはroot実行（sudo不要）・checkout前に
+  git＋ca-certificatesの導入が必要
 - **static-analysisは当面warning運用**（non-blocking・
   `continue-on-error`）：cppcheck＝syssvc/ target/ arch/（PRISTINE除外）、
   clang-tidy＝POSIXのcompile_commands.jsonからsyssvc／linux_gcc／
@@ -178,11 +184,12 @@ zcu102／polarfire）、③build-onlyジョブ（pico2／stm32mp257）、
 ### 追加したファイル
 
 - `.github/workflows/ci.yml` — push(main/feat/**)・PR・dispatch。8ジョブ
-  （posix／mps2-qemu／zybo-qemu／zcu102-qemu／polarfire(build)／pico2(build)
-  ／stm32mp257(build・ARM公式tarball＋cache)／static-analysis）。
-  fail-fast無効・concurrency・ログartifacts
+  （posix／mps2-qemu／zybo-qemu／zcu102-qemu／polarfire-qemu
+  (ubuntu:26.04コンテナ)／pico2(build)／stm32mp257(build・ARM公式tarball
+  ＋cache)／static-analysis）。fail-fast無効・concurrency・ログartifacts
 - `.github/workflows/nightly.yml` — schedule（03:00 JST）＋dispatch。
-  QEMU 2ターゲット（mps2 32本／zcu102 35本）のtestexec全件
+  QEMU 3ターゲット（mps2 32本／zcu102 35本／polarfire 34本
+  (ubuntu:26.04コンテナ)）のtestexec全件
 - `scripts/ci/run_testexec.py` — testexec.py CIラッパ（合否判定付き）
 - `scripts/ci/run_testcfg.sh` — testcfg.py CIラッパ（合否判定付き）
 - `scripts/ci/smoke_sample1.sh` — sample1スモーク判定
