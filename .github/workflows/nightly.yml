@@ -3,6 +3,9 @@
 #
 #  設計・経緯は docs/dev/ci.md を参照．PR毎に回すには重いため夜間に分離
 #  （workflow_dispatchで手動実行も可能）．
+#  全ジョブを開発コンテナイメージで実行（docs/dev/devcontainer.md）．
+#  イメージ統一により polarfire も同一マトリクスで実行する
+#  （ubuntu:26.04素コンテナの別ジョブだった経緯は docs/dev/ci.md）．
 #
 #  テスト対象は test/testexec.py TEST_SPEC の機能テスト全件から，
 #  ターゲット毎に以下を除外したもの（2026-06-06 開発機での全件実行結果）：
@@ -12,10 +15,6 @@
 #    未定義でビルド不可（ターゲット移植の既存ギャップ・要整備）
 #  - cpuexc1・cpuexc4（mps2）：CPU例外がHardFaultへエスカレートし
 #    Unregistered Exceptionとなる既存挙動（要調査）
-#
-#  polarfireはランナーのQEMU 8.2がmicrochip-icicle-kitの直接カーネル
-#  ブート（-bios none）未対応のため、ubuntu:26.04コンテナ（QEMU 10.2）で
-#  実行する別ジョブとする（経緯は docs/dev/ci.md）．
 #
 name: Nightly
 
@@ -28,12 +27,16 @@ jobs:
   testexec-full:
     name: testexec full (${{ matrix.name }})
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: mps2-qemu
-            packages: gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm
             options: --preset mps2_an521-qemu
             run: >-
               timeout 60 qemu-system-arm -machine mps2-an521 -nographic
@@ -45,9 +48,7 @@ jobs:
               notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
               sysman1 sysstat1 task1 tmevt1
           - name: zcu102-qemu
-            packages: gcc-aarch64-linux-gnu libc6-dev-arm64-cross qemu-system-arm
-            options: >-
-              --preset zcu102_arm64-qemu -DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-
+            options: --preset zcu102_arm64-qemu
             run: >-
               timeout 60 qemu-system-aarch64 -machine xlnx-zcu102,secure=on
               -nographic -semihosting-config enable=on,target=native
@@ -59,13 +60,21 @@ jobs:
               mutex1 mutex2 mutex3 mutex4 mutex5 mutex6 mutex7 mutex8
               notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
               sysman1 sysstat1 task1 tmevt1
+          - name: polarfire-qemu
+            options: --preset polarfire_soc_kit-qemu
+            run: >-
+              timeout 60 qemu-system-riscv64 -machine microchip-icicle-kit
+              -nographic -semihosting-config enable=on,target=native
+              -bios none -kernel asp.elf
+            tests: >-
+              cpuexc1 cpuexc2 cpuexc3 cpuexc4 cpuexc5 cpuexc6 cpuexc7 cpuexc8
+              cpuexc9 cpuexc10
+              dtq1 exttsk flg1 hrt1 mpf1
+              mutex1 mutex2 mutex3 mutex4 mutex5 mutex6 mutex7 mutex8
+              notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
+              sysman1 sysstat1 task1 tmevt1
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            ninja-build ${{ matrix.packages }}
       - name: Function tests (testexec.py)
         run: |
           scripts/ci/run_testexec.py --options "${{ matrix.options }}" \
@@ -78,41 +87,4 @@ jobs:
         with:
           name: nightly-${{ matrix.name }}-logs
           path: build/testexec-${{ matrix.name }}/testexec.log
-          if-no-files-found: ignore
-
-  #
-  #  polarfire：ubuntu:26.04コンテナ（QEMU 10.2）でtestexec全件
-  #  （除外：dlynse・int1．理由は冒頭コメント）
-  #
-  testexec-full-polarfire:
-    name: testexec full (polarfire-qemu)
-    runs-on: ubuntu-24.04
-    container: ubuntu:26.04
-    steps:
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends \
-            ca-certificates git cmake ninja-build python3 \
-            gcc-riscv64-unknown-elf qemu-system-riscv
-      - uses: actions/checkout@v4
-      - name: Function tests (testexec.py)
-        run: |
-          scripts/ci/run_testexec.py --options "--preset polarfire_soc_kit-qemu" \
-            --run "timeout 60 qemu-system-riscv64 -machine microchip-icicle-kit \
-                   -nographic -semihosting-config enable=on,target=native \
-                   -bios none -kernel asp.elf" \
-            --workdir build/testexec-polarfire-qemu \
-            cpuexc1 cpuexc2 cpuexc3 cpuexc4 cpuexc5 cpuexc6 cpuexc7 cpuexc8 \
-            cpuexc9 cpuexc10 \
-            dtq1 exttsk flg1 hrt1 mpf1 \
-            mutex1 mutex2 mutex3 mutex4 mutex5 mutex6 mutex7 mutex8 \
-            notify1 pdq1 raster1 raster2 sem1 sem2 suspend1 \
-            sysman1 sysstat1 task1 tmevt1
-      - name: Upload logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: nightly-polarfire-qemu-logs
-          path: build/testexec-polarfire-qemu/testexec.log
           if-no-files-found: ignore

@@ -5,6 +5,10 @@
 #  - PR/push：全ターゲットbuild＋各QEMUスモーク（10分以内目標）
 #  - 全件テストは nightly.yml（schedule＋手動dispatch）
 #  - 合否判定スクリプトは scripts/ci/（ローカルでも実行可能）
+#  - 全ジョブを開発コンテナイメージ（ghcr.io/exshonda/asp3_core-dev）で実行
+#    （ツールチェーン・QEMUのピン留め．設計は docs/dev/devcontainer.md）．
+#    イメージは日付タグで参照する（暗黙の更新を防ぐ）．更新時は本ファイル内の
+#    タグを一括置換すること
 #
 name: CI
 
@@ -35,12 +39,13 @@ jobs:
   posix:
     name: POSIX (linux)
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ninja-build
       - name: Build (sample1)
         run: |
           cmake --preset linux -B build/linux
@@ -72,15 +77,13 @@ jobs:
   mps2-qemu:
     name: QEMU mps2-an521 (Cortex-M33)
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        #  libnewlib-arm-none-eabi はRecommendsのため明示指定が必要
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi \
-            qemu-system-arm
       - name: Build (sample1)
         run: |
           cmake --preset mps2_an521-qemu -B build/mps2_an521-qemu
@@ -106,14 +109,13 @@ jobs:
   zybo-qemu:
     name: QEMU zybo_z7 (Cortex-A9)
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi \
-            qemu-system-arm
       - name: Build (sample1)
         run: |
           cmake --preset zybo_z7-qemu -B build/zybo_z7-qemu
@@ -126,25 +128,23 @@ jobs:
 
   #
   #  QEMU Cortex-A53（zcu102／xlnx-zcu102）：build → sample1＋testexecスモーク
-  #  ベアメタル用aarch64-none-elfの代わりにapt aarch64-linux-gnuを使用
-  #  （-nostdlib対応済み．A35_TOOLCHAIN_PREFIXで切替）
+  #  イメージ同梱の aarch64-none-elf（13.3.rel1）を使用＝プリセット素のまま
+  #  （A35_TOOLCHAIN_PREFIX 不要．apt aarch64-linux-gnu 時代の経緯は
+  #    docs/dev/ci.md．glibc系フォールバックは chip.cmake に残置）
   #
   zcu102-qemu:
     name: QEMU zcu102 (Cortex-A53)
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          #  libc6-dev-arm64-cross はRecommendsのため明示指定が必要
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            ninja-build gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
-            qemu-system-arm
       - name: Build (sample1)
         run: |
-          cmake --preset zcu102_arm64-qemu -B build/zcu102_arm64-qemu \
-            -DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-
+          cmake --preset zcu102_arm64-qemu -B build/zcu102_arm64-qemu
           cmake --build build/zcu102_arm64-qemu
       - name: Smoke test (sample1)
         run: |
@@ -155,7 +155,7 @@ jobs:
       - name: Smoke test (testexec.py sem1)
         run: |
           scripts/ci/run_testexec.py \
-            --options "--preset zcu102_arm64-qemu -DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-" \
+            --options "--preset zcu102_arm64-qemu" \
             --run "timeout 60 qemu-system-aarch64 -machine xlnx-zcu102,secure=on -nographic \
                    -semihosting-config enable=on,target=native -kernel asp.elf" \
             --workdir build/testexec-zcu102 \
@@ -170,24 +170,19 @@ jobs:
 
   #
   #  QEMU RV64GC（polarfire／microchip-icicle-kit）：build → sample1スモーク
-  #  ※ランナー（ubuntu-24.04）のQEMU 8.2はicicle-kitの直接Mモードブート
-  #    （-bios none -kernel）未対応（QEMU 10.1で追加）のため、
-  #    ubuntu:26.04コンテナ（QEMU 10.2）内で実行する。
-  #    26.04ではriscvが qemu-system-misc から qemu-system-riscv に分離。
-  #    経緯は docs/dev/ci.md を参照
+  #  ※icicle-kitの直接Mモードブート（-bios none -kernel）はQEMU 10.1以降．
+  #    イメージのQEMU 10.2で実行（ubuntu:26.04素コンテナ時代の経緯は
+  #    docs/dev/ci.md を参照）
   #
   polarfire-qemu:
     name: QEMU polarfire (RV64GC)
     runs-on: ubuntu-24.04
-    container: ubuntu:26.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Install dependencies
-        #  コンテナはroot実行のためsudo不要。checkoutの前にgitを入れる
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends \
-            ca-certificates git cmake ninja-build python3 \
-            gcc-riscv64-unknown-elf qemu-system-riscv
       - uses: actions/checkout@v4
       - name: Build (sample1)
         run: |
@@ -206,13 +201,13 @@ jobs:
   pico2:
     name: Build raspberrypi_pico2 (Cortex-M33)
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi
       - name: Build (sample1)
         run: |
           cmake --preset raspberrypi_pico2 -B build/raspberrypi_pico2
@@ -220,34 +215,19 @@ jobs:
 
   #
   #  STM32MP257F-DK（実機ターゲット）：build only（リンクまで）
-  #  ベアメタル用aarch64-none-elfをARM公式tarballから導入（actions/cache）
+  #  aarch64-none-elf 13.3.rel1 はイメージに同梱（tarball＋actions/cache
+  #  だった経緯は docs/dev/ci.md）
   #
   stm32mp257:
     name: Build stm32mp257f_dk (Cortex-A35)
     runs-on: ubuntu-24.04
-    env:
-      TOOLCHAIN_NAME: arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-elf
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ninja-build
-      - name: Cache aarch64-none-elf toolchain
-        id: cache-toolchain
-        uses: actions/cache@v4
-        with:
-          path: ~/toolchain/${{ env.TOOLCHAIN_NAME }}
-          key: ${{ env.TOOLCHAIN_NAME }}
-      - name: Download aarch64-none-elf toolchain
-        if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p ~/toolchain && cd ~/toolchain
-          curl -fsSL -o toolchain.tar.xz \
-            "https://developer.arm.com/-/media/Files/downloads/gnu/13.3.rel1/binrel/${TOOLCHAIN_NAME}.tar.xz"
-          tar xf toolchain.tar.xz && rm toolchain.tar.xz
-      - name: Add toolchain to PATH
-        run: echo "$HOME/toolchain/${TOOLCHAIN_NAME}/bin" >> "$GITHUB_PATH"
       - name: Build (sample1)
         run: |
           cmake --preset stm32mp257f_dk_arm64 -B build/stm32mp257f_dk_arm64
@@ -260,13 +240,13 @@ jobs:
   static-analysis:
     name: Static analysis (cppcheck / clang-tidy)
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            ninja-build cppcheck clang-tidy
       - name: cppcheck (syssvc/ target/ arch/)
         continue-on-error: true
         run: |
