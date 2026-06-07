@@ -17,7 +17,7 @@ set(ASP3_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR})
 if(NOT DEFINED ASP3_TARGET)
     message(FATAL_ERROR
         "ASP3_TARGET is not defined. "
-        "Use a preset (e.g. --preset m33-qemu) or -DASP3_TARGET=<target>.")
+        "Use a preset (e.g. --preset mps2_an521-qemu) or -DASP3_TARGET=<target>.")
 endif()
 
 if(NOT EXISTS ${ASP3_ROOT_DIR}/target/${ASP3_TARGET}/target.cmake)
