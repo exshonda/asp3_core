@@ -1,7 +1,7 @@
 # OVERVIEW.md — TOPPERS/ASP3 Core 構想まとめ
 
 > **TOPPERS/ASP3 Core**（リポジトリ：`asp3_core`）の全体像。  
-> 詳細は各ドキュメント（`docs/asp3_derivative_plan.md` / `docs/FILE_PLAN.md` / `START.md` 等）を参照。
+> 詳細は各ドキュメント（`AGENTS.md` / `docs/dev/README.md` 等）を参照。
 
 ---
 
@@ -35,7 +35,6 @@
 ### エントリ・規約ファイル
 - `AGENTS.md`：全AIツール共通の正本（single source of truth）
 - `CLAUDE.md` / `.clinerules` / `.cursorrules`：各ツールから AGENTS.md への薄いポインタ
-- `START.md`：開発の始め方と人間/AI分担（Phase 0＝人間、Phase 1以降＝AI）
 
 ### 手動マージ支援（上流追従の台帳）
 - `DIVERGENCE_MAP.md`：上流からの乖離点を記録（cfgエンジン／定義／生成テンプレートを区別）

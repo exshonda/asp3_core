@@ -59,6 +59,7 @@
 | `configure.rb`・`test/testexec.rb`・`test_cfg/testcfg.rb`・`utils/*.rb`・`utils/makerelease.py` | .rbツールの.py化 | |
 | `arch/tracelog/tTraceLog.c` | CLIターゲット | TECS版トレースログ．非TECS版`trace_log.c`に置換（`docs/dev/cli-target.md`） |
 | `MANIFEST`・`E_PACKAGE`（全数．extension/内は残置）・`target/{ct11mpcore,gr_peach,macos_xcode,simtimer_ct11mpcore}_gcc/`・`arch/arm_gcc/rza1/`・`arch/simtimer/`・`test/simt_*.c` | ファイルの削除 | `docs/dev/file-cleanup.md` 参照 |
+| `README.txt` | 監査(2026-06-07) | 上流のトップREADME．案内先のdoc/*.txtがMarkdown化で削除済みとなり陳腐化．README.md が後継 |
 | `configure.py`・`sample/Makefile`・`kernel/Makefile.kernel`・`arch/*/common/Makefile.core`・`arch/*/*/Makefile.chip`・`target/*/Makefile.target` | ファイルの削除（フェーズ2＝make版ビルド廃止．ビルドはCMakeのみ） | **`kernel/Makefile.kernel` はkernel/領域だが削除（上流マージで復活させない）**．`target/stm32mp257f_dk_arm64_gcc/minimal_boot/Makefile`（実機ブート資材）・`target/zybo_z7_gcc/xilinx_sdk/`（実機JTAG資材）は残置 |
 | `doc/*.txt`（11本：user/porting/configurator/design/mutex_design/inherit_design/asp_spec/extension/non_tecs/migration/simtimer） | ドキュメントMarkdown化 | **Markdown版（`docs/spec/`）が正本**（変換は機械突合で全数検証済み・`docs/dev/docs-markdown.md`）．simtimer.txtのみ機能自体の削除（file-cleanup）に伴い変換せず削除．**`doc/version.txt` のみ残置**（リリース毎に必ず更新＝マージ追従の起点）．**上流マージ時は上流 `doc/*.txt` のdiffを `docs/spec/` の対応ファイルへ手動反映**（対応表は `docs/spec/README.md`） |
 

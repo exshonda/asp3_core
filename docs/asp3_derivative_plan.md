@@ -1,5 +1,12 @@
 # TOPPERS/ASP3 Core 開発計画まとめ
 
+> **位置づけ（2026-06-07更新）**：本ファイルはプロジェクト発足時の**原典計画
+> （歴史文書）**である。機能追加計画の正本は `AGENTS.md` §1 に移行済みで、
+> 進捗・実施記録は `docs/dev/README.md` を参照。
+> **現役で参照されるのは「CFG_SPEC_MAP」関連の節（§8・§9）のみ**
+> （AGENTS §7／§10 から参照）。それ以外の記述（コマンド例・プリセット名等）は
+> 当時のままであり、現状とは異なる場合がある。
+
 > 作成日：2026-06-04  
 > 対象：TOPPERS/ASP3カーネルの派生型開発  
 > 上流：https://www.toppers.jp/asp3-kernel.html
@@ -58,17 +65,8 @@
 
 ## 3. 機能追加計画
 
-| 項目 | 内容 | 優先度 |
-|---|---|---|
-| TECSレス | syssvcをプレーンCで実装。tecsgenへの依存を除去。AI向けにコードの間接層が消え追いやすくなる | 高 |
-| cfgのPython化 | RubyベースのコンフィギュレータをPythonで再実装。宣言的スペック（データ駆動）設計推奨 | 高 |
-| CMake対応 | CMakeListsおよびasp3_pico_sdk.cmakeで実装済み | 高 |
-| ファイルの削除 | 不要なファイルを削除 | 高 |
-| QEMUターゲット | mps2-an521（Cortex-M33）、virt（RISC-V / ARMv8-A） | 高 |
-| CLIターゲット | POSIX sim。エージェントのbuild→run→testループ用 | 高 |
-| CI整備 | GitHub Actions：全ターゲットbuild＋POSIX/QEMUテスト実行 | 高 |
-| ドキュメントMarkdown化 | 統合仕様書・APIリファレンスをMarkdown化（RAG対応） | 中 |
-| skillパッケージ | build/flash/debug/cfg生成skill（別リポジトリ） | 中 |
+**正本は `AGENTS.md` §1「機能追加計画」へ移行した**（項目の追加・変更はAGENTS側で
+行う）。各項目の実施プラン・実施結果は `docs/dev/README.md` の索引から辿れる。
 
 ---
 

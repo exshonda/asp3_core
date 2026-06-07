@@ -45,7 +45,7 @@
 | `porting_02_kernel_impl.md` | 上流ポーティングガイド(2/3)：カーネル実装の依存部（ディスパッチャ・割込み/CPU例外出入口・タイマ） | porting.txt §6 | 🟢 |
 | `porting_03_cfg_syssvc.md` | 上流ポーティングガイド(3/3)：cfg設定ファイル・システムサービス・ファイル一覧 | porting.txt §7〜§10 | 🟢 |
 | `migration_guide.md` | マイグレーション（ASP1/JSP/μITRON4.0からの移行） | migration.txt | 🟢 |
-| `version_history.md` | 変更履歴 | version.txt | ⚪ |
+| （変換しない） | 変更履歴は `doc/version.txt` を直接参照（リリース毎に必ず更新される＝上流マージ追従の起点としてテキストのまま残置） | version.txt | − |
 
 ## 変換ルール
 
