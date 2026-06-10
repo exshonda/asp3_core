@@ -36,7 +36,7 @@
 | `target/*/target_kernel.py`・`target_check.py`（全9ターゲット＋dummyのtarget_offset.py） | 旧`.trb`→Python移植 | pass2/pass3テンプレートのPython化 | 上流由来ターゲットは上流.trb変更時に対応.pyへ手動再反映 | target(テンプレート) | 3.7.2 |
 | `CMakeLists.txt` | 新規追加 | CMakeビルド | （上流に存在せず・衝突なし） | build(NEW) | — |
 | `cmake/` 一式 | 新規追加 | ツールチェーンファイル（arm-none-eabi/a35） | （上流に存在せず・衝突なし） | build(NEW) | — |
-| `asp3_core.cmake`・`arch/*/arch.cmake`・`arch/*/*/chip.cmake`・`target/*/target.cmake` | 新規追加 | CMakeビルド（変数積み上げ方式） | （上流に存在せず・衝突なし） | build(NEW) | — |
+| `asp3_core.cmake`・`arch/*/arch.cmake`・`arch/*/*/chip.cmake`・`target/*/target.cmake` | 新規追加（`asp3_core.cmake`：`ASP3_TARGET_DIR`変数で外部SDKターゲットの受け入れ口を追加＝後方互換拡張．経緯は`docs/dev/pico-sdk-integration.md`） | CMakeビルド（変数積み上げ方式） | （上流に存在せず・衝突なし） | build(NEW) | — |
 | `arch/riscv_gcc/common/`・`arch/riscv_gcc/polarfire_soc/` | 新規追加 | RISC-V（XLEN抽象＝RV64GC/RV32IMAC）コア依存部＋PolarFire SoCチップ依存部（FMP3のPolarFire SoC移植をASP3変換．経緯は`docs/dev/qemu-target-riscv.md`．RV32対応のSTK_T分岐・PLIC/mtimer除外オプション・target_hrt_*リネーム削除は`docs/dev/pico2-riscv.md`） | 上流がRISC-V対応を追加した場合は統合検討（FMP3側の更新は手動反映） | arch(NEW) | — |
 | `target/mps2_an521_gcc/` | 新規追加 | QEMU Cortex-M33ターゲット | （上流に存在せず・衝突なし） | target(NEW) | — |
 | `target/rp2350-arm-s_pico_sdk/` | 新規追加 | asp3_pico_sdkから移植 | （上流に存在せず・衝突なし） | target(NEW) | — |

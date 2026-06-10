@@ -435,6 +435,50 @@ cmake --preset <new_preset> -B build/<name>
 # Configureがエラーなく完了し、libasp3.a のビルド設定が生成されること
 ```
 
+### 外部（SDK）ターゲットの置き方（`ASP3_TARGET_DIR`）
+
+ターゲット依存部（`target/<name>/`）を **asp3_core リポジトリの外**（各社SDKリポジトリ側）に
+置くこともできる。asp3_core を各SDKリポジトリの submodule として参照する構成
+（Pico SDK統合・`docs/dev/pico-sdk-integration.md`）で、asp3_core を純カーネルに保つための仕組み。
+
+```bash
+# 外部の target.cmake を使ってビルド（ASP3_ROOT_DIR は submodule の asp3_core）
+cmake -S asp3_core -B build \
+  -DASP3_TARGET=<name> \
+  -DASP3_TARGET_DIR=/abs/path/to/sdk_repo/target/<name>
+```
+
+`ASP3_TARGET_DIR` は `asp3_core.cmake` が解決する変数（**後方互換**）：
+
+- **未指定時**＝`${ASP3_ROOT_DIR}/target/${ASP3_TARGET}`（＝従来動作。既存プリセットは無変更）。
+- **指定時**＝そのディレクトリの `target.cmake` を include する。絶対パスで与える。
+
+#### 外部 target.cmake の参照規約（パス解決のキモ）
+
+外部に置く `target.cmake` では、参照先によってベースパスを使い分ける：
+
+| 参照対象 | ベース | 理由 |
+|---|---|---|
+| **チップ／ターゲット依存部**（自分の `target_*.c` / `.cfg` / `arch.cmake` / `chip.cmake`） | `${CMAKE_CURRENT_LIST_DIR}` 相対 | 外部リポジトリ側に実体があるため。`ASP3_ROOT_DIR`（submodule）と取り違えるとパスが壊れる |
+| **共通 arch**（`arch/<core>/common/arch.cmake`）・**cfgテンプレート**（`core_*.py`）・カーネル本体 | `${ASP3_ROOT_DIR}` | submodule（asp3_core）側に残るため |
+| **cfgテンプレート・Cソースの供給**（`ASP3_*_FILES`） | **絶対パス**で積む（既存規約） | リスト変数はルート `CMakeLists.txt` が絶対パス前提で扱う |
+
+```cmake
+# 外部（SDK）リポジトリ側 target/<name>/target.cmake の骨格
+set(TARGETDIR ${CMAKE_CURRENT_LIST_DIR})            # ← 外部の自分自身（ASP3_ROOT_DIR ではない）
+set(CHIPDIR   ${CMAKE_CURRENT_LIST_DIR}/../../arch/<arch_dir>/<chip>)  # 外部に持つ場合
+
+list(APPEND ASP3_TARGET_C_FILES ${TARGETDIR}/target_kernel_impl.c)    # 絶対パスで積む
+list(APPEND ASP3_INCLUDE_DIRS   ${TARGETDIR})
+
+# 共通 arch・cfgエンジンは submodule（asp3_core）側＝ASP3_ROOT_DIR 参照のまま
+include(${ASP3_ROOT_DIR}/arch/<arch_dir>/common/arch.cmake)
+```
+
+> リポジトリ内ターゲット（`target/linux_gcc` 等）は従来どおり `${ASP3_ROOT_DIR}/target/<name>` を
+> 使えばよい（`ASP3_ROOT_DIR` == リポジトリルートで一致するため）。`CMAKE_CURRENT_LIST_DIR` 相対は
+> **外部に置くターゲットを書くときの規約**。
+
 ---
 
 ## Step 7：ビルド全体確認

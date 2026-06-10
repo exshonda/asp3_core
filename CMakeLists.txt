@@ -126,7 +126,9 @@ list(APPEND ASP3_APP_INCLUDE_DIRS ${ASP3_APPLDIR})
 #    ASP3_LINK_LIBS / ASP3_LDSCRIPT / ASP3_ARCH_C_FILES /
 #    ASP3_TARGET_C_FILES / ASP3_SYSSVC_TARGET_C_FILES / ASP3_RUN_COMMAND
 #
-include(${ASP3_ROOT_DIR}/target/${ASP3_TARGET}/target.cmake)
+#  ASP3_TARGET_DIR は asp3_core.cmake で解決済み（既定＝target/${ASP3_TARGET}，
+#  外部SDKターゲットは -DASP3_TARGET_DIR=<外部の絶対パス> で供給）
+include(${ASP3_TARGET_DIR}/target.cmake)
 
 #
 #  トレースログ機能（arch/tracelog・非TECS版）
