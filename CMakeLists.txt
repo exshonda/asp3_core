@@ -16,6 +16,19 @@ project(asp3_core C ASM)
 include(${CMAKE_CURRENT_LIST_DIR}/asp3_core.cmake)
 
 #
+#  ライブラリ専用モード（外部SDKアプリ向け）
+#
+#  ON のとき，asp 実行ファイル・サンプルアプリ・ctest登録を作らず，
+#  カーネルライブラリ（asp3）・cfg生成・ヘルパ関数（asp3_add_syssvc /
+#  asp3_cfg_check）のみを公開する．外部リポジトリ（各社SDK）が
+#  add_subdirectory(asp3_core) して，自前の最終実行ファイルから asp3 を
+#  リンクする構成で使う（Pico SDK統合・docs/dev/pico-sdk-integration.md）．
+#  既定OFF＝従来どおり asp 実行ファイルまでビルド（既存プリセットに影響なし）．
+#
+option(ASP3_LIBRARY_ONLY
+    "Build only the asp3 kernel library (no asp executable / sample)" OFF)
+
+#
 #  Pythonインタプリタ（cfg実行用）
 #
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
@@ -337,6 +350,14 @@ function(asp3_cfg_check TARGET)
 endfunction()
 
 #
+#  以下，asp 実行ファイル・実行/デバッグターゲット・ctest登録は
+#  ライブラリ専用モード（ASP3_LIBRARY_ONLY=ON）では作らない．外部SDK側が
+#  asp3 ライブラリをリンクして自前の実行ファイルを作るため（カーネル
+#  ライブラリ asp3・cfg生成・ヘルパ関数は上で定義済みで，こちらで公開する）．
+#
+if(NOT ASP3_LIBRARY_ONLY)
+
+#
 #  サンプルアプリケーション（asp）
 #
 #  アプリのCソースは存在する場合のみ加える（cfg段階でエラーになる
@@ -472,3 +493,5 @@ endif()
 if(DEFINED ASP3_TARGET_RUN_CMAKE)
     include(${ASP3_TARGET_RUN_CMAKE})
 endif()
+
+endif()  # NOT ASP3_LIBRARY_ONLY
