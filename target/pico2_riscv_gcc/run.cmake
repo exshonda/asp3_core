@@ -1,7 +1,7 @@
 #
 #		実機実行・デバッグ用CMakeターゲット（RaspberryPi Pico2 RISC-V用）
 #
-#  ARM版（target/raspberrypi_pico2_gcc/run.cmake）の流用．差分：
+#  ARM版（target/pico2_arm_gcc/run.cmake）の流用．差分：
 #    - OpenOCDターゲット設定：target/rp2350-riscv.cfg（RPiフォーク同梱）
 #    - gdb：gdb-multiarch（riscv64-unknown-elf-gdbはaptパッケージに無い）
 #  （書込み・実行はrunターゲット＝target.cmakeのASP3_RUN_COMMAND）

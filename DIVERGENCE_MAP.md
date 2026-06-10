@@ -20,7 +20,7 @@
 | `arch/arm_gcc/zynq7000/xuartps.[ch]` | `xuartps.c`新規・`xuartps.h`改変（非TECSドライバAPI追加）・`MANIFEST`改変 | 非TECS版SIOドライバ | 上流zynq7000依存部の`xuartps.h`変更時に要確認 | arch | 3.7.2 |
 | `target/mps2_an521_gcc/`（非TECS化） | 新規追加（`cmsdk_uart.[ch]`・`target_serial.{c,h,cfg}`）＋改変 | TECSレス化 | （ターゲット自体がNEW・上流衝突なし） | target(NEW) | — |
 | `target/stm32mp257f_dk_arm64_gcc/`・`arch/arm64_gcc/stm32mp2/`（非TECS化） | 新規追加（`stm32usart.c`・`target_serial.{c,h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING_ASP3_STM32MP2.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
-| `target/raspberrypi_pico2_gcc/`・`arch/arm_m_gcc/rp2350/`（非TECS化） | 新規追加（`rp2350_uart.[ch]`・`chip_serial.{c,h,cfg}`・`target_serial.{h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING.md`）．`rp2350_uart_cls_por()`に送信FIFOドレイン待ちを追加（終了時の末尾出力欠落の修正．`docs/dev/porting-test.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
+| `target/pico2_arm_gcc/`・`arch/arm_m_gcc/rp2350/`（非TECS化） | 新規追加（`rp2350_uart.[ch]`・`chip_serial.{c,h,cfg}`・`target_serial.{h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING.md`）．`rp2350_uart_cls_por()`に送信FIFOドレイン待ちを追加（終了時の末尾出力欠落の修正．`docs/dev/porting-test.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
 | `target/linux_gcc/`・`arch/posix_gcc/` | 上流SVN（3.7.2）から取込み | POSIXシミュレーション環境（3.7.2 tarball未収録のため別途取込み） | 上流posix_gccパッケージの更新に追従 | target/arch | 3.7.2 |
 | `target/linux_gcc/target_kernel_impl.c` | 改変（CLIターゲット） | main()のargc/argv化＋`--tap`/`--slog`/`--help`追加（経緯は`docs/dev/cli-target.md`） | 上流posix_gccのmain()変更時に要手動マージ | target | 3.7.2 |
 | `arch/posix_gcc/posix_kernel_impl.c` | 改変（CLIターゲット・上流バグ修正） | LOG_INH_ENTER/LEAVEへ渡す変数の修正（上流は未定義変数inhnoを渡しており，トレース有効時にコンパイル不能．上流報告：`docs/dev/upstream-report-tracelog.md`） | 上流で修正されたら上流版を採用して差分解消 | arch | 3.7.2 |
@@ -40,7 +40,7 @@
 | `arch/riscv_gcc/common/`・`arch/riscv_gcc/polarfire_soc/` | 新規追加 | RISC-V（XLEN抽象＝RV64GC/RV32IMAC）コア依存部＋PolarFire SoCチップ依存部（FMP3のPolarFire SoC移植をASP3変換．経緯は`docs/dev/qemu-target-riscv.md`．RV32対応のSTK_T分岐・PLIC/mtimer除外オプション・target_hrt_*リネーム削除は`docs/dev/pico2-riscv.md`） | 上流がRISC-V対応を追加した場合は統合検討（FMP3側の更新は手動反映） | arch(NEW) | — |
 | `target/mps2_an521_gcc/` | 新規追加 | QEMU Cortex-M33ターゲット | （上流に存在せず・衝突なし） | target(NEW) | — |
 | `target/rp2350-arm-s_pico_sdk/` | 新規追加 | asp3_pico_sdkから移植 | （上流に存在せず・衝突なし） | target(NEW) | — |
-| `arch/riscv_gcc/rp2350/`・`target/raspberrypi_pico2_riscv_gcc/` | 新規追加 | RP2350 RISC-V（Hazard3）＝SDK非依存ベアメタル移植（Xh3irq・RISC-V IMAGE_DEF．経緯は`docs/dev/pico2-riscv.md`．RP2350.h/rp2350_uart等はarm_m_gcc/rp2350をパス参照で共有） | （上流に存在せず・衝突なし） | arch/target(NEW) | — |
+| `arch/riscv_gcc/rp2350/`・`target/pico2_riscv_gcc/` | 新規追加 | RP2350 RISC-V（Hazard3）＝SDK非依存ベアメタル移植（Xh3irq・RISC-V IMAGE_DEF．経緯は`docs/dev/pico2-riscv.md`．RP2350.h/rp2350_uart等はarm_m_gcc/rp2350をパス参照で共有） | （上流に存在せず・衝突なし） | arch/target(NEW) | — |
 | `target/stm32mp257f_dk_arm64_gcc/` | 新規追加 | stm32_vscode_aspから移植 | （上流に存在せず・衝突なし） | target(NEW) | — |
 | `arch/arm64_gcc/zynqmp/`・`target/zcu102_arm64_gcc/` | 新規追加 | QEMU(xlnx-zcu102)用ARMv8-Aターゲット（FMP3のZynqMP移植をASP3変換．経緯は`docs/dev/qemu-target-a64.md`） | （上流に存在せず・衝突なし．FMP3側の更新は手動反映） | arch/target(NEW) | — |
 | `target/polarfire_soc_kit_gcc/` | 新規追加 | QEMU(microchip-icicle-kit)用RISC-Vターゲット（FMP3のPolarFire SoC Kit移植をASP3変換．経緯は`docs/dev/qemu-target-riscv.md`） | （上流に存在せず・衝突なし．FMP3側の更新は手動反映） | target(NEW) | — |

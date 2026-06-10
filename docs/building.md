@@ -107,7 +107,7 @@ cmake --build build/mytest
 ```bash
 ninja -C build/mps2_an521-qemu run     # QEMU（終了は Ctrl-A X）
 ninja -C build/linux run        # ホスト実行
-ninja -C build/raspberrypi_pico2 run    # 実機書込み（OpenOCD program）
+ninja -C build/pico2_arm run    # 実機書込み（OpenOCD program）
 ```
 
 テストプログラムは `ext_ker` 時にセミホスティングで QEMU が自動終了する。
@@ -200,11 +200,11 @@ python3 ../test_cfg/testcfg.py all
 | mps2_an521_gcc | mps2_an521-qemu | QEMU（run．QEMU専用ターゲット） |
 | zybo_z7_gcc | zybo_z7／**zybo_z7-qemu** | 実機（xilinx_sdk/jtag.tcl）／QEMU（run） |
 | zcu102_arm64_gcc | zcu102_arm64／**zcu102_arm64-qemu** | 実機（実行手段は今後整備）／QEMU（run）．aarch64-none-elf が無い環境は `-DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-` を付与 |
-| raspberrypi_pico2_gcc | raspberrypi_pico2 | 実機（run=OpenOCD書込み．gdb/console等） |
+| pico2_arm_gcc | pico2_arm | 実機（run=OpenOCD書込み．gdb/console等） |
 | stm32mp257f_dk_arm64_gcc | stm32mp257f_dk_arm64 | 実機（swd-run/osdebug/console等．リンクは aarch64-none-elf 環境） |
 | polarfire_soc_kit_gcc | polarfire_soc_kit／**polarfire_soc_kit-qemu** | 実機（実行手段は今後整備）／QEMU（run）．qemu-system-riscv64 がPATHにない場合は `-DQEMU_SYSTEM_RISCV64=...` を付与 |
 | dummy_gcc | （プリセット無し．`-DASP3_TARGET=dummy_gcc`） | cfgテスト用ホストビルド |
-| raspberrypi_pico2_riscv_gcc | raspberrypi_pico2_riscv | 実機（run=OpenOCD書込み（rp2350-riscv.cfg）．gdb/console等）．SDK非依存ベアメタル（Xh3irq） |
+| pico2_riscv_gcc | pico2_riscv | 実機（run=OpenOCD書込み（rp2350-riscv.cfg）．gdb/console等）．SDK非依存ベアメタル（Xh3irq） |
 
 CMake対応の経緯は `docs/dev/cmake.md` を参照。
 

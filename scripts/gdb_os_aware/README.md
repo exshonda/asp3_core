@@ -105,7 +105,7 @@ gdb-multiarch -q -nx build/<preset>/asp.elf \
 |---|---|---|---|
 | arm64（GICv2） | `arm64_gcc/common` | stm32mp2（GICD=0x4AC10000）・zynqmp（0xF9010000） | stm32mp257f_dk・zcu102 |
 | arm（GICv2） | `arm_gcc/common` | zynq7000（0xF8F01000） | zybo_z7 |
-| arm_m（NVIC） | `arm_m_gcc/common` | rp2350（パススルー） | mps2_an521（chip層なし）・raspberrypi_pico2 |
+| arm_m（NVIC） | `arm_m_gcc/common` | rp2350（パススルー） | mps2_an521（chip層なし）・pico2_arm |
 | riscv（PLIC） | `riscv_gcc/common` | polarfire_soc（0x0C000000, cidx=1） | polarfire_soc_kit |
 | posix | −（層なし。エンジンの汎用動作） | − | − |
 

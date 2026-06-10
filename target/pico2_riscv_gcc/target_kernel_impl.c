@@ -15,7 +15,7 @@
  *  ターゲット依存モジュール（RaspberryPi Pico2 RISC-V用）
  *
  *  hardware_init_hookの内容（RESETS／クロック／TICKS／PADSアイソレー
- *  ション解除／UART用GPIO）はARM版（target/raspberrypi_pico2_gcc）から
+ *  ション解除／UART用GPIO）はARM版（target/pico2_arm_gcc）から
  *  の流用（すべてMMIO操作＝ISA非依存）．ARM版にあったFPU（CPACR）設定
  *  はHazard3にFPUが無いため削除．
  */

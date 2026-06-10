@@ -14,7 +14,7 @@
 /*
  *  タイマドライバのターゲット依存部（RaspberryPi Pico2 RISC-V用）
  *
- *  ARM版（target/raspberrypi_pico2_gcc/target_timer.h）のTIMER0 ALARM0
+ *  ARM版（target/pico2_arm_gcc/target_timer.h）のTIMER0 ALARM0
  *  ロジックを踏襲し，割込みの強制（過去時刻設定時のペンディング）を
  *  NVIC（ISPR）からXh3irqの割込み強制ビット（meifa）に置き換えたもの．
  *  meifaの強制ビットはmeinextでの受付け時にハードウェアが自動クリア

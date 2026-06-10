@@ -3,10 +3,10 @@
 #
 #  変数を積み上げ，チップ依存部の chip.cmake をincludeする
 #  （AGENTS.md §11）．pico-sdkは使用しない（ベアメタル移植．
-#  ARM版 target/raspberrypi_pico2_gcc と同じボード・同じ方針）．
+#  ARM版 target/pico2_arm_gcc と同じボード・同じ方針）．
 #
 
-set(TARGETDIR ${ASP3_ROOT_DIR}/target/raspberrypi_pico2_riscv_gcc)
+set(TARGETDIR ${ASP3_ROOT_DIR}/target/pico2_riscv_gcc)
 
 #
 #  コンフィギュレーション関連

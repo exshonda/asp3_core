@@ -32,7 +32,7 @@
 | Pico SDK統合タイマ | `rp2350-arm-s_pico_sdk` | `target_timer.c` | add_repeating_timer_us |
 | Pico SDK UART | `rp2350-arm-s_pico_sdk` | `target_serial.c` | uart_putc_raw |
 | Pico SDK ブート連携 | `rp2350-arm-s_pico_sdk` | `target_kernel.c` | stdio_init / Core1停止 |
-| RP2350 RISC-V起動（IMAGE_DEF） | `raspberrypi_pico2_riscv_gcc` | `image_def.S` | RISC-V EXE（0x1101）＋ENTRY_POINT item |
+| RP2350 RISC-V起動（IMAGE_DEF） | `pico2_riscv_gcc` | `image_def.S` | RISC-V EXE（0x1101）＋ENTRY_POINT item |
 | Hazard3 Xh3irq割込み制御 | `arch/riscv_gcc/rp2350` | `xh3irq_kernel_impl.h`・`chip_support.S` | meinext claim・優先度スタックをソフトpop |
 | RV32実証（XLEN抽象） | `arch/riscv_gcc/rp2350` | `chip.cmake`・`common/core_kernel.h` | rv32imac/ilp32・STK_T分岐 |
 | Xh3irq割込み状態（OS-awareness） | `arch/riscv_gcc/rp2350` | `chip_os_awareness.py` | 窓方式CSRをexec_progbufで読出し |

@@ -2,7 +2,7 @@
 
 ARM MPS2+ FPGA ボードの AN521（SSE-200，デュアル Cortex-M33）イメージを，
 QEMU の `mps2-an521` マシン上で動作させるためのターゲット依存部である．
-RaspberryPi Pico2（`raspberrypi_pico2_gcc`，Cortex-M33）の依存部をベースに，
+RaspberryPi Pico2（`pico2_arm_gcc`，Cortex-M33）の依存部をベースに，
 チップ依存部を持たない自己完結型のボード依存部として構成している．
 
 ## 構築と実行

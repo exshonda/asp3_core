@@ -47,7 +47,7 @@ timeout 30 qemu-system-arm -M mps2-an521 -cpu cortex-m33 \
   -semihosting -semihosting-config enable=on,target=native -nographic
 ```
 
-実機ターゲット（raspberrypi_pico2 等）は同様にビルドして
+実機ターゲット（pico2_arm 等）は同様にビルドして
 `ninja -C <builddir> run`（書込み）＋ `console`（シリアル）で実行する。
 
 ## 期待出力と判定

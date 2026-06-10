@@ -38,7 +38,7 @@ TOPPERS/ASP3カーネルを上流追従しながら、各社SDK（Raspberry Pi P
 | CI整備 | GitHub Actions：全ターゲットbuild＋POSIX/QEMUテスト実行 | 高 |
 | OS Awareness 対応 | OS Awareness を全ターゲット使用可能とする | 高  |
 | 移植検証テスト | 新ターゲット移植の最初の動作確認（カーネル基本6項目・TAP機械判定）。test/porting/ の実体化 | 高 |
-| RISC-V Hazard3ターゲット | PICO2のRISC-Vコア（Hazard3）をSDK非依存ベアメタルで対応（raspberrypi_pico2_gccのRISC-V版） | 高 |
+| RISC-V Hazard3ターゲット | PICO2のRISC-Vコア（Hazard3）をSDK非依存ベアメタルで対応（pico2_arm_gccのRISC-V版） | 高 |
 | ドキュメントMarkdown化 | 統合仕様書・APIリファレンスをMarkdown化（RAG対応） | 中 |
 | devcontainer / Docker | ツールチェーン・QEMU・Pythonをピン留めした開発コンテナ。開発機/CI/エージェント環境の再現性を確保 | 中 |
 | Pico SDK統合 | pico-sdkと協調動作（第一目的の第1弾）。SDK固有のarch/targetは外側リポジトリ(asp3_pico_sdk)で管理し、asp3_coreは`ASP3_TARGET_DIR`で受け入れる | 中 |
@@ -146,10 +146,10 @@ timeout 30 qemu-system-riscv64 -machine microchip-icicle-kit -nographic \
   -semihosting-config enable=on,target=native -bios none -kernel build/polarfire_soc_kit-qemu/asp.elf
 
 # Raspberry Pi PICO2 (Cortex-M33 / 実機)
-cmake --preset raspberrypi_pico2 -B build/raspberrypi_pico2 && cmake --build build/raspberrypi_pico2
+cmake --preset pico2_arm -B build/pico2_arm && cmake --build build/pico2_arm
 
 # Raspberry Pi PICO2 (RISC-V Hazard3 / 実機)
-cmake --preset raspberrypi_pico2_riscv -B build/raspberrypi_pico2_riscv && cmake --build build/raspberrypi_pico2_riscv
+cmake --preset pico2_riscv -B build/pico2_riscv && cmake --build build/pico2_riscv
 
 # STM32MP257F-DK (Cortex-A35 / 実機)
 cmake --preset stm32mp257f_dk_arm64 -B build/stm32mp257f_dk_arm64 && cmake --build build/stm32mp257f_dk_arm64

@@ -6,7 +6,7 @@
 #  （ベアメタル移植．arch/arm_m_gcc/rp2350/PORTING.md参照）．
 #
 
-set(TARGETDIR ${ASP3_ROOT_DIR}/target/raspberrypi_pico2_gcc)
+set(TARGETDIR ${ASP3_ROOT_DIR}/target/pico2_arm_gcc)
 
 #
 #  コンフィギュレーション関連

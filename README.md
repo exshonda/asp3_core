@@ -51,7 +51,7 @@ cmake --preset mps2_an521-qemu && cmake --build --preset run-mps2_an521-qemu
 | zybo_z7_gcc | ARMv7-A (Cortex-A9) | 実機 / QEMU |
 | zcu102_arm64_gcc | ARMv8-A (Cortex-A53) | 実機 / QEMU |
 | polarfire_soc_kit_gcc | RISC-V (RV64GC) | 実機 / QEMU |
-| raspberrypi_pico2_gcc | ARMv8-M (Cortex-M33) | 実機 |
+| pico2_arm_gcc | ARMv8-M (Cortex-M33) | 実機 |
 | stm32mp257f_dk_arm64_gcc | ARMv8-A (Cortex-A35) | 実機 |
 
 ## ドキュメント

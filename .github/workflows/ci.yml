@@ -232,7 +232,7 @@ jobs:
   #  Raspberry Pi PICO2（実機ターゲット）：build only
   #
   pico2:
-    name: Build raspberrypi_pico2 (Cortex-M33)
+    name: Build pico2_arm (Cortex-M33)
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/exshonda/asp3_core-dev:20260606
@@ -246,8 +246,8 @@ jobs:
       - uses: actions/checkout@v5
       - name: Build (sample1)
         run: |
-          cmake --preset raspberrypi_pico2 -B build/raspberrypi_pico2
-          cmake --build build/raspberrypi_pico2
+          cmake --preset pico2_arm -B build/pico2_arm
+          cmake --build build/pico2_arm
 
   #
   #  Raspberry Pi PICO2 RISC-V（実機ターゲット・Hazard3）：build only
@@ -255,7 +255,7 @@ jobs:
   #  docs/dev/pico2-riscv.md）
   #
   pico2-riscv:
-    name: Build raspberrypi_pico2_riscv (RISC-V Hazard3)
+    name: Build pico2_riscv (RISC-V Hazard3)
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/exshonda/asp3_core-dev:20260606
@@ -269,8 +269,8 @@ jobs:
       - uses: actions/checkout@v5
       - name: Build (sample1)
         run: |
-          cmake --preset raspberrypi_pico2_riscv -B build/raspberrypi_pico2_riscv
-          cmake --build build/raspberrypi_pico2_riscv
+          cmake --preset pico2_riscv -B build/pico2_riscv
+          cmake --build build/pico2_riscv
 
   #
   #  STM32MP257F-DK（実機ターゲット）：build only（リンクまで）

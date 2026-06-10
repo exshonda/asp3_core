@@ -5,20 +5,20 @@
   ],
   "configurePresets": [
     {
-      "name": "raspberrypi_pico2",
+      "name": "pico2_arm",
       "inherits": "_base",
       "displayName": "Raspberry Pi PICO2 (Cortex-M33)",
       "description": "ベアメタル移植。実機書込みはOpenOCD（--target run）",
       "toolchainFile": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
       "cacheVariables": {
-        "ASP3_TARGET": "raspberrypi_pico2_gcc"
+        "ASP3_TARGET": "pico2_arm_gcc"
       }
     }
   ],
   "buildPresets": [
     {
-      "name": "raspberrypi_pico2",
-      "configurePreset": "raspberrypi_pico2"
+      "name": "pico2_arm",
+      "configurePreset": "pico2_arm"
     }
   ]
 }

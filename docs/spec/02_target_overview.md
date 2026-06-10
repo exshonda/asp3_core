@@ -66,7 +66,7 @@ target/dummy_gcc    ダミー（GNU開発環境）のターゲット依存部
 > - クローン: `git clone --recursive https://github.com/exshonda/asp3_core.git`
 > - サブプロジェクト（SDK依存部）: `asp3_pico_sdk`, `asp3_fsp` 等は `external/` 配下で管理
 > 
-> 新規ターゲット追加時の出発点は `target/dummy_gcc` ではなく，既存の機能的に類似したターゲット（例：ARM Cortex-M なら `target/raspberrypi_pico2_gcc/`）をテンプレートとして使用してください。
+> 新規ターゲット追加時の出発点は `target/dummy_gcc` ではなく，既存の機能的に類似したターゲット（例：ARM Cortex-M なら `target/pico2_arm_gcc/`）をテンプレートとして使用してください。
 
 ---
 

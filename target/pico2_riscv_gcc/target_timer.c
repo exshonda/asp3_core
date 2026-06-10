@@ -14,7 +14,7 @@
 /*
  *  タイマドライバ（RaspberryPi Pico 2 RISC-V ASP3用）
  *  TIMER0 ALARM0 を使用して高分解能タイマを実現する．
- *  ARM版（target/raspberrypi_pico2_gcc/target_timer.c）からの流用
+ *  ARM版（target/pico2_arm_gcc/target_timer.c）からの流用
  *  （すべてMMIO操作＝ISA非依存）．
  */
 

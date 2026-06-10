@@ -1,7 +1,7 @@
 /*
  *  RaspberryPi Pico2 RISC-V（Hazard3）用リンカスクリプト
  *
- *  ARM版（target/raspberrypi_pico2_gcc/rpi_pico2.ld）のメモリマップを
+ *  ARM版（target/pico2_arm_gcc/rpi_pico2.ld）のメモリマップを
  *  踏襲し，RISC-V流に変更したもの：
  *    - 先頭はベクタテーブルではなくエントリコード（.text.start＝start.S）
  *      ＋IMAGE_DEFブロック（エントリはIMAGE_DEFのENTRY_POINT itemで指定）
