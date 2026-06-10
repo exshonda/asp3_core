@@ -189,11 +189,12 @@ SDKアプリ（pico_stdlib をリンクする最終実行ファイル）が asp3
 - 検証：`linux`（OFF）で `asp` 生成を確認。`mps2_an521_gcc` を `-DASP3_LIBRARY_ONLY=ON` で
   configure・ビルドし `libasp3.a` 生成・`asp` 非生成を確認。
 
-### SDK側（asp3_pico_sdk_sample／別リポジトリ）— ビルド検証 完了（2026-06-10）
+### SDK側（asp3_pico_sdk／別リポジトリ）— ビルド検証＋実機動作確認 完了（2026-06-10）
 
 A案（既存 `asp3_pico_sdk_sample` を再利用）で、旧 `asp3_pico_sdk`（カーネル同梱fork）への
-依存を解消し、純カーネルの asp3_core を submodule 参照する構成へ移行。**ローカル作業まで完了・
-GitHub操作（旧repoのarchive／sample→asp3_pico_sdk 改名／push）は保留**（ユーザー確認待ち）。
+依存を解消し、純カーネルの asp3_core を submodule 参照する構成へ移行。**ローカル作業・GitHub操作・
+実機動作確認まで完了**。GitHub再編：旧 `asp3_pico_sdk`→`asp3_pico_sdk_legacy`（archive）、
+`asp3_pico_sdk_sample`→`asp3_pico_sdk`（新・正本）に改名。移行コミット `f843f52` を新 main に反映。
 
 実施内容（`../asp3_pico_sdk_sample` ブランチ `feat/asp3-core-submodule`・コミット `f843f52`）：
 
@@ -214,6 +215,16 @@ GitHub操作（旧repoのarchive／sample→asp3_pico_sdk 改名／push）は保
 - ASP3カーネル（`sta_ker`／`dispatcher_*`／`logtask_main`）と pico-sdk 割込み登録APIの
   `--wrap` 誘導（`__wrap_irq_set_exclusive_handler`）が同一ELFにリンクされることを確認。
 
-> 未完（後続）：①GitHub操作（旧 asp3_pico_sdk の archive／`asp3_pico_sdk_sample`→`asp3_pico_sdk`
-> 改名／push）はユーザー確認待ちで保留。②実機検証とタイマ競合（SDK alarm TIMER0 vs ASP3 HRT）の
-> 調停は実機（pico-sdk必須）で別途。③RISC-V（Hazard3）版（`raspberrypi_pico2_riscv_gcc` を移植元）。
+実機動作確認（2026-06-10）：
+
+- Raspberry Pi **PICO2 実機**に `sample1_pico_sdk.uf2` を書き込み、**UART シリアル**に
+  カーネル起動メッセージと `task1 is running ...` の周期出力を確認（sample1 が起動・
+  タスクがディスパッチされ動作）。
+- 既知リスクだった**タイマ競合（SDK alarm TIMER0 vs ASP3 HRT＝`USE_TIM_AS_HRT`）は
+  基本動作を妨げなかった**。ただし時間系（`dly_tsk`／周期ハンドラ／`get_tim`）の精度・
+  長時間安定性の定量検証は未実施＝後続課題。
+
+> 未完（後続）：①タイマ競合の定量検証と調停（時間系の精度・SDK alarm を併用する場合の
+> 共存設計）。②RISC-V（Hazard3）版（`raspberrypi_pico2_riscv_gcc` の Xh3irq 実装を移植元）。
+> ③`asp3_core` は private のため、SDK 利用者の submodule 取得には認証が必要（`gh auth`／
+> SSH置換／公開化のいずれか。手順は asp3_pico_sdk 側 README 参照）。
