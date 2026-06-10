@@ -28,7 +28,7 @@
 | RISC-V Hazard3ターゲット | `pico2-riscv.md` | 完了（dlynse較正・testexec全件・OS Awarenessは残課題） |
 | ドキュメントMarkdown化 | `docs-markdown.md` | 完了 |
 | devcontainer / Docker | `devcontainer.md` | 完了 |
-| Pico SDK統合 | `pico-sdk-integration.md` | 実施中（asp3_core側＝`ASP3_TARGET_DIR`受け入れ口 完了／SDK側実装は別リポジトリ） |
+| Pico SDK統合 | `pico-sdk-integration.md` | 実施中（asp3_core側＝`ASP3_TARGET_DIR`＋`ASP3_LIBRARY_ONLY` 完了／SDK側＝submodule移行・ビルド検証 完了／GitHub操作・実機検証は後続） |
 | skillパッケージ | `skill-package.md` | 計画中 |
 
 状態：計画中 → 実施中 → 完了（各項目の進行に合わせて更新する）

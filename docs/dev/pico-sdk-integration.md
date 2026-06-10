@@ -174,3 +174,46 @@ asp3_pico_sdk リポジトリ側の作業（本リポジトリのスコープ外
 
 > 実機検証（タイマ競合の解決等）は asp3_pico_sdk リポジトリ側の作業。本リポジトリのスコープは
 > 受け入れ口整備まで。
+
+### asp3_core側（ライブラリ専用モード）— 完了（2026-06-10）
+
+SDKアプリ（pico_stdlib をリンクする最終実行ファイル）が asp3_core を
+`add_subdirectory` して `asp3` ライブラリだけを取り込めるよう、`CMakeLists.txt` に
+**`ASP3_LIBRARY_ONLY` オプション**を追加した（既定OFF＝従来どおり `asp` 実行ファイルまでビルド）。
+
+| ファイル | 変更内容 |
+|---|---|
+| `CMakeLists.txt` | `option(ASP3_LIBRARY_ONLY ... OFF)` を追加。ON のとき `asp` 実行ファイル・サンプル・ctest登録・実行/デバッグターゲットを作らず、`asp3` ライブラリ・cfg生成・ヘルパ関数（`asp3_add_syssvc` / `asp3_cfg_check`）のみを公開（`cfg1_out` は offset.h 生成に必要なため維持） |
+
+- ブランチ：`feat/library-only`（ベース `9a15203` → コミット `5619f92`、CI 全9ジョブ green を確認して main へ ff マージ）。
+- 検証：`linux`（OFF）で `asp` 生成を確認。`mps2_an521_gcc` を `-DASP3_LIBRARY_ONLY=ON` で
+  configure・ビルドし `libasp3.a` 生成・`asp` 非生成を確認。
+
+### SDK側（asp3_pico_sdk_sample／別リポジトリ）— ビルド検証 完了（2026-06-10）
+
+A案（既存 `asp3_pico_sdk_sample` を再利用）で、旧 `asp3_pico_sdk`（カーネル同梱fork）への
+依存を解消し、純カーネルの asp3_core を submodule 参照する構成へ移行。**ローカル作業まで完了・
+GitHub操作（旧repoのarchive／sample→asp3_pico_sdk 改名／push）は保留**（ユーザー確認待ち）。
+
+実施内容（`../asp3_pico_sdk_sample` ブランチ `feat/asp3-core-submodule`・コミット `f843f52`）：
+
+| 区分 | 内容 |
+|---|---|
+| submodule差替 | `.gitmodules` の `asp3`（asp3_pico_sdk）→ `asp3_core`（`asp3_core.git`・main `5619f92`） |
+| pico固有部の移設 | 旧 asp3_pico_sdk から `asp3_pico_sdk.cmake`（`PICO_PLATFORM`→`ASP3_TARGET`/`ASP3_TARGET_DIR`／`ASP3_CORE_DIR`／`irq_*` の `--wrap`）、`target/rp2350-arm-s_pico_sdk`、`arch/arm_m_gcc/rp2350`（チップ）・`arch/gcc` を sample 側へ |
+| パス規約適用 | `target.cmake`／`arch.cmake` を外部ターゲット規約に修正（チップ/ターゲット＝`CMAKE_CURRENT_LIST_DIR` 相対、共通arch＝`ASP3_ROOT_DIR`）。`cfg1_out` 用に `-nostdlib -nostartfiles`＋`c gcc nosys` を `target.cmake` で供給 |
+| CMake一本化 | `sample1/CMakeLists.txt` の fork CMake（`add_subdirectory(asp3_pico_sdk fork)`）を廃止し、`add_subdirectory(asp3_core, ASP3_LIBRARY_ONLY=ON)` ＋ `asp3_add_syssvc()` ＋ `asp3_set_pico_sdk_options()` に一本化 |
+
+検証（ビルドまで・doc「CIはビルドまで」方針）：
+
+- pico-sdk 2.1.1 ＋ arm-none-eabi-gcc 13.2.1 で `PICO_PLATFORM=rp2350-arm-s` を
+  configure・ビルドし、`sample1_pico_sdk.elf`／`.uf2`／`.bin` の生成を確認
+  （ARM EXEC・entry `0x1000014d`＝RP2350 flash XIP・text 約37KB）。
+- cfg 3パス（`cfg1_out.c`→`cfg1_out.elf`→`offset.h`→`kernel_cfg.c/h`）が pico クロスビルド上で
+  実行されることを確認（asp3_core の Python cfg エンジンがそのまま動作）。
+- ASP3カーネル（`sta_ker`／`dispatcher_*`／`logtask_main`）と pico-sdk 割込み登録APIの
+  `--wrap` 誘導（`__wrap_irq_set_exclusive_handler`）が同一ELFにリンクされることを確認。
+
+> 未完（後続）：①GitHub操作（旧 asp3_pico_sdk の archive／`asp3_pico_sdk_sample`→`asp3_pico_sdk`
+> 改名／push）はユーザー確認待ちで保留。②実機検証とタイマ競合（SDK alarm TIMER0 vs ASP3 HRT）の
+> 調停は実機（pico-sdk必須）で別途。③RISC-V（Hazard3）版（`raspberrypi_pico2_riscv_gcc` を移植元）。
