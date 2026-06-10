@@ -174,3 +174,66 @@ asp3_pico_sdk リポジトリ側の作業（本リポジトリのスコープ外
 
 > 実機検証（タイマ競合の解決等）は asp3_pico_sdk リポジトリ側の作業。本リポジトリのスコープは
 > 受け入れ口整備まで。
+
+---
+
+### asp3_pico_sdk側 タスク1：タイマ競合の検証と調停 — 完了（2026-06-11）
+
+#### 現状把握（静的解析）
+
+| コンポーネント | 使用ハードウェアタイマ | 使用アラームチャンネル | IRQ |
+|---|---|---|---|
+| ASP3 HRT | TIMER0 | **ALARM0** (`RP2350_TIMER0_ALARM0`) | `RP2350_TIMER0_0_IRQn` |
+| pico-sdk デフォルト alarm pool | TIMER0 | **ALARM3** (`PICO_TIME_DEFAULT_ALARM_POOL_HARDWARE_ALARM_NUM=3`) | `RP2350_TIMER0_3_IRQn` |
+
+- **アラームチャンネルは分離**されており直接競合なし。
+- `busy_wait_us()` / `time_us_64()` は TIMER0 TIMERAWL/H を読み取るのみ（書込みなし）→安全。
+- `sleep_ms()` / `add_alarm_*()` は ALARM3 経由 → ALARM0 と衝突しない。
+- alarm pool 初期化時の `irq_set_exclusive_handler(TIMER0_3_IRQn, ...)` は `--wrap` 経由で
+  ASP3 の `_kernel_exc_tbl[]` に正しく登録される（`target_kernel_impl.c` の
+  `__wrap_irq_set_exclusive_handler` が処理）。
+
+#### 定量検証（PICO2 実機・2026-06-11）
+
+**検証プログラム**: `asp3_pico_sdk/sample1/timer_check/`
+（`timer_check.c` / `timer_check.cfg` / `CMakeLists.txt`）
+
+**dly_tsk(1000000) 精度計測（10 試行）**
+
+| 試行 | fch_hrt 測定値 (us) | 誤差 (us) | get_tim 測定値 (us) | 誤差 (us) |
+|---|---|---|---|---|
+| 0 | 1,000,014 | +14 | 1,000,013 | +13 |
+| 1 | 1,000,006 | +6 | 1,000,007 | +7 |
+| 2–9 | 1,000,006 | +6 | 1,000,006 | +6 |
+
+- 初回のみ +14 us（ログタスク起動オーバーヘッド）、以降は安定して **+6 us (+6 ppm)**。
+
+**get_tim() 単調増加 + ドリフト検証（300 秒）**
+
+| 時刻 | fch_hrt_d (us) | get_tim_d (us) | 累積ドリフト (us) |
+|---|---|---|---|
+| 10 s | 1,000,006 | 1,000,006 | 68 |
+| 20 s | 1,000,006 | 1,000,006 | 142 |
+| 150 s | 1,000,006 | 1,000,006 | 974 |
+| 300 s | 1,000,006 | 1,000,006 | **1,934** |
+
+- `errors=0`：300 秒間で単調増加違反なし。
+- 累積ドリフト 1,934 us / 300 s = **6.45 ppm**（水晶振動子の周波数オフセット）。
+- `fch_hrt()` と `get_tim()` の測定値が完全一致 → 同一 TIMER0 TIMERAWL からの導出を確認。
+
+#### 共存設計の結論
+
+**pico-sdk のタイマ API（`sleep_ms` / `add_alarm_*` 等）は現状のまま使用可能**。
+
+ALARM チャンネルが ASP3 (ALARM0) と pico-sdk デフォルト pool (ALARM3) で分離されており、
+`--wrap` による IRQ 管理統合も正常動作している。ASP3 カーネル側・pico-sdk 側のいずれも
+変更不要。アプリが `add_alarm_*` を使う場合の制約：
+
+1. **alarm pool に ALARM0 を指定しないこと**（`alarm_pool_create(timer0, 0, ...)` の 0 は禁止）。
+   デフォルト pool（ALARM3）を使う限り問題なし。
+2. `busy_wait_us()` / `sleep_ms()` の呼び出しは割込みコンテキスト外（タスクコンテキスト）で行うこと
+   （ASP3 の割込み禁止規約に従う）。
+3. 候補(a)「ASP3 HRT を別タイマに逃がす」・候補(c)「SDK タイマ API 禁止」は不要。
+
+これらの内容を `asp3_pico_sdk/` の README または `target/rp2350-arm-s_pico_sdk/` 内
+コメントに明記することを推奨。
