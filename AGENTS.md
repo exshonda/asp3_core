@@ -41,6 +41,7 @@ TOPPERS/ASP3カーネルを上流追従しながら、各社SDK（Raspberry Pi P
 | RISC-V Hazard3ターゲット | PICO2のRISC-Vコア（Hazard3）をSDK非依存ベアメタルで対応（raspberrypi_pico2_gccのRISC-V版） | 高 |
 | ドキュメントMarkdown化 | 統合仕様書・APIリファレンスをMarkdown化（RAG対応） | 中 |
 | devcontainer / Docker | ツールチェーン・QEMU・Pythonをピン留めした開発コンテナ。開発機/CI/エージェント環境の再現性を確保 | 中 |
+| Pico SDK統合 | pico-sdkと協調動作（第一目的の第1弾）。SDK固有のarch/targetは外側リポジトリ(asp3_pico_sdk)で管理し、asp3_coreは`ASP3_TARGET_DIR`で受け入れる | 中 |
 | skillパッケージ | build/flash/debug/cfg生成skill（別リポジトリ） | 中 |
 
 ### 機能追加の実施ルール
