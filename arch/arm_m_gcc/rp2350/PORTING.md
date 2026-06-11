@@ -2,6 +2,11 @@
 
 最終更新: 2026-06-05
 
+> **注（その後の改称）**：本メモ中の `target/raspberrypi_pico2_gcc/` は現在
+> **`target/pico2_arm_gcc/`** に改称済み（RISC-V版 `pico2_riscv_gcc` との対）。
+> ビルドも Makefile+configure.rb 版は廃止され CMake（プリセット `pico2_arm`）に移行済み。
+> 本文は移植当時の記録として原文のまま残す（読み替えのこと）。
+
 ## 目的
 TOPPERS/ASP3 (Release 3.7.2) を Raspberry Pi **Pico 2**
 (RP2350: Cortex-M33 ×2 / FPU(FPv5-SP) / 4MB QSPI フラッシュ / 520KB SRAM) へ移植する。

@@ -28,7 +28,7 @@ target/<name>/
 └── target.cmake             ← ターゲット依存部の登録（変数積み上げ＋arch.cmake include）
 ```
 
-> ファイル名・構成は `target/rp2350-arm-s_pico_sdk/` を参照。`target_kernel.py` /
+> ファイル名・構成は `target/pico2_arm_gcc/`（実機ベアメタル）を参照。`target_kernel.py` /
 > `target_check.py` は旧Ruby cfg の `.trb` テンプレートをPython化したもの。
 
 **変更してはいけないファイル**：`kernel/` 配下のファイルは一切編集しないこと。
@@ -43,11 +43,10 @@ target/<name>/
 |---|---|---|
 | SysTickによるHRTタイマ | `mps2_an521_gcc` | `target_timer.c` |
 | NVICによる割り込み制御 | `mps2_an521_gcc` | `target_config.h`, `target_kernel.c` |
-| Pico SDK統合タイマ | `rp2350-arm-s_pico_sdk` | `target_timer.c` |
-| Pico SDK UART | `rp2350-arm-s_pico_sdk` | `target_serial.c` |
+| Pico SDK統合タイマ／UART | 外部リポジトリ `asp3_pico_sdk` | （SDK統合は別リポジトリ＝`ASP3_TARGET_DIR`方式。本リポジトリのベアメタル版は `pico2_arm_gcc`） |
 | GICv3割り込み制御 | `stm32mp257f_dk_arm64_gcc` | `target_kernel.c` |
 | Cortex-A35アーキテクチャ | `stm32mp257f_dk_arm64_gcc` | `arch/arm64_gcc/` |
-| RISC-V コンテキストスイッチ | `rp2350-riscv_pico_sdk` | `arch/riscv_gcc/` |
+| RISC-V コンテキストスイッチ | `pico2_riscv_gcc` | `arch/riscv_gcc/common/core_support.S` |
 | POSIXシミュレーション | `linux_gcc` | 全ファイル |
 | セミホスティングシリアル | `mps2_an521_gcc` | `target_serial.c` |
 
@@ -212,7 +211,7 @@ HRTCNT target_hrt_get_current(void) {
 #### SDK提供タイマ（Pico SDK等）
 
 ```c
-/* rp2350-arm-s_pico_sdk/target_timer.c を参照 */
+/* 外部リポジトリ asp3_pico_sdk の target_timer.c を参照（SDK統合版） */
 #include "hardware/timer.h"
 
 static repeating_timer_t hrt_timer;
@@ -278,7 +277,7 @@ void target_fput_log(char c) {
 #### Pico SDK UART
 
 ```c
-/* rp2350-arm-s_pico_sdk/target_serial.c を参照 */
+/* 外部リポジトリ asp3_pico_sdk の target_serial.c を参照（SDK統合版） */
 #include "hardware/uart.h"
 void target_fput_log(char c) {
     uart_putc_raw(uart0, c);

@@ -16,7 +16,7 @@
 # ターゲット基本情報
 # --------------------------------------------------------------
 target:
-  name: ""                 # ディレクトリ名（例: rp2350-arm-s_pico_sdk）
+  name: ""                 # ディレクトリ名（例: pico2_arm_gcc）
   display_name: ""         # 表示名（例: Raspberry Pi PICO2 Cortex-M33）
   vendor: ""               # チップベンダー（例: raspberrypi, st, renesas, nxp）
   chip: ""                 # チップ型番（例: RP2350, STM32MP257F, RZ/A3UL）
@@ -128,7 +128,7 @@ serial:
 # （AIがコード生成時に参照すべき既存ターゲット）
 # --------------------------------------------------------------
 reference:
-  closest_target: ""       # 最も近い実装（例: mps2_an521_gcc, rp2350-arm-s_pico_sdk）
+  closest_target: ""       # 最も近い実装（例: mps2_an521_gcc, pico2_arm_gcc）
   arch_dir: ""             # 使用するarch/配下ディレクトリ（例: arm_gcc, riscv_gcc）
   context_switch_ref: ""   # コンテキストスイッチの参照実装
   notes: ""                # 既存実装との差異・特記事項
@@ -149,7 +149,7 @@ ai_notes: |
 # 記入例：Raspberry Pi PICO2（Cortex-M33 / RP2350）
 # ==============================================================
 # target:
-#   name: rp2350-arm-s_pico_sdk
+#   name: pico2_arm_gcc
 #   display_name: Raspberry Pi PICO2 (Cortex-M33)
 #   vendor: raspberrypi
 #   chip: RP2350
