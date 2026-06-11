@@ -478,6 +478,24 @@ include(${ASP3_ROOT_DIR}/arch/<arch_dir>/common/arch.cmake)
 > 使えばよい（`ASP3_ROOT_DIR` == リポジトリルートで一致するため）。`CMAKE_CURRENT_LIST_DIR` 相対は
 > **外部に置くターゲットを書くときの規約**。
 
+#### 別ツールチェーンの併用（gcc 以外の SDK）
+
+外部 SDK が asp3_core 既存ターゲット（gcc：arm-none-eabi/aarch64/riscv64）と
+**異なるツールチェーン**を使う場合（例：FSP統合は LLVM-ARM/clang＝ATfE）、
+ツールチェーンファイルは **asp3_core ではなく外部リポジトリ側に置く**（asp3_core を汚さない）。
+
+- 外部アプリの最上位 `CMakeLists.txt`（`project()` より前）または `-DCMAKE_TOOLCHAIN_FILE=` で
+  SDK 側のツールチェーンファイル（例 `cmake/llvm.cmake`）を指定する。
+- `add_subdirectory(asp3_core ...)`（`ASP3_LIBRARY_ONLY=ON`）で取り込む `asp3` ライブラリ・
+  `cfg1_out` は、その最上位で確定したツールチェーン（コンパイラ・`CMAKE_C_FLAGS` 等）を継承する。
+  ＝asp3_core 側は**ツールチェーン非依存**で、gcc 専用の前提を持たない（`cmake/toolchain-*.cmake`
+  は asp3_core 内ターゲット用で、外部 SDK はこれを使わなくてよい）。
+- `cfg1_out`（静的API値抽出用の使い捨て ELF）が SDK 生成ヘッダ等に依存する場合は、
+  外部側で `add_dependencies(cfg1_out <生成ターゲット>)` を **`add_subdirectory(asp3_core)` の後**に
+  記述する（`cfg1_out` ターゲットはそこで初めて生成されるため）。
+- 詳細な実例は `docs/dev/pico-sdk-integration.md`（Pico SDK・clang不要）／
+  `docs/dev/fsp-integration.md`（Renesas FSP・LLVM-ARM/clang＋RASC 生成依存）を参照。
+
 ---
 
 ## Step 7：ビルド全体確認
