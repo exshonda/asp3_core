@@ -29,6 +29,7 @@
 | ドキュメントMarkdown化 | `docs-markdown.md` | 完了 |
 | devcontainer / Docker | `devcontainer.md` | 完了 |
 | Pico SDK統合 | `pico-sdk-integration.md` | 完了（asp3_core側＝`ASP3_TARGET_DIR`＋`ASP3_LIBRARY_ONLY`＋pico2ターゲット改称／SDK側＝submodule移行・ARM-S/RISC-V とも PICO2実機動作確認・タイマ競合定量検証（ALARM0 vs ALARM3＝競合なし）／GitHub再編済。SDK統合版でのOS Awareness確認等は後続） |
+| FSP統合 | `fsp-integration.md` | 計画中（受け入れ口はPico統合で整備済・RASC/clangは本機に導入済） |
 | skillパッケージ | `skill-package.md` | 計画中 |
 
 状態：計画中 → 実施中 → 完了（各項目の進行に合わせて更新する）
