@@ -207,9 +207,12 @@
 
 /*
  * FPU関連レジスタ
+ *
+ * bareな CPACR/FPCCR マクロは CMSIS のレジスタ構造体メンバ名（CPACR/FPCCR）と
+ * 衝突するため定義しない（FSP等 CMSIS同居SDKとの協調動作のため）。
+ * アドレスは既存の CPACR_BASE（=0xE000ED88U）と FPCCR_ADDR を使う。
  */
-#define CPACR 0xE000ED88
-#define FPCCR 0xE000EF34
+#define FPCCR_ADDR 0xE000EF34
 
 #define CPACR_FPU_ENABLE       0x00f00000
 #define FPCCR_NO_PRESERV       0x00000000

@@ -247,8 +247,8 @@ core_initialize(void)
 	sil_andw((void *)CCR_BASE, ~CCR_STKALIGN);
 
 #ifdef TOPPERS_FPU_ENABLE
-	sil_orw((uint32_t *)CPACR, CPACR_FPU_ENABLE);
-	sil_wrw_mem((uint32_t *)FPCCR, FPCCR_INIT);
+	sil_orw((uint32_t *)CPACR_BASE, CPACR_FPU_ENABLE);
+	sil_wrw_mem((uint32_t *)FPCCR_ADDR, FPCCR_INIT);
 #endif /* TOPPERS_FPU_ENABLE */
 
 	/*
