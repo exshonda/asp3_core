@@ -271,6 +271,13 @@ ALABEL(return_to_thread_fp)
 	bx     lr
 #endif /* TOPPERS_FPU_CONTEXT */
 
+	/*
+	 * exc_return_const は ldr pc, exc_return_const（ワードアクセス）で読まれる。
+	 * 直前の return_to_thread_fp が TOPPERS_FPU_CONTEXT 有効時に 16bit の bx lr で
+	 * 終わると .word が 2 バイト境界に置かれ、Cortex-M85 等でワード読みが
+	 * UNALIGNED fault を起こす。明示的に 4 バイト境界へ揃える。
+	 */
+	.balign 4
 ALABEL(exc_return_const)
 	.word  EXC_RETURN
 

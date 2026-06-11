@@ -65,7 +65,10 @@
 #else
 #define EXC_RETURN              0xfffffffd
 #endif
+/* EXC_RETURN_PREFIX は CMSIS core_cm85.h 等でも定義されるため再定義を避ける */
+#ifndef EXC_RETURN_PREFIX
 #define EXC_RETURN_PREFIX       0xff000000
+#endif
 #define EXC_RETURN_HANDLER      0x0
 #define EXC_RETURN_THREAD       0x8
 #define EXC_RETURN_MSP          0x0
