@@ -177,6 +177,37 @@ asp3_pico_sdk リポジトリ側の作業（本リポジトリのスコープ外
 
 ---
 
+### asp3_core側（ライブラリ専用モード）— 完了（2026-06-10）
+
+SDKアプリ（pico_stdlib をリンクする最終実行ファイル）が asp3_core を
+`add_subdirectory` して `asp3` ライブラリだけを取り込めるよう、`CMakeLists.txt` に
+**`ASP3_LIBRARY_ONLY` オプション**を追加した（既定OFF＝従来どおり `asp` 実行ファイルまでビルド）。
+
+| ファイル | 変更内容 |
+|---|---|
+| `CMakeLists.txt` | `option(ASP3_LIBRARY_ONLY ... OFF)` を追加。ON のとき `asp` 実行ファイル・サンプル・ctest登録・実行/デバッグターゲットを作らず、`asp3` ライブラリ・cfg生成・ヘルパ関数（`asp3_add_syssvc` / `asp3_cfg_check`）のみを公開（`cfg1_out` は offset.h 生成に必要なため維持） |
+
+- ブランチ：`feat/library-only`（ベース `9a15203` → コミット `5619f92`、CI 全9ジョブ green を確認して main へ ff マージ）。
+- 検証：`linux`（OFF）で `asp` 生成を確認。`mps2_an521_gcc` を `-DASP3_LIBRARY_ONLY=ON` で
+  configure・ビルドし `libasp3.a` 生成・`asp` 非生成を確認。
+
+### SDK側（asp3_pico_sdk／別リポジトリ）— submodule移行・ビルド・実機動作確認 完了（2026-06-10）
+
+A案（既存 `asp3_pico_sdk_sample` を再利用）で、旧 `asp3_pico_sdk`（カーネル同梱fork）への
+依存を解消し、純カーネルの asp3_core を submodule 参照する構成へ移行。GitHub再編：旧
+`asp3_pico_sdk`→`asp3_pico_sdk_legacy`（archive）、`asp3_pico_sdk_sample`→`asp3_pico_sdk`（新・正本）に改名。
+
+| 区分 | 内容 |
+|---|---|
+| submodule差替 | `.gitmodules` の `asp3`（asp3_pico_sdk）→ `asp3_core`（`asp3_core.git`） |
+| pico固有部の移設 | `asp3_pico_sdk.cmake`（`PICO_PLATFORM`→`ASP3_TARGET`/`ASP3_TARGET_DIR`／`ASP3_CORE_DIR`／`irq_*` の `--wrap`）と SDK ターゲット依存部（チップarch は後に asp3_core 共用へ集約） |
+| CMake一本化 | `sample1/CMakeLists.txt` の fork CMake を廃止し、`add_subdirectory(asp3_core, ASP3_LIBRARY_ONLY=ON)` ＋ `asp3_add_syssvc()` ＋ `asp3_set_pico_sdk_options()` に一本化 |
+
+検証：pico-sdk 2.1.1 ＋ arm-none-eabi-gcc で `PICO_PLATFORM=rp2350-arm-s` を configure・ビルドし
+`sample1_pico_sdk.elf`／`.uf2` 生成・cfg 3パス・`--wrap` 誘導（`__wrap_irq_set_exclusive_handler`）の
+リンクを確認。**PICO2 実機**に書込み、UART に起動メッセージ＋`task1 is running ...` の周期出力を確認。
+（タイマ競合の定量検証はタスク1、RISC-V対応はタスク2を参照。）
+
 ### asp3_pico_sdk側 タスク1：タイマ競合の検証と調停 — 完了（2026-06-11）
 
 #### 現状把握（静的解析）
@@ -237,3 +268,30 @@ ALARM チャンネルが ASP3 (ALARM0) と pico-sdk デフォルト pool (ALARM3
 
 これらの内容を `asp3_pico_sdk/` の README または `target/rp2350-arm-s_pico_sdk/` 内
 コメントに明記することを推奨。
+### asp3_pico_sdk側 タスク2：RISC-V（Hazard3）版 — 完了（2026-06-11）
+
+`PICO_PLATFORM=rp2350-riscv` を実装し、RP2350 の RISC-V コア（Hazard3）で ASP3 を起動。
+
+| 区分 | 内容 |
+|---|---|
+| ヘルパ分岐 | `asp3_pico_sdk.cmake` の `rp2350-riscv` を実装（`ASP3_TARGET=pico2_riscv_sdk_gcc`／`ASP3_TARGET_DIR` 解決）。`asp3_set_pico_sdk_options()` を ISA で分岐 |
+| 移植元 | asp3_core の RISC-V ベアメタル実装（`arch/riscv_gcc/{rp2350,common}`＝Xh3irq・RISC-V IMAGE_DEF、`target/pico2_riscv_gcc`）。arch は asp3_core 側を共用（SDK側 arch の重複は全廃＝ARM-S も asp3_core のチップarchへ集約） |
+| シリアルRX | RISC-V では UART RX 割込みを **ASP3 ネイティブ ISR（`target_serial.cfg` の `CRE_ISR`）**で受ける。pico-sdk の `irq_*` 登録は Hazard3 の mtvec 解釈と非互換のため `--wrap` では誘導できない（ARM-S は NVIC のため `--wrap` で誘導） |
+| sample統合 | `sample1` を ISA 非依存の単一フォルダ化（`PICO_PLATFORM` で切替。差は割込み禁止命令の `#if __ARM_ARCH` のみ）。VS Code Pico 拡張の「Switch Platform」で ARM↔RISC-V 切替 |
+
+検証（実機・2026-06-11）：拡張同梱の RISC-V toolchain（`RISCV_RPI_2_0_0_5`＝newlib）で
+`PICO_PLATFORM=rp2350-riscv` をビルドし、**PICO2 実機**で `task1` 周期出力＋シリアル RX
+（`a`→`act_tsk(1)`、`2a`→`act_tsk(2)`）を確認。pico-sdk **2.1.1 / 2.2.0** の両方でビルド確認。
+
+### asp3_core側 ターゲットリネーム — 完了（2026-06-11）
+
+SDK 側ターゲット（`pico2_arm_sdk_gcc` / `pico2_riscv_sdk_gcc`）との対称性のため、
+ベアメタル pico2 ターゲットを改称：
+
+- `target/raspberrypi_pico2_gcc/` → `target/pico2_arm_gcc/`（プリセット `raspberrypi_pico2`→`pico2_arm`）
+- `target/raspberrypi_pico2_riscv_gcc/` → `target/pico2_riscv_gcc/`（プリセット `raspberrypi_pico2_riscv`→`pico2_riscv`）
+- 追随更新：`CMakePresets.json`・`.github/workflows/ci.yml`・`AGENTS.md`・`DIVERGENCE_MAP.md`・`docs/porting/IMPL_INDEX.md`・各 `presets.json`／`run.cmake`／`rpi_pico2.ld`。
+
+> 未完（後続）：①RISC-V 実機での `timer_check` 相当の定量検証（ARM-S は完了）。
+> ②OS Awareness の RISC-V 対応（`docs/dev/pico2-riscv.md` の残課題）。③skill パッケージ（build/flash/debug）。
+> ※`asp3_core` は public 化済みのため、SDK 利用者の submodule 取得は匿名で可（旧・認証課題は解消）。
