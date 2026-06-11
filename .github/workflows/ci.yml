@@ -24,10 +24,11 @@ concurrency:
 
 env:
   #  POSIXで実行する機能テスト（test/testexec.py TEST_SPECの機能テスト全件．
-  #  dlynse・hrt1はホストのスケジューリングの影響を受ける測定系のため除外）
+  #  dlynseのみ除外＝sil_dly_nseの実時間較正でホスト依存．hrt1はHRT単調
+  #  クランプ（arch/posix_gcc/posix_timer_itimer.c）で逆行が解消され対象化）
   POSIX_TESTS: >-
     cpuexc1 cpuexc2 cpuexc3 cpuexc4 cpuexc5 cpuexc6 cpuexc7 cpuexc8 cpuexc9 cpuexc10
-    dtq1 exttsk flg1 int1 mpf1
+    dtq1 exttsk flg1 hrt1 int1 mpf1
     mutex1 mutex2 mutex3 mutex4 mutex5 mutex6 mutex7 mutex8
     notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
     sysman1 sysstat1 task1 tmevt1

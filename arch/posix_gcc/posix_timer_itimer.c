@@ -75,6 +75,7 @@ static QUEUE	active_tmrcb_queue;
  *  インターバルタイマ設定時点での絶対時刻
  */
 static ABSTIM	current_abstim;
+static ABSTIM	last_abstim;		/* 【asp3_core変更】HRT単調性クランプ用：直前に返した絶対時刻 */
 
 /*
  *  インターバルタイマの設定値
@@ -169,12 +170,32 @@ static ABSTIM
 get_current_abstim(void)
 {
 	struct itimerval	val;
+	ABSTIM				abstim;
 
 	/*
 	 *  インターバルタイマを読み出し，現在の絶対時刻を求める．
 	 */
 	getitimer(ITIMER_REAL, &val);
-	return(current_abstim + itimer_progress(&val));
+	abstim = current_abstim + itimer_progress(&val);
+
+	/*
+	 *  【asp3_core変更】高分解能タイマの単調性の保証．
+	 *
+	 *  getitimerの残り時間はOSのタイマ実装に依存してマイクロ秒境界で量子化
+	 *  され，近接した2回の読出しで残り時間が1μs増える（経過が1μs戻る）こと
+	 *  がある．HRTは単調非減少が要件（hrt1テストが逆行を検出）のため，直前に
+	 *  返した値より小さくならないようにクランプする（実HRTカウンタは単調．
+	 *  他ターゲットのget_currentも同様のクランプを行う）．
+	 *  ※本関数はtimer_mutex保持＋シグナルブロック下でのみ呼ばれるため，
+	 *    static変数の更新は逐次化される．
+	 */
+	if (abstim < last_abstim) {
+		abstim = last_abstim;
+	}
+	else {
+		last_abstim = abstim;
+	}
+	return(abstim);
 }
 
 /*
