@@ -293,5 +293,7 @@ SDK 側ターゲット（`pico2_arm_sdk_gcc` / `pico2_riscv_sdk_gcc`）との対
 - 追随更新：`CMakePresets.json`・`.github/workflows/ci.yml`・`AGENTS.md`・`DIVERGENCE_MAP.md`・`docs/porting/IMPL_INDEX.md`・各 `presets.json`／`run.cmake`／`rpi_pico2.ld`。
 
 > 未完（後続）：①RISC-V 実機での `timer_check` 相当の定量検証（ARM-S は完了）。
-> ②OS Awareness の RISC-V 対応（`docs/dev/pico2-riscv.md` の残課題）。③skill パッケージ（build/flash/debug）。
+> ②skill パッケージ（build/flash/debug）。
+> ※OS Awareness の RISC-V 対応（Xh3irq）はベアメタル `pico2_riscv_gcc` で実装・実機確認
+> 済み（`docs/dev/pico2-riscv.md`）。SDK統合版での確認のみ後続。
 > ※`asp3_core` は public 化済みのため、SDK 利用者の submodule 取得は匿名で可（旧・認証課題は解消）。

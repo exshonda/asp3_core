@@ -25,7 +25,7 @@
 | CI整備 | `ci.md` | 完了 |
 | OS Awareness 対応 | `os-awareness.md` | 完了 |
 | 移植検証テスト | `porting-test.md` | 完了（polarfire QEMUのみCIで確認） |
-| RISC-V Hazard3ターゲット | `pico2-riscv.md` | 完了（dlynse較正・testexec全件・OS Awarenessは残課題） |
+| RISC-V Hazard3ターゲット | `pico2-riscv.md` | 完了（dlynse較正・testexec 36/36・OS Awareness実機確認まで完了） |
 | ドキュメントMarkdown化 | `docs-markdown.md` | 完了 |
 | devcontainer / Docker | `devcontainer.md` | 完了 |
 | Pico SDK統合 | `pico-sdk-integration.md` | 完了（asp3_core側＝`ASP3_TARGET_DIR`＋`ASP3_LIBRARY_ONLY`＋pico2ターゲット改称／SDK側＝submodule移行・ARM-S/RISC-V とも PICO2実機動作確認・タイマ競合定量検証（ALARM0 vs ALARM3＝競合なし）／GitHub再編済。OS Awareness RISC-V等は後続） |
