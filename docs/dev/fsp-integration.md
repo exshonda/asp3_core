@@ -97,4 +97,45 @@ asp3_fsp/
 
 ## 実施結果
 
-（完了時に記載）
+### asp3_core側 — 完了（2026-06-11）
+
+受け入れ口（`ASP3_TARGET_DIR`・`ASP3_LIBRARY_ONLY`）は Pico統合で整備済み。FSP特有の追加は
+clang/LLVM-ARM ツールチェーンだが、**asp3_core を汚さない方針で asp3_fsp 側に置く**と判断
+（プラン推奨どおり）。asp3_core 側の実変更は doc のみ：
+
+- `docs/porting/PORTING_GUIDE.md`「外部ターゲット」節に **別ツールチェーン併用**の指針を追補
+  （ツールチェーンファイルは外部SDK側／asp3 lib・cfg1_out は最上位ツールチェーンを継承＝asp3_core非依存／
+  cfg1_out が SDK生成ヘッダに依存する場合は `add_subdirectory(asp3_core)` 後に `add_dependencies(cfg1_out …)`）。
+- コミット `5415b79`（branch `feat/fsp-porting-guide-note` → CI 全9 green → main）。既存ターゲット無影響。
+
+### asp3_fsp側 — 調査結果（2026-06-11・中間／実ビルドは未）
+
+`../asp3_fsp`（clone）を調査。現状は旧 asp3_pico_sdk と同型の「カーネル同梱＋fork CMakeLists」。
+
+**ツール（本マシン導入済み）**
+- RASC：`~/.renesas/platform/sc/ra/fsp_6.4.0/eclipse/rasc`（Linux ネイティブ・ヘッドレス起動可）
+- LLVM-ARM：ATfE **21.1.1**（`~/.renesas/platform/arm-llvm/21.1.1/ATfE-21.1.1-Linux-x86_64/bin/clang`）
+
+**移行で対応が要る点（CMake一本化の実装メモ）**
+- `target/ek_ra6m5/target.cmake`：`${PROJECT_SOURCE_DIR}` 基準を **外部規約**へ
+  （チップarch `arch/arm_m_gcc/ra6m5_fsp` と target は `CMAKE_CURRENT_LIST_DIR` 相対、共通arch
+  `arch/arm_m_gcc/common` は `ASP3_ROOT_DIR`＝submodule）。
+- target.cmake 末尾の `add_dependencies(${CFG1_OUT} generate_content_…)` は、canonical asp3_core では
+  `cfg1_out` が target.cmake include 後に生成されるため**ここでは未生成**。→ サンプル CMakeLists の
+  `add_subdirectory(asp3_core)` 後に移すこと（PORTING_GUIDE の注記どおり）。
+- FSP生成ヘッダ（`ra/`・`ra_cfg/`・`ra_gen/`）依存：cfg1_out も FSP ヘッダを要するため RASC 生成に依存させる。
+- `ek_ra6m5/sample/Config.cmake` が **Windows前提**（`rasc.exe`・`python.exe`・既定 `fsp_6.2.0`）。
+  Linux では `RASC_EXE_PATH=…/fsp_6.4.0/eclipse/rasc`・`PYTHON_EXE=python3` 等の上書きが要る。
+- リンカ：`cmake/asp3_sections.lld`（ASP3固有 `.vector`/`.empty.*` を FLASH 配置）＋ `-nostartfiles`
+  （ATfE の picolibc crt0 回避）は移行後も維持。
+
+**実ビルドの現ブロッカー（要ユーザー判断）**
+- `ek_ra6m5/ek_ra8m2` の `configuration.xml` は **FSP 6.2.0**（`#FSPVersion#=6.2.0`・各コンポーネント V6.2.0）。
+  導入済み RASC は **6.4.0** のみ → RASC `--generate` が「Failed to locate component … (V6.2.0) in any
+  software packs」で失敗（`ra/`・`ra_gen/` 未生成）。生成失敗時の GUI エラー表示で GTK クラッシュ（副次）。
+- 解消には①プロジェクトを **FSP 6.4.0 へ移行**（VSCode RA拡張で開くと移行／RASC migrate）か、
+  ②**FSP 6.2.0 パックを導入**（Renesas pack）のいずれかが必要。いずれも Renesas GUI/パック操作＝ユーザー領域。
+
+> 次段（バージョン解消後・推奨は新セッション）：asp3_fsp の submodule化＋CMake一本化
+> （`add_subdirectory(asp3_core, ASP3_LIBRARY_ONLY)`＋`ASP3_TARGET_DIR`）→ RASC生成→clangビルド→
+> （可能なら）実機 EK-RA6M5/RA8M2 検証。Pico A案と同型。
