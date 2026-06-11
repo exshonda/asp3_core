@@ -43,6 +43,7 @@ TOPPERS/ASP3カーネルを上流追従しながら、各社SDK（Raspberry Pi P
 | devcontainer / Docker | ツールチェーン・QEMU・Pythonをピン留めした開発コンテナ。開発機/CI/エージェント環境の再現性を確保 | 中 |
 | Pico SDK統合 | pico-sdkと協調動作（第一目的の第1弾）。SDK固有のarch/targetは外側リポジトリ(asp3_pico_sdk)で管理し、asp3_coreは`ASP3_TARGET_DIR`で受け入れる | 中 |
 | FSP統合 | Renesas FSPと協調動作（第一目的の第2弾）。外側リポジトリ(asp3_fsp)で管理＝`ASP3_TARGET_DIR`。ツールチェーンはLLVM-ARM/clang・RASC生成依存 | 中 |
+| STM32 HAL統合 | STM32Cube HALと協調動作（第一目的の第3弾）。外側リポジトリ(stm32_vscode_asp)で管理＝`ASP3_TARGET_DIR`。移植元が旧世代asp3(TECS/Ruby)のため非TECS+Python cfg化が要・toolchainはarm-none-eabi gcc・CubeMX生成依存（現行版に合わせる） | 中 |
 | skillパッケージ | build/flash/debug/cfg生成skill（別リポジトリ） | 中 |
 
 ### 機能追加の実施ルール
