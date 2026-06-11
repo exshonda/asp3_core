@@ -255,42 +255,82 @@ asp3_core 本体：**無変更**（docs のみ：本ファイル）。
   ディスパッチされる設計。`_kernel_exc_tbl` の **USART2(idx 75)→`sio_handler`**・
   **TIM5(idx 48→idx 64)→`target_hrt_handler`** を `nm`/`objdump` で確認済み。
   `SCB->VTOR=_kernel_vector_table` は `core_initialize()` が設定（H563 と同経路）。
-- **実機（フラッシュ→バナー/タスク切替）**：**部分動作・未解決の不具合あり**（2026-06-12、Win STM32CubeProgrammer で書込み）。
-  - **OK**：起動してバナーが正常出力（＝リセット→`Reset_Handler`→`main()`→`sta_ker()`→
-    初期化ルーチン→`print_banner` まで到達。USART2 の同期送信経路も動作）。
-  - **NG**：バナー直後に **`exc_task`(sample1.c:307) の `ras_ter` が `E_CTX` を返し続けるループ**。
-    `main_task` の "Sample program starts" は出ない。
+- **実機（フラッシュ→バナー/タスク切替）**：**動作OK（2026-06-12 解決）**。
+  deskmini PC（Linux）で `STM32_Programmer_CLI -c port=SWD reset=HWrst -w
+  build/Debug/H533.elf -v -rst` 書込み →
+  バナー → `System logging task is started on port 1.` →
+  `Sample program starts (exinf = 0).` → `task1 is running (NNN)` 連続出力。
+  `r` 送信（rot_rdq）で task1→task2→task3 の切替を確認
+  （SysTick・PendSV・svc_handler・USART 割込みの全経路が動作）。
 
-#### 不具合の解析（2026-06-12 時点・未解決）
+#### 不具合の解析（2026-06-12 解決済み）
 
-- **症状の解釈**：`CPUEXC1=6`（UsageFault・arm_m `core_test.h`）。起動直後に CPU 例外が
-  連続発火 → `cpuexc_handler` → `act_tsk(EXC_TASK)` → `exc_task` → `ras_ter` で **`E_CTX`**。
-  `ras_ter` の `E_CTX` は `CHECK_TSKCTX_UNL()` 失敗＝**タスクコンテキストでない or CPUロック中**。
-  arm_m の `sense_context()` は **CONTROL.SPSEL（PSP=タスク / MSP=非タスク）** で判定
-  （`core_kernel_impl.h:134`）。faultしたタスクを `ras_ter` で終了できない（E_CTX）ため、
-  例外復帰でfault命令に戻り再fault＝**無限ループ**。根本原因は**最初のUsageFault**。
-- **切り分け済み**：
-  - **FPUコンテキスト退避パスは健全**：`pico2_arm`（同じ Cortex-M33・同じ
-    `TOPPERS_FPU_ENABLE/CONTEXT/LAZYSTACKING`）が実機動作済み。pendsv の
-    `vstmdb {s16-s31}` 経路自体のバグではない。
-    - ただし **float-abi が相違**：pico2_arm=`softfp` / stm32cubemx=`hard`（CubeMX既定）。
-      リンクは通る＝ABIは一貫しているが、`hard` 固有の挙動は未排除。
-  - **ベクタ/ディスパッチャは静的に正常**（上記）。`start_dispatch` は `CONTROL_INIT`(PSP) 設定も正常。
-  - **CPUEXC1 登録を外す実験**：`DEF_EXC(CPUEXC1)` をコメントアウトして再ビルド・書込み
-    → **バナー後 無音**（UsageFault が HardFault(3) に昇格し、未処理スピンに入ったと推測。
-    `default_exc_handler` の "Unregistered Exception" すら出ず）。この実験編集は**戻し済み**。
-- **H533 固有の容疑（CubeMX生成 main.c）**：`pico2_arm`/`H563` と違い H533 の `main.c` は
-  **`MPU_Config()`（0x08FFF000 RO/NX 領域＋`HAL_MPU_Enable`）** と **ICACHE 有効化** を含む
-  （H563 の `main.c` には無い）。MPU 違反は MemManage(4)→HardFault(3) 昇格で Excno が
-  合わない（観測は exc6 系）ため第一容疑ではないが、ICACHE/クロック（H533=HSI 32MHz系）含め未排除。
-- **次の一手（診断）**：`cpuexc_handler` 内で **`target_fput_log` による同期出力**で
-  faulting PC（`((uint32_t*)p_excinf)[P_EXCINF_OFFSET_PC]`＝offset 8）と
-  **CFSR(0xE000ED28)/HFSR(0xE000ED2C)** をダンプして即停止 → `addr2line` で落ちている
-  命令を特定する（logtask 非依存の同期パスを使う。syslog だと logtask 飢餓で出ない）。
+当初の症状＝バナー後に `exc_task`(sample1.c:307) の `ras_ter` が `E_CTX` を返し
+続けるループ。これは**二次症状**で、真因は以下。
+
+**真因：`_kernel_vector_table` の整列違反（VTOR の整列要件）**
+
+- ARMv8-M の VTOR はベクタテーブルが「エントリ数×4 以上の2のべき乗」境界
+  （H533：16+131=148エントリ → **1024byte**）に置かれることを要求し、
+  VTOR 書込み時に下位ビットが切り捨てられる。
+- CubeMX 生成のリンカスクリプトに `.vector` セクションの配置規則は無く、
+  **orphan section として 4byte 整列で配置される**。`core_initialize()` が
+  `VTOR = _kernel_vector_table` を設定すると**実効ベースが手前にずれ、
+  全ベクタが「ずれた位置」からフェッチ**される。
+- 当時のバイナリではテーブルが `0x0800D710`（下位 0x10 切捨て→実効
+  `0x0800D700`、**4スロットずれ**）にあり、**SysTick（例外15）のベクタが
+  table[11]=`_kernel_svc_handler`** になっていた。アイドル中（`p_runtsk=NULL`、
+  割込まれた文脈の r4=0）に最初の SysTick で svc_handler が走り、
+  `ldr r0,[r4,#TCB_stk_top]`（core_support.S:305）が `NULL+0x20` を読んで
+  精密 BusFault（gdb 実測：CFSR=0x00008200、BFAR=0x20、被フォルト文脈
+  IPSR=0x0f=SysTick、フレーム LR=0xFFFFFFBC）。
+- **IRQ（番号16以上）はずれ先もほぼ `core_int_entry`** で、内部で IPSR から
+  `exc_tbl[]` を引くため**正常動作してしまい**（バナーが出る・USART も動く）、
+  発見が遅れた。ずれの影響は例外 11〜15 のシステム例外に集中する。
+- 死後 `sta_ker()` が復帰し `main()` 末尾の `while(1)`（=0x080083E0）へ。
+  この番地は **ICF で `Error_Handler` の `while(1)` と畳み込まれており**、
+  addr2line/bt が「Error_Handler ← MX_ICACHE_Init」と誤誘導した
+  （**FPU/MPU/ICACHE は無罪**）。
+
+**修正（2点＋副次1点）**
+
+1. `asp3/target/stm32h533_nucleo/target_kernel.py`：`_kernel_vector_table` に
+   `__attribute__((section(".vector"), aligned(N)))` を付与。N はテンプレートで
+   「エントリ数×4 を覆う2のべき乗」を動的計算（H533=1024）。リンカスクリプト
+   （CubeMX 生成・.gitignore 対象）には手を入れない。
+2. `asp3/arch/arm_m_gcc/stm32h5xx_stm32cube/arch.cmake`：
+   `TOPPERS_ENABLE_TRUSTZONE` を除去。pico2_arm（RP2350＝Secure ブート）由来の
+   流用で、`EXC_RETURN=0xFFFFFFFD`（ES/S=1、Secure 用）になっていた。実機は
+   TZEN=0xC3（**TrustZone disabled**、`STM32_Programmer_CLI -ob displ` で確認）で
+   HW 生成の EXC_RETURN は `0xFFFFFFBC`。**整列修正後に単独切り分けした結果、
+   この実機では 0xFFFFFFFD でも動作した**（HW が RES0 ビットを無視）が、
+   仕様上不正のため除去（TZEN 有効化時のみ定義する）。
+3. `asp3/target/stm32h533_nucleo/target_serial.c`：`target_fput_log` が
+   `putc(stdout)`＋空 `_write_r(){}` で実出力しない porting 仕様非準拠を修正。
+   USART2（ST-LINK VCP）レジスタ直接ポーリング（`ISR.TXE` 待ち→`TDR` 書込み、
+   `CR1.UE=0` の間は捨てる）に変更。gdb から `call target_fput_log('X')` で
+   実出力を確認済み。
+
+**デバッグ手法（winning technique・他移植にも適用可）**
+
+- OpenOCD は stm32h5x.cfg 非搭載でも最小 cfg（stlink/swd/dap/cortex_m の
+  target create のみ）で接続可。`openocd -f /tmp/h5.cfg`（gdb server :3333）→
+  `gdb-multiarch`。ST-LINK_gdbserver は FW 要求で不可だった。
+- 決め手は `monitor cortex_m vector_catch hard_err bus_err mm_err chk_err
+  state_err nocp_err int_err`（reset は除外）→ `monitor reset halt` → `continue`
+  で**フォルト発生瞬間に停止**させること。
+- **「被フォルト文脈の IPSR と PC の所属関数が矛盾」したらベクタテーブル不正を
+  疑う**（IPSR=15=SysTick なのに PC が svc_handler 内、が今回の証拠だった）。
+- 外部SDKのリンカスクリプトを使う統合では `.vector` が orphan section になる
+  → **整列属性をテーブル自体に付けるのが安全**（リンカスクリプト非依存）。
+- OpenOCD 起動中は `STM32_Programmer_CLI` が DEV_CONNECT_ERR（ST-LINK 排他）。
 
 #### 参考：NUCLEO-H563ZI 実機
 
 - H563 を実機書込みすると **ログが一切出力されない**（バナーも出ない）。H533 より手前で
   停止している（USART3/BSP かクロックか要切り分け）。H563 は元々ビルドのみ検証で実機未確認だった。
+- H533 と同じ整列違反を抱えている可能性が高い（`target/stm32cubemx/target_kernel.py`
+  にも同じ `aligned` 修正の水平展開が必要。H563 は IRQ 数が多いため必要整列は 2048 になりうる）。
 
-> **状態：実機ブリングアップ中（未解決）**。ビルド・静的検証は完了、実機は banner 到達まで。
+> **状態：H533RE 実機ブリングアップ完了（sample1 動作確認済み）**。
+> 残：H563ZI の実機検証（整列修正の水平展開含む）・test_porting/testexec の実行。
