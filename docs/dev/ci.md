@@ -172,7 +172,7 @@ zcu102／polarfire）、③build-onlyジョブ（pico2／stm32mp257）、
 | dlynse | `sil_dly_nse`の実時間較正テスト。QEMU（サイクル精度なし）・POSIX（ホストスケジューリング）では成立しない。**実機でのみ有意味**のためCI対象外 |
 | hrt1（POSIX） | **解消済**：itimerの残り時間がμs境界で量子化され近接読出しで1μs逆行していた。HRTは単調非減少が要件のため `arch/posix_gcc/posix_timer_itimer.c` の `get_current_abstim()` に単調クランプを追加（実HRTカウンタ同様・他ターゲットのget_currentと同方針）。POSIX CI対象に復帰 |
 | int1 | **mps2＝対応済**（予備NVIC IRQ60をソフト割込み源に整備＝21/21 PASS・CI/nightly対象）。**polarfire＝非適用**（PLICは`ras_int`非対応＝QEMUのSiFive PLICもpending書込み拒否。意図的除外）。zcu102/pico2_arm/pico2_riscvは元から対応 |
-| cpuexc1・cpuexc4（mps2） | CPU例外がHardFaultへエスカレートし`Unregistered Exception`で失敗する既存挙動。**要調査** |
+| cpuexc1・cpuexc4（arm_m全般） | **原因判明・対処未決**：`SIL_LOC_INT`（arm_mはPRIMASK＝上流とバイト一致）中の `udf` がUsageFault→HardFault昇格し，UsageFault用ハンドラで捕捉できない＝**上流arm_m固有の特性**（我々のバグではない）。BASEPRIロックにすれば通ることは実験確認済みだが上流乖離。詳細・選択肢・実験結果は **`docs/dev/issue-cpuexc-armm.md`**（ユーザー判断待ち） |
 
 ### 変更したファイル
 
