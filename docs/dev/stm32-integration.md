@@ -359,6 +359,30 @@ cmake --build build/TestPorting
 # 書込み → /dev/ttyACM0 115200 に TAP（1..6, ok 1〜ok 6）が出る
 ```
 
+#### testexec（機能テスト全件・H563ZI 実機・2026-06-12）
+
+標準機能テスト36本を実機で全件実行。**結果は arm_m 規範（mps2 nightly）と
+同等以上**：
+
+| 判定 | 件数 | 内訳 |
+|---|---|---|
+| PASS | **32** | 標準30本＋**hrt1・dlynse**（実機でのみ有意味な測定系。QEMU CI では除外されているものが実機で通った） |
+| SKIP | 1 | cpuexc10（`This test program is not necessary.`＝正常） |
+| FAIL | 2 | **cpuexc1・cpuexc4＝既知の上流 arm_m 特性**（PRIMASK ベース SIL_LOC_INT 中の UsageFault が HardFault 昇格。mps2/pico2_arm と同一挙動。`docs/dev/issue-cpuexc-armm.md` 参照・対処方針はユーザー判断待ち） |
+| BUILD_FAIL | 1 | int1（`target_test.h` に INTNO1 等のテスト用ソフト割込み源が未整備。mps2 は予備 NVIC IRQ で対応済み＝STM32 でも同様に整備可能。今後の課題） |
+
+- **実行機構**：外側リポジトリに実機用ランナー `scripts/testexec_stm32.py` を新設
+  （asp3_core の test/testexec.py は asp3_core 単体 configure 前提のため）。
+  外側プロジェクトを 1 テストずつ `-DASP3_APPLDIR/APPLNAME/APPCFGNAME` 差し替えで
+  configure→build→STM32_Programmer_CLI 書込み→シリアル判定。判定は CI ランナー
+  （`scripts/ci/run_testexec.py`）と同一仕様（PASS/SKIP マーカー・SPECIAL_SPEC）。
+  `--rejudge` で保存済みログの再判定のみ可。
+- **dlynse で実較正を実施**：初回 `sil_dly_nse(129): 124 NG`（境界ケースのみ 4% 短い）。
+  実測（セットアップ≈68ns・ループ1周≈56ns）に対し `SIL_DLY_TIM1=79` が過大
+  だったため **64 に較正**（`stm32cubemx.h`・両ターゲット。遅延が長くなる安全側）
+  → dlynse PASS（NG 0件）。
+
 > **状態：H533RE・H563ZI とも実機ブリングアップ完了**
-> （sample1 動作確認済み、H563ZI は test_porting 6/6 も通過）。
-> 残：H533RE での test_porting 実行（ボード再接続時。同一機構で可）・testexec。
+> （sample1・test_porting 6/6、H563ZI は testexec 32 PASS/1 SKIP＝規範同等）。
+> 残：H533RE での test_porting・testexec（ボード再接続時。同一機構で可）・
+> int1 用ソフト割込み源の整備（任意）。
