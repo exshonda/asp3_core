@@ -11,8 +11,9 @@
 #  ターゲット毎に以下を除外したもの（2026-06-06 開発機での全件実行結果）：
 #  - dlynse（全QEMUターゲット）：sil_dly_nseの実時間較正テスト．QEMUは
 #    サイクル精度をもたないため成立しない（実機でのみ有意味）
-#  - int1（mps2・polarfire）：target_test.hに割込み発生機構（INTNO1等）が
-#    未定義でビルド不可（ターゲット移植の既存ギャップ・要整備）
+#  - int1（polarfire のみ除外）：PLICはソフト割込み発生（ras_int）非対応
+#    （QEMUのSiFive PLICもpendingレジスタ書込みを拒否）＝原理的に非適用．
+#    mps2は予備NVIC IRQをソフト割込み源として整備済み（int1実行＝対象）
 #  - cpuexc1・cpuexc4（mps2）：CPU例外がHardFaultへエスカレートし
 #    Unregistered Exceptionとなる既存挙動（要調査）
 #
@@ -46,7 +47,7 @@ jobs:
               -semihosting-config enable=on,target=native -kernel asp.elf
             tests: >-
               cpuexc2 cpuexc3 cpuexc5 cpuexc6 cpuexc7 cpuexc8 cpuexc9 cpuexc10
-              dtq1 exttsk flg1 hrt1 mpf1
+              dtq1 exttsk flg1 hrt1 int1 mpf1
               mutex1 mutex2 mutex3 mutex4 mutex5 mutex6 mutex7 mutex8
               notify1 pdq1 raster1 raster2 sem1 sem2 suspend1
               sysman1 sysstat1 task1 tmevt1

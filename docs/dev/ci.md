@@ -171,7 +171,7 @@ zcu102／polarfire）、③build-onlyジョブ（pico2／stm32mp257）、
 |---|---|
 | dlynse | `sil_dly_nse`の実時間較正テスト。QEMU（サイクル精度なし）・POSIX（ホストスケジューリング）では成立しない。**実機でのみ有意味**のためCI対象外 |
 | hrt1（POSIX） | linux_gccでHRTが1μs逆行する事象（`high resolution timer count goes back`）。QEMU各ターゲットでは正常。**要調査**（POSIX対象外、QEMU nightlyでは対象） |
-| int1（mps2・polarfire） | `target_test.h`に割込み発生機構（INTNO1等）が未定義でビルド不可。**ターゲット移植の既存ギャップ**（zcu102は定義済みでパス） |
+| int1 | **mps2＝対応済**（予備NVIC IRQ60をソフト割込み源に整備＝21/21 PASS・CI/nightly対象）。**polarfire＝非適用**（PLICは`ras_int`非対応＝QEMUのSiFive PLICもpending書込み拒否。意図的除外）。zcu102/pico2_arm/pico2_riscvは元から対応 |
 | cpuexc1・cpuexc4（mps2） | CPU例外がHardFaultへエスカレートし`Unregistered Exception`で失敗する既存挙動。**要調査** |
 
 ### 変更したファイル
