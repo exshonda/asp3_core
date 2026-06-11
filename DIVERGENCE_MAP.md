@@ -23,6 +23,7 @@
 | `target/pico2_arm_gcc/`・`arch/arm_m_gcc/rp2350/`（非TECS化） | 新規追加（`rp2350_uart.[ch]`・`chip_serial.{c,h,cfg}`・`target_serial.{h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING.md`）．`rp2350_uart_cls_por()`に送信FIFOドレイン待ちを追加（終了時の末尾出力欠落の修正．`docs/dev/porting-test.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
 | `target/linux_gcc/`・`arch/posix_gcc/` | 上流SVN（3.7.2）から取込み | POSIXシミュレーション環境（3.7.2 tarball未収録のため別途取込み） | 上流posix_gccパッケージの更新に追従 | target/arch | 3.7.2 |
 | `target/linux_gcc/target_kernel_impl.c` | 改変（CLIターゲット） | main()のargc/argv化＋`--tap`/`--slog`/`--help`追加（経緯は`docs/dev/cli-target.md`） | 上流posix_gccのmain()変更時に要手動マージ | target | 3.7.2 |
+| `arch/posix_gcc/posix_timer_itimer.c` | 改変（HRT単調性） | `get_current_abstim()`にHRT単調クランプを追加（itimer量子化による1μs逆行の修正．hrt1テスト対応．経緯は`docs/dev/ci.md`既知事項） | 上流posix_gcc更新時に要手動マージ（クランプ部は【asp3_core変更】コメント） | arch | 3.7.2 |
 | `arch/posix_gcc/posix_kernel_impl.c` | 改変（CLIターゲット・上流バグ修正） | LOG_INH_ENTER/LEAVEへ渡す変数の修正（上流は未定義変数inhnoを渡しており，トレース有効時にコンパイル不能．上流報告：`docs/dev/upstream-report-tracelog.md`） | 上流で修正されたら上流版を採用して差分解消 | arch | 3.7.2 |
 | `kernel/sys_manage.c` | **改変（PRISTINE領域・要注意）** | get_lod()のLOG_GET_LOD_ENTERに渡す変数の修正（上流は未定義変数p_tskidを渡しており，トレース有効時にコンパイル不能．ユーザー承認のうえ1行のみ修正．上流報告：`docs/dev/upstream-report-tracelog.md`） | **上流マージ時は必ず本行を確認**．上流で修正されたら上流版を採用して差分解消 | kernel(PRISTINE+1行) | 3.7.2 |
 | `syssvc/test_svc.c`・`test_svc.h` | 上流 `non_tecs` 由来＋改変（CLIターゲット） | TAP出力モード（`test_tap_mode`）を追加（経緯は`docs/dev/cli-target.md`） | `extension/non_tecs/syssvc` の更新時に要手動マージ | syssvc(EXTENDED) | 3.7.2 |
