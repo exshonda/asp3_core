@@ -30,6 +30,7 @@
 | devcontainer / Docker | `devcontainer.md` | 完了 |
 | Pico SDK統合 | `pico-sdk-integration.md` | 完了（asp3_core側＝`ASP3_TARGET_DIR`＋`ASP3_LIBRARY_ONLY`＋pico2ターゲット改称／SDK側＝submodule移行・ARM-S/RISC-V とも PICO2実機動作確認・タイマ競合定量検証（ALARM0 vs ALARM3＝競合なし）／GitHub再編済。SDK統合版でのOS Awareness確認等は後続） |
 | FSP統合 | `fsp-integration.md` | 実施中（asp3_core側＝PORTING_GUIDE注記＋CMSIS協調のCPACR/FPCCR修正(473d97e)。SDK側＝asp3_fsp submodule化・EK-RA6M5/EK-RA8M2 を RASC6.2.0+ATfE clang でビルド検証完了。実機動作確認は後続） |
+| STM32 HAL統合 | `stm32-integration.md` | 計画中（移植元が旧世代asp3＝TECS/Ruby・非TECS+Python cfg化要・gccツールチェーン・CubeMX生成依存／バージョンは現行に合わせる） |
 | skillパッケージ | `skill-package.md` | 計画中 |
 
 状態：計画中 → 実施中 → 完了（各項目の進行に合わせて更新する）
