@@ -251,6 +251,29 @@ jobs:
           cmake --build build/pico2_arm
 
   #
+  #  NXP EVK-MIMXRT685（実機ターゲット）：build only
+  #  （QEMUにRT685モデルが無いため実行はできない．経緯は
+  #  docs/dev/nxp-integration.md）
+  #
+  mimxrt685evk:
+    name: Build mimxrt685evk (Cortex-M33)
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      #  イメージの既定ユーザはvscode（devcontainer用）のため、Actionsの
+      #  ランナーファイルに書けるようrootで実行する
+      options: --user root
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build (sample1)
+        run: |
+          cmake --preset mimxrt685evk -B build/mimxrt685evk
+          cmake --build build/mimxrt685evk
+
+  #
   #  Raspberry Pi PICO2 RISC-V（実機ターゲット・Hazard3）：build only
   #  （QEMUにHazard3モデルが無いため実行はできない．実機検証の経緯は
   #  docs/dev/pico2-riscv.md）

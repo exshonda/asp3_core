@@ -1,5 +1,9 @@
 # RISC-V Hazard3ターゲット（pico2-riscv）
 
+> **注（その後の改称）**：本書中の `raspberrypi_pico2_riscv_gcc` は現 `pico2_riscv_gcc`、
+> `raspberrypi_pico2_gcc` は現 `pico2_arm_gcc`（プリセットは `pico2_riscv` / `pico2_arm`）。
+> 以下のプラン・実施結果は当時の名称のまま（履歴記録）。
+
 ## 項目
 
 RISC-V Hazard3ターゲット（AGENTS.md §1 機能追加計画、優先度：高）
