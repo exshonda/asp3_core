@@ -1257,3 +1257,115 @@ ALABEL(_sil_dly_nse1)
 	cmp		x0, xzr
 	b.gt  _sil_dly_nse1
 	ret
+
+/*
+ *  エントリ時キャッシュ／MMU状態の正規化
+ *
+ *  ブートローダやデバッガによる再ロードなど，キャッシュ／MMUが有効な
+ *  （または内容が不定な）状態でカーネルにエントリした場合に，
+ *  「キャッシュ無効・RAMが唯一の正」という起動前提状態を作る．
+ *
+ *    1. D/統合キャッシュの全レベルを set/way で clean&invalidate
+ *       （DC CISW）．dirtyラインをRAMへ書き出した上で破棄する．
+ *    2. SCTLR_EL1 の M/C/I をクリア（MMU・D/Iキャッシュ無効化）．
+ *    3. Iキャッシュ全無効化（IC IALLU）．stale命令の排除．
+ *    4. TLB全無効化（TLBI VMALLE1）．旧変換の排除．
+ *
+ *  本ルーチンはロード／ストアを一切発行しない（レジスタと保守命令の
+ *  み．スタック不使用・x0-x11とx30以外不変）．このため，キャッシュ
+ *  有効中に clean&invalidate を行っても掃引と並行して新たな dirty
+ *  ラインが生じず，自スタック破壊が起きない．呼出しは各ターゲットの
+ *  hardware_init_hook から「b arm64_normalize_cache_state_el1」の
+ *  tail-call で行うこと（スタック未設定でも安全に呼べる）．
+ *
+ *  前提・制約:
+ *  - EL1で実行すること（SCTLR_EL1/TLBI VMALLE1を対象とする．
+ *    hardware_init_hook の呼出し位置はこれを満たす）．
+ *  - シングルコアブート前提．set/way 掃引は他のコヒーレントマスタ
+ *    （キャッシュ有効な他コア）との並行動作では不確実（Arm ARM）．
+ *    マルチコアでは各コアが他コア起動前に自コアで実行すること．
+ *  - FEAT_CCIDX 非対応（CCSIDRの解釈は way[12:3]/set[27:13]＝
+ *    ARMv8.0〜8.2形式．Cortex-A35/A53/A57等は問題ない）．
+ *  - set/way は CLIDR_EL1 に見えるレベルまでしか掃引しない．
+ *    PE外部のシステムキャッシュを持つSoCでは別途 by-VA の保守が必要．
+ */
+	ATEXT
+	AALIGN(2)
+	AGLOBAL(arm64_normalize_cache_state_el1)
+ALABEL(arm64_normalize_cache_state_el1)
+	/*
+	 *  D/統合キャッシュの全レベルを clean&invalidate（DC CISW）
+	 *
+	 *  CLIDR_EL1 の LoC までの各レベルについて，CCSIDR_EL1 から
+	 *  way数・set数・ラインサイズを取得し全ラインを掃引する
+	 *  （TF-A lib/aarch64/cache_helpers.S の dcsw_op_all と同構造）．
+	 */
+	mrs	x0, clidr_el1
+	ubfx	x3, x0, #24, #3			/* x3 = LoC */
+	cbz	x3, ncs_dcsw_done
+	mov	x10, xzr			/* x10 = CSSELR値（level << 1） */
+ALABEL(ncs_dcsw_level)
+	add	x2, x10, x10, lsr #1		/* x2 = level * 3 */
+	lsr	x1, x0, x2
+	and	x1, x1, #7			/* x1 = ctype */
+	cmp	x1, #2
+	b.lt	ncs_dcsw_next			/* Dキャッシュ無しレベルはスキップ */
+	msr	csselr_el1, x10
+	isb
+	mrs	x1, ccsidr_el1
+	and	x2, x1, #7
+	add	x2, x2, #4			/* x2 = log2(ラインサイズ) */
+	ubfx	x4, x1, #3, #10			/* x4 = way数 - 1 */
+	clz	w5, w4				/* x5 = wayフィールドのシフト量 */
+	ubfx	x6, x1, #13, #15		/* x6 = set数 - 1 */
+	mov	x7, x4				/* x7 = wayカウンタ */
+ALABEL(ncs_dcsw_way)
+	lsl	x8, x7, x5
+	orr	x8, x8, x10			/* x8 = way | level */
+	mov	x9, x6				/* x9 = setカウンタ */
+ALABEL(ncs_dcsw_set)
+	lsl	x11, x9, x2
+	orr	x11, x11, x8			/* x11 = way | set | level */
+	dc	cisw, x11
+	subs	x9, x9, #1
+	b.ge	ncs_dcsw_set
+	subs	x7, x7, #1
+	b.ge	ncs_dcsw_way
+ALABEL(ncs_dcsw_next)
+	add	x10, x10, #2			/* 次のレベルへ */
+	lsl	x1, x3, #1
+	cmp	x1, x10
+	b.gt	ncs_dcsw_level
+	msr	csselr_el1, xzr
+	dsb	sy
+	isb
+ALABEL(ncs_dcsw_done)
+
+	/*
+	 *  MMU・D/Iキャッシュの無効化（SCTLR_EL1.{M,C,I} クリア）
+	 *
+	 *  論理即値の制約上，1ビットずつクリアする．
+	 */
+	mrs	x0, sctlr_el1
+	bic	x0, x0, #SCTLR_M_BIT
+	bic	x0, x0, #SCTLR_C_BIT
+	bic	x0, x0, #SCTLR_I_BIT
+	msr	sctlr_el1, x0
+	dsb	sy
+	isb
+
+	/*
+	 *  Iキャッシュの全無効化（stale命令の排除）
+	 */
+	ic	iallu
+	dsb	nsh
+	isb
+
+	/*
+	 *  TLBの全無効化（旧実行の変換の排除）
+	 */
+	tlbi	vmalle1
+	dsb	nsh
+	isb
+
+	ret

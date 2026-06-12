@@ -78,6 +78,17 @@ list(APPEND ASP3_SYSSVC_TARGET_C_FILES
 )
 
 #
+#  hardware_init_hook（エントリ時キャッシュ/MMU正規化）
+#
+#  start.S の weak 定義を上書きするため，ライブラリ（libasp3.a）では
+#  なく start.S と同じく直接リンクする（アーカイブ経由では weak 定義
+#  が既に解決済みのため引き込まれない）．
+#
+list(APPEND ASP3_START_FILES
+    ${TARGETDIR}/target_start_hook.S
+)
+
+#
 #  チップ依存部のインクルード
 #
 include(${ASP3_ROOT_DIR}/arch/arm64_gcc/stm32mp2/chip.cmake)
