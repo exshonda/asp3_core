@@ -1,0 +1,24 @@
+{
+  "version": 4,
+  "include": [
+    "../../cmake/presets-base.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "mimxrt685evk",
+      "inherits": "_base",
+      "displayName": "NXP EVK-MIMXRT685 (Cortex-M33)",
+      "description": "ベアメタル移植（XIP実行）。実機書込みはMCU-Link（LinkServer/J-Link）",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
+      "cacheVariables": {
+        "ASP3_TARGET": "mimxrt685evk_gcc"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "mimxrt685evk",
+      "configurePreset": "mimxrt685evk"
+    }
+  ]
+}
