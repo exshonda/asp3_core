@@ -388,5 +388,6 @@ arch/target/アプリ/移植skill を外側で管理**する構成（`ASP3_TARGE
 | [asp3_pico_sdk](https://github.com/exshonda/asp3_pico_sdk) | Raspberry Pi Pico SDK統合（RP2350） | PICO2（ARM/RISC-V） |
 | [asp3_fsp](https://github.com/exshonda/asp3_fsp) | Renesas FSP統合（RA・LLVM/clang＋RASC）＋移植skill | EK-RA6M5／EK-RA8M2 |
 | [asp3_stm32cube](https://github.com/exshonda/asp3_stm32cube)（旧 stm32_vscode_asp） | STM32Cube HAL統合（STM32H5・CubeMX）＋移植skill。STM32MP257/A35ターゲットの移植元でもある | NUCLEO-H563ZI／H533RE |
+| [asp3_mcuxsdk](https://github.com/exshonda/asp3_mcuxsdk) | NXP MCUXpresso SDK統合（i.MX RT685）。**準備中**（Phase A=ベアメタル先行・`docs/dev/nxp-integration.md`） | （未・EVK-MIMXRT685保有） |
 
 > asp3_core 側を変更したら、各リポジトリの submodule を bump して追従させること。

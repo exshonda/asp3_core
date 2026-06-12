@@ -51,10 +51,10 @@ NXP MCUXpresso SDK と TOPPERS/ASP3 を協調動作させる。対象は
 5. OS Awareness（arm_m共通NVIC層が既存＝target層のみ）・osdebug
 
 ### Phase B：MCUXpresso SDK統合（外側リポジトリ）
-0. リポジトリ名の決定。候補（既存の `asp3_<SDK名>` 命名に整合）：
-   - **`asp3_mcuxpresso`**：SDK正式名。最も説明的だが長い
-   - **`asp3_mcuxsdk`**：NXP公式GitHubの現行SDKリポジトリ名（mcuxsdk）に一致
-   - **`asp3_mcux`**：最簡潔（SDK自身の略称 MCUX）
+0. リポジトリ名：**`asp3_mcuxsdk`** に決定（NXP公式SDKリポジトリ名 mcuxsdk に一致）。
+   **作成済み（2026-06-12）**：https://github.com/exshonda/asp3_mcuxsdk
+   ＝骨格（README・asp3_core submodule・予定構成）を初期化済み。
+   ローカル：`../asp3_mcuxsdk`
 1. 外側リポジトリ：asp3_core submodule＋
    `ASP3_TARGET_DIR`＋`ASP3_LIBRARY_ONLY`（確立済みの受け入れ口）
 2. SDKのfsl_ドライバ・スタートアップとの調停：割込み登録の主導権
