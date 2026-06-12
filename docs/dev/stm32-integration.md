@@ -1,5 +1,9 @@
 # STM32 HAL統合（STM32Cube / Cortex-M）
 
+> **注**：外側リポジトリは 2026-06-12 に `stm32_vscode_asp` から
+> **`asp3_stm32cubemx`** へ改名した（https://github.com/exshonda/asp3_stm32cubemx）。
+> 本文中の旧名は経緯ログとしてそのまま維持している。
+
 ## 項目
 
 STM32 HAL統合（AGENTS.md §1 機能追加計画、優先度：中。第一目的「各社SDKとの協調動作」の第3弾＝Pico SDK・FSPに続く）

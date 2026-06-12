@@ -42,7 +42,7 @@
 | `arch/riscv_gcc/common/`・`arch/riscv_gcc/polarfire_soc/` | 新規追加 | RISC-V（XLEN抽象＝RV64GC/RV32IMAC）コア依存部＋PolarFire SoCチップ依存部（FMP3のPolarFire SoC移植をASP3変換．経緯は`docs/dev/qemu-target-riscv.md`．RV32対応のSTK_T分岐・PLIC/mtimer除外オプション・target_hrt_*リネーム削除は`docs/dev/pico2-riscv.md`） | 上流がRISC-V対応を追加した場合は統合検討（FMP3側の更新は手動反映） | arch(NEW) | — |
 | `target/mps2_an521_gcc/` | 新規追加 | QEMU Cortex-M33ターゲット | （上流に存在せず・衝突なし） | target(NEW) | — |
 | `arch/riscv_gcc/rp2350/`・`target/pico2_riscv_gcc/` | 新規追加 | RP2350 RISC-V（Hazard3）＝SDK非依存ベアメタル移植（Xh3irq・RISC-V IMAGE_DEF．経緯は`docs/dev/pico2-riscv.md`．RP2350.h/rp2350_uart等はarm_m_gcc/rp2350をパス参照で共有） | （上流に存在せず・衝突なし） | arch/target(NEW) | — |
-| `target/stm32mp257f_dk_arm64_gcc/` | 新規追加 | stm32_vscode_aspから移植 | （上流に存在せず・衝突なし） | target(NEW) | — |
+| `target/stm32mp257f_dk_arm64_gcc/` | 新規追加 | asp3_stm32cubemx（旧 stm32_vscode_asp）から移植 | （上流に存在せず・衝突なし） | target(NEW) | — |
 | `arch/arm64_gcc/zynqmp/`・`target/zcu102_arm64_gcc/` | 新規追加 | QEMU(xlnx-zcu102)用ARMv8-Aターゲット（FMP3のZynqMP移植をASP3変換．経緯は`docs/dev/qemu-target-a64.md`） | （上流に存在せず・衝突なし．FMP3側の更新は手動反映） | arch/target(NEW) | — |
 | `target/polarfire_soc_kit_gcc/` | 新規追加 | QEMU(microchip-icicle-kit)用RISC-Vターゲット（FMP3のPolarFire SoC Kit移植をASP3変換．経緯は`docs/dev/qemu-target-riscv.md`） | （上流に存在せず・衝突なし．FMP3側の更新は手動反映） | target(NEW) | — |
 
