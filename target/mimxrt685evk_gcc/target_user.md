@@ -103,45 +103,63 @@ cmake --build build/mimxrt685evk
 
 ### 接続
 EVK-MIMXRT685 のデバッグ用 USB（J5）と PC を接続する．オンボードのデバッグプローブ
-（LPC-Link2）は CMSIS-DAP（LinkServer）または J-Link ファームウェアで動作し，
+（LPC-Link2）は **CMSIS-DAP（出荷時標準ファームウェア）**で動作し，
 同じ USB で VCOM（デバッグシリアル 115200bps，Linux では `/dev/ttyACM0`）も提供される．
+lsusb で `1fc9:0090 LPC-LINK2 CMSIS-DAP` と認識される（実機検証済みの標準構成）．
 
-**実機検証済みの構成は J-Link ファームウェア**（lsusb で `1366:0105 SEGGER J-Link`）．
-ホスト側に SEGGER J-Link Software が必要：
+ホスト側には **LinkServer**（NXP 公式 CLI）が必要：
 
 ```bash
-# MCUXpresso Installer 経由（components: JLink）または segger.com から deb を取得して
-sudo dpkg -i JLink_Linux_V930_x86_64.deb
-# 接続済みプローブに udev ルールを適用（または抜き差し）
-sudo udevadm control --reload-rules && sudo udevadm trigger
+# MCUXpresso Installer（components: LinkServer）が取得する deb.bin を展開して
+bash LinkServer_*.x86_64.deb.bin --noexec --keep --target extracted
+sudo dpkg -i extracted/LinkServer_*.x86_64.deb     # /usr/local/LinkServer に入る
+/usr/local/LinkServer/LinkServer probes            # プローブ認識の確認
 ```
 
-### 書込み（実機検証済みの手順）
-
-**JLinkExe**（コマンドファイル方式）：
+### 書込み（標準＝LinkServer・実機検証済み）
 
 ```bash
 cd build/mimxrt685evk
+/usr/local/LinkServer/LinkServer flash MIMXRT685S:EVK-MIMXRT685 load asp.elf
+```
+
+`load` がフラッシュ書込みを行い，完了後にターゲットをリセットして実行する．
+CMake ターゲットでも同じことができる：
+
+```bash
+ninja -C build/mimxrt685evk flash       # 書込み→リセット実行
+ninja -C build/mimxrt685evk console     # シリアルコンソール（picocom等）
+ninja -C build/mimxrt685evk debug       # LinkServer gdbserver＋gdbで接続
+ninja -C build/mimxrt685evk osdebug     # 同上＋OS-awareness（gdb-multiarch）
+```
+
+### 代替：J-Link ファームウェア（オプションで切替）
+
+プローブを J-Link 化（SEGGER ファームウェアへ書換え）した場合は，SEGGER J-Link
+Software（`sudo dpkg -i JLink_Linux_*.deb`）を導入のうえ，**各ツールのオプションで
+切り替える**（ターゲット名・手順は共通のまま）：
+
+```bash
+# CMake：デバッガ選択はキャッシュ変数（既定 linkserver）
+cmake --preset mimxrt685evk -B build/mimxrt685evk -DMIMXRT685_DEBUGGER=jlink
+ninja -C build/mimxrt685evk flash      # 同じターゲット名で JLinkExe 書込みになる
+
+# ボードランナ：環境変数
+MIMXRT685_FLASH=jlink scripts/ci/run_board_mimxrt685evk.sh
+
+# 手動（JLinkExe 直接）
 printf 'loadfile asp.elf\nr\ng\nqc\n' > flash.jlink
 JLinkExe -device MIMXRT685S_M33 -if SWD -speed 4000 -autoconnect 1 -NoGui 1 \
          -CommandFile flash.jlink
 ```
 
-`loadfile` でフラッシュ書込み（比較→消去→書込み＝差分のみ），`r`（リセット）→
-`g`（実行）．CMake ターゲットでも同じことができる：
+ファームウェアの切替（どちらの方向も）は **LPCScrypt** で行う：J5 を抜く →
+**JP1（Link2 の DFU ブートジャンパ）を装着** → J5 接続 → `program_CMSIS`
+（または `program_JLINK`）実行 → JP1 を外して抜き差し．LPCScrypt は
+LinkServer のインストーラに同梱（`/usr/local/LinkServer/lpcscrypt`）．
 
-```bash
-ninja -C build/mimxrt685evk jlink-run    # 書込み→リセット→実行
-ninja -C build/mimxrt685evk console     # シリアルコンソール（picocom等）
-ninja -C build/mimxrt685evk jlink-debug # J-Link GDB Server＋gdbでロード＆デバッグ
-ninja -C build/mimxrt685evk osdebug     # 同上＋OS-awareness（gdb-multiarch）
-```
-
-その他の書込み手段（未検証）：
-
-1. **LinkServer**（CMSIS-DAP ファームウェアの場合）:
-   `LinkServer flash MIMXRT685S:EVK-MIMXRT685 load build/mimxrt685evk/asp.elf`
-2. **MCUXpresso IDE**: GUI からのデバッグ実行（旧 3.7.0 移植の `MCUXpresso/` 手順）
+その他：**MCUXpresso IDE**（GUI からのデバッグ実行＝旧 3.7.0 移植の
+`MCUXpresso/` 手順）も利用できる（未検証）．
 
 ### VCOM 利用時の注意
 
@@ -152,9 +170,9 @@ VCOM（`/dev/ttyACM0`）を読むプロセスは**同時に1つだけ**にする
 
 ### テスト実行（ボードランナ）
 
-`scripts/ci/run_board_mimxrt685evk.sh` が UART キャプチャ→J-Link 書込み→完走マーカ
-待ちを行う（`test/testexec.py` の TARGET_RUN 用．ボードと tty を共有するため
-**テストバッチの並行実行は禁止**）：
+`scripts/ci/run_board_mimxrt685evk.sh` が UART キャプチャ→LinkServer 書込み
+（`MIMXRT685_FLASH=jlink` で J-Link）→完走マーカ待ちを行う（`test/testexec.py` の
+TARGET_RUN 用．ボードと tty を共有するため**テストバッチの並行実行は禁止**）：
 
 ```bash
 scripts/ci/run_testexec.py --options "--preset mimxrt685evk" \
