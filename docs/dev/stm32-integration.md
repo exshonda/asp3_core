@@ -359,10 +359,11 @@ cmake --build build/TestPorting
 # 書込み → /dev/ttyACM0 115200 に TAP（1..6, ok 1〜ok 6）が出る
 ```
 
-#### testexec（機能テスト全件・H563ZI 実機・2026-06-12）
+#### testexec（機能テスト全件・H563ZI／H533RE 実機・2026-06-12）
 
-標準機能テスト36本を実機で全件実行。**結果は arm_m 規範（mps2 nightly）と
-同等以上**：
+標準機能テスト36本を**両ボードの実機で全件実行し、完全に同一の結果**
+（あわせて H533RE は test_porting 6/6 も通過）。
+**arm_m 規範（mps2 nightly）と同等以上**：
 
 | 判定 | 件数 | 内訳 |
 |---|---|---|
@@ -377,12 +378,13 @@ cmake --build build/TestPorting
   configure→build→STM32_Programmer_CLI 書込み→シリアル判定。判定は CI ランナー
   （`scripts/ci/run_testexec.py`）と同一仕様（PASS/SKIP マーカー・SPECIAL_SPEC）。
   `--rejudge` で保存済みログの再判定のみ可。
-- **dlynse で実較正を実施**：初回 `sil_dly_nse(129): 124 NG`（境界ケースのみ 4% 短い）。
-  実測（セットアップ≈68ns・ループ1周≈56ns）に対し `SIL_DLY_TIM1=79` が過大
-  だったため **64 に較正**（`stm32cubemx.h`・両ターゲット。遅延が長くなる安全側）
-  → dlynse PASS（NG 0件）。
+- **dlynse で実較正を実施**：H563ZI 初回 `sil_dly_nse(129): 124 NG`（境界ケース
+  のみ 4% 短い）。実測（セットアップ≈68ns・ループ1周≈56ns）に対し
+  `SIL_DLY_TIM1=79` が過大だったため **64 に較正**（`stm32cubemx.h`・両ターゲット。
+  遅延が長くなる安全側）→ **両ボードで dlynse PASS（NG 0件）**（クロック構成の
+  異なる H533RE でも安全側に成立することを実機確認）。
 
-> **状態：H533RE・H563ZI とも実機ブリングアップ完了**
-> （sample1・test_porting 6/6、H563ZI は testexec 32 PASS/1 SKIP＝規範同等）。
-> 残：H533RE での test_porting・testexec（ボード再接続時。同一機構で可）・
-> int1 用ソフト割込み源の整備（任意）。
+> **状態：H533RE・H563ZI とも実機ブリングアップ・検証完了**
+> （sample1・test_porting 6/6・testexec 32 PASS/1 SKIP＝両ボード同一・規範同等）。
+> 残：int1 用ソフト割込み源の整備（任意）・cpuexc1/4 の方針確定
+> （issue-cpuexc-armm.md・ユーザー判断待ち）。
