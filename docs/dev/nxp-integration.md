@@ -63,6 +63,62 @@ NXP MCUXpresso SDK と TOPPERS/ASP3 を協調動作させる。対象は
 3. SDKバージョンは**現行（最新）に合わせる**（STM32と同方針）
 4. 実機検証＋移植skill（porting-asp3-to-nxp 等）を外側リポジトリに
 
+#### Phase B 詳細プラン（2026-06-12 着手時点・調査済み事項を反映）
+
+**SDK取得（調査結果）**：現行SDKは west マニフェスト方式（`mcuxsdk-manifests`
+release/26.03.00）。west は使わず、マニフェストが指す**最小3リポジトリを
+submodule 直参照**する（CI でもそのまま使える＝GUI生成依存なしの利点を実現）：
+
+| submodule | 実体 | サイズ | 用途 |
+|---|---|---|---|
+| `sdk/core` | mcuxsdk-core | 46MB | 共通fslドライバ（flexcomm/usart・ctimer・common 等） |
+| `sdk/devices-rt` | mcux-devices-rt | 13MB | `RT600/MIMXRT685S/`（ヘッダ・system・gcc startup/ld・fsl_clock/power/reset） |
+| `sdk/cmsis` | mcu-sdk-cmsis | 14MB | CMSIS Core ヘッダ |
+
+examples リポジトリ（200MB）は submodule にせず、必要なボードファイル
+（`_boards/evkmimxrt685/` の board.c/h・clock_config・pin_mux・flash_config＝BSD-3）
+をボードプロジェクトへ**コピー**する（CubeMX生成コードのコミットと同じ扱い）。
+
+**リポジトリ構成（asp3_stm32cube と同型）**：
+
+```
+asp3_mcuxsdk/
+├── asp3/
+│   ├── asp3_core                    … submodule（既存）
+│   ├── asp3_mcuxsdk.cmake           … glue（ASP3_CORE_DIR/ROOT_DIR/TARGET_DIR解決）
+│   └── target/evkmimxrt685_mcuxsdk/ … SDK版ターゲット依存部（チップ層相当も同居）
+├── sdk/                             … 上記3 submodule
+├── evkmimxrt685/                    … ボードプロジェクト（CMakeLists・main.c・boardファイル）
+└── docs/
+```
+
+**技術方針（調査で確定）**：
+
+- **ブート**：SDK標準（`startup_MIMXRT685S_cm33.S`→`SystemInit`→`main()`）。
+  `main()` が `BOARD_InitPins`/`BOARD_BootClockRUN` 後に `sta_ker()` を呼ぶ。
+  リンカスクリプトも SDK の `MIMXRT685Sxxxx_cm33_flash.ld`。flash_config（FCFB）も
+  SDK 版＝Phase A の自前ブート部材（start_imxrt600.S・mimxrt685.ld・自前flash_config）
+  は使わない
+- **ベクタ/割込み**：arm_m 共通部の `core_initialize()` が VTOR を ASP3 cfg 生成
+  テーブルへ切り替える＝**ASP3がNVIC掌握・SDKは素直に従う**（STM32/FSPと同方式。
+  pico の `--wrap` は不要と判断）。SDKドライバの割込みは cfg（`ATT_ISR`/`DEF_INH`）
+  で登録し、ISR から fsl のハンドラ関数を呼ぶ（STM32 の `HAL_UART_IRQHandler` 呼び
+  出しと同型）
+- **クロック**：SDK既定 `BOARD_BootClockRUN` をそのまま使う（main_pll=528×18/19=
+  500.21MHz・**CPU=250.105MHz**・frg_pll=main_pll/12=41.68MHz）。Phase A の
+  FBB/PMIC/300MHz 設定は使わない（250MHzはPMIC既定で動作＝SDK examples実績）
+- **HRTタイマ**：CTIMER0＋fsl_ctimer。クロックは main_clk をプリスケーラ500分周
+  →**1.000421MHz**（+421ppm。整数分周で正確に1MHzにできないため許容し文書化）
+- **シリアル**：FC0 USART＋fsl_usart（STM32の HAL_UART_*_IT 相当の transactional
+  API＋コールバックで SIO 層を実装）
+- **SysTick**：ASP3は使わない（USE_TIM_AS_HRT）。SDK側も基本未使用＝競合なし
+- ターゲット依存部は外側リポジトリで自己完結させる（Phase A の
+  `arch/arm_m_gcc/imxrt600` への参照はしない。必要な定義はコピー）
+
+**検証計画**：ビルド → 実機 sample1 → test_porting 6/6 → testexec（代表テスト）→
+記録（verification.md・本ファイル実施結果・AGENTS §14・README）。
+移植skill（porting-asp3-to-nxp）は実機検証完了後に作成。
+
 > Phase A が完成すればハード知識（XIP・クロック・タイマ・UART）が
 > 3.7.2/CMake環境で検証済みになり、Phase B はSDK協調の差分に集中できる
 > （pico＝ベアメタル先行→SDK統合、と同じ段取り）。
