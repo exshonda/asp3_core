@@ -175,10 +175,18 @@ EK-RA8M2 実機で起動バナー後に出力が文字化け。原因は asp3_co
 **Cortex-M85 でワード読みが UNALIGNED fault**を起こしていた（旧 bundled fork が共通archに
 持っていた `.balign 4` 修正が submodule化で失われていた＝乖離）。asp3_core main に
 `.balign 4`＋`EXC_RETURN_PREFIX` の `#ifndef` ガードを取り込み（`9a267c9`・CI 全9 green・
-mps2/pico2_arm 無影響）。submodule を bump（FSP `b00b018`）。実機での解消確認はユーザー検証中。
+mps2/pico2_arm 無影響）。submodule を bump（FSP `b00b018`）。
 
-> 未完（後続）：①EK-RA8M2 実機での文字化け解消の最終確認（`.balign 4` 修正後）。
->   ②MVE(Helium) を使うアプリ向けの VPR レジスタ保存/復帰（`#ifdef __ARM_FEATURE_MVE`）の
->   共通archへの取り込み（sample1 は MVE 未使用のため本件には不要・別途）。③EK-RA6M5/RA8M2 実機動作確認（ボード接続環境）。
+**実機動作確認 完了（2026-06-12・EK-RA6M5／EK-RA8M2）**：
+EK-RA8M2 では `.balign` 修正後も実機固有の問題が3件残り、asp3_fsp 側で解消
+（`b830742`/`ff36d15`＝起動時シリアル化けの根本対策・SCI の CCR0.TE 遷移で
+0xFE 1バイトに縮退、`c409634`＝間欠的出力停止＝GPT ベース HRT ドライバの
+ラップ処理修正）。最終ビルドの実機検証（115200 8N1）：**リセット8回＋95秒
+連続走行（GPTラップ42.9秒×2跨ぎ）で警告0・task1一定速度・スタールなし**。
+切り分け・根本原因の詳細は asp3_fsp リポジトリの `asp3_change.md` を参照。
+→ **FSP統合は完了**（索引・AGENTS表を更新）。
+
+> 後続（別件）：①MVE(Helium) を使うアプリ向けの VPR レジスタ保存/復帰
+>   （`#ifdef __ARM_FEATURE_MVE`）の共通archへの取り込み（sample1 は MVE 未使用）。
 > ②`Config.cmake` の Windows前提（`rasc.exe`/`python.exe`/既定6.2.0）の Linux/OS非依存化
-> （現状は `-DRASC_EXE_PATH=` 等の上書きで対応）。③STM32統合（同じ受け入れ口で後日）。
+> （現状は `-DRASC_EXE_PATH=` 等の上書きで対応）。
