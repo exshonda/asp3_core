@@ -93,8 +93,10 @@ cmake --build build/mimxrt685evk
 テストプログラムのビルド（例: 移植検証テスト）:
 
 ```bash
-cmake --preset mimxrt685evk -B build/mimxrt685evk -DASP3_APP=test_porting
-cmake --build build/mimxrt685evk
+cmake --preset mimxrt685evk -B build/mimxrt685evk-porting \
+    -DASP3_APPLDIR=test/porting -DASP3_APPLNAME=test_porting \
+    -DASP3_EXTRA_APP_C_FILES=test/porting/tap.c
+cmake --build build/mimxrt685evk-porting
 ```
 
 ---
