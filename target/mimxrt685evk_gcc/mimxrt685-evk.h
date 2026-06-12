@@ -57,8 +57,14 @@
 
 /*
  *  微少時間待ちのための定義（本来はSILのターゲット依存部）
+ *
+ *  実機のtest_dlynseで較正（2026-06-12，gcc 13.2・XIPキャッシュ有効）：
+ *  呼出オーバーヘッド実測23ns（7サイクル），ループ実測16.7ns/回
+ *  （5サイクル@300MHz）．理論下限（floor）で設定し，最速実行でも
+ *  指定時間を下回らないようにする（3.7.0実績値79/50は旧コンパイラ
+ *  世代の値で，現コードでは過大→dlynse NG）．
  */
-#define SIL_DLY_TIM1    79
-#define SIL_DLY_TIM2    50
+#define SIL_DLY_TIM1    23
+#define SIL_DLY_TIM2    16
 
 #endif /* TOPPERS_LPC55S69_EVK_H */

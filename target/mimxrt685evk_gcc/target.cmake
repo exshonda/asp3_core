@@ -93,6 +93,11 @@ list(APPEND ASP3_TARGET_C_FILES
 )
 
 #
+#  実機実行・デバッグターゲット（jlink-run/osdebug等．aspターゲット定義後に取込み）
+#
+set(ASP3_TARGET_RUN_CMAKE ${TARGETDIR}/run.cmake)
+
+#
 #  非TECS版SIOドライバ（チップ依存部のchip.cmakeが供給）
 #
 
