@@ -6,7 +6,7 @@
 
 ## 要約（結論を先に）
 
-- `test_cpuexc1` / `test_cpuexc4` は **arm_m 系ターゲット（mps2_an521・pico2_arm）で失敗**する
+- `test_cpuexc1` / `test_cpuexc4` は **arm_m 系ターゲット（mps2_an521・pico2_arm・mimxrt685evk）で失敗**する
   （`Unregistered Exception occurs. Excno = 00000003`＝HardFault）。
 - 原因は **arm_m の `SIL_LOC_INT()` が PRIMASK（`cpsid i`）で全割込みをロック**するため、
   その区間で発生した CPU 例外（UsageFault）が優先度マスクで取れず **HardFault にエスカレート**すること。
@@ -141,7 +141,7 @@ cpuexc4: All check points passed.
   - `SIL_PRE_LOC` が `bool_t TOPPERS_locked` 固定 → BASEPRI の旧値を保持できず、
     **ネスト時の正しい save/restore に別設計が要る**（実験パッチは未対応）。
   - mps2・pico2_arm の**実機での割込み挙動の再検証**が必要。
-- **影響範囲**：arm_m 全ターゲット（mps2_an521・pico2_arm・将来のarm_m）。
+- **影響範囲**：arm_m 全ターゲット（mps2_an521・pico2_arm・mimxrt685evk〔2026-06-12 実機で同一症状を確認〕・将来のarm_m）。
 
 ### 案② 上流準拠のまま「制限」として明文化・除外（推奨）
 - **内容**：`core_sil.h` は上流忠実のまま。arm_m で cpuexc1/4 を

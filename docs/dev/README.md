@@ -31,7 +31,7 @@
 | Pico SDK統合 | `pico-sdk-integration.md` | 完了（asp3_core側＝`ASP3_TARGET_DIR`＋`ASP3_LIBRARY_ONLY`＋pico2ターゲット改称／SDK側＝submodule移行・ARM-S/RISC-V とも PICO2実機動作確認・タイマ競合定量検証（ALARM0 vs ALARM3＝競合なし）／GitHub再編済。SDK統合版でのOS Awareness確認等は後続） |
 | FSP統合 | `fsp-integration.md` | 完了（外側リポジトリ asp3_fsp＝A案submodule化・RASC6.2.0+ATfE clang。EK-RA6M5/EK-RA8M2 実機動作確認済み＝RA8M2はM85 exc_return整列・SCI起動化け・GPT HRTラップの3件を修正のうえ95秒連続走行で警告0） |
 | STM32 HAL統合 | `stm32-integration.md` | 完了（外側リポジトリ asp3_stm32cube＝A案submodule化＋非TECS+Python cfg化。NUCLEO-H563ZI/H533RE 実機検証済み＝test_porting 6/6・testexec。H533REのVTOR整列が重要知見） |
-| NXP MCUXpresso SDK統合 | `nxp-integration.md` | 実施中（Phase A実装済＝mimxrt685evk追加・ビルド検証済・実機検証待ち。Phase B＝SDK統合は未着手） |
+| NXP MCUXpresso SDK統合 | `nxp-integration.md` | 実施中（Phase A完了＝mimxrt685evk追加・実機検証済〔test_porting 6/6・testexec・dlynse較正・OS Awareness〕。Phase B＝SDK統合は未着手） |
 | skillパッケージ | `skill-package.md` | 完了（移植ガイドskillとして各SDKリポジトリ内に実装＝asp3_fsp/asp3_stm32cube。picoは不要と判断。当初計画からの変更点は本ファイル参照） |
 
 状態：計画中 → 実施中 → 完了（各項目の進行に合わせて更新する）
