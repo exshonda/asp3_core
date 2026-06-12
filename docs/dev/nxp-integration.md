@@ -92,4 +92,80 @@ NXP MCUXpresso SDK と TOPPERS/ASP3 を協調動作させる。対象は
 
 ## 実施結果
 
-（完了時に記載）
+### Phase A：ベアメタルターゲット追加（2026-06-12 実装・ビルド検証済）
+
+`/home/honda/TOPPERS/FMP3/posix/asp3_3.7/` の genuine ASP3 3.7.0 移植
+（`target/mimxrt685evk_gcc`＋`arch/arm_m_gcc/imxrt600`・TECS＋Ruby cfg）を
+非TECS＋Python cfg＋CMake構成へ変換し，asp3_core本体に追加した。
+ブランチ：`feat/mimxrt685evk`。
+
+#### 追加したファイル
+
+**`arch/arm_m_gcc/imxrt600/`（チップ依存部・18ファイル）**
+
+| ファイル | 由来・変更内容 |
+|---|---|
+| `IMXRT600.h` | 3.7.0版ほぼそのまま（`FIFOSTAT_TXEMPTY` ビット定義のみ追加） |
+| `start_imxrt600.S` | 3.7.0版そのまま（セクションテーブル駆動のDATA/BSS初期化＝XIP用） |
+| `imxrt600_usart.[ch]` | **新規**：`tUsart.c`（TECS）のレジスタ操作ロジックを rp2350_uart.[ch] と同構造の非TECSドライバへ変換。クローズ時の送信FIFOドレイン待ちを追加（pico2と同趣旨） |
+| `chip_serial.{c,h,cfg}` | **新規**：非TECS SIO 中継層（rp2350の同名ファイルと同形）。`target_fput_log` 含む |
+| `chip_kernel.h`・`chip_sil.h`（TBITW_IPRI=3）・`chip_stddef.h`・`chip_cfg1_out.h` | 3.7.0版そのまま |
+| `chip_kernel_impl.h`・`chip_syssvc.h` | 3.7.0版から旧logtrace includeを削除（asp3_core方式）。`TNUM_PORT` 4→1 |
+| `chip_rename.def`／`chip_rename.h`・`chip_unrename.h` | `INCLUDE "core"` 形式に変更し `utils/genrename.py` で再生成 |
+| `chip_os_awareness.py` | **新規**：core層（NVIC）APIの再エクスポート |
+| `chip.cmake` | **新規**：Makefile.chipのCMake版。`arch.cmake` include後に `start.S`→`start_imxrt600.S` を差し替え |
+
+**`target/mimxrt685evk_gcc/`（ターゲット依存部・29ファイル）**
+
+| ファイル | 由来・変更内容 |
+|---|---|
+| `flash_config.[ch]` | 3.7.0版そのまま（NXP BSD-3-Clause・FlexSPI設定ブロック＝`.flash_conf`） |
+| `mimxrt685.ld`・`mimxrt685-evk.h`・`target_asm.inc`・`target_sil.h`・`target_stddef.h`・`target_kernel.h`・`target_kernel.cfg`・`target_kernel_impl.[ch]`・`target_cfg1_out.h`・`target_timer.{c,h,cfg}` | 3.7.0版そのまま（CTimer0 HRT・FBB/PMIC/PLL初期化・`raise_int` は3.7.2にも存在） |
+| `target_kernel.py`・`target_check.py` | **`.trb`→`.py`変換**：`GenResVectVal`（ベクタ9＝イメージタイプ。プレーンイメージ=bit14）をPython関数化 |
+| `target_syssvc.h` | 非TECS用に書き換え：`SIO_USART_BASE`/`SIO_FLEXCOMM_BASE`/`SIO_USART_INDEX`（FC0）・`INTNO_SIO` 等を追加 |
+| `target_serial.{h,cfg}` | **新規**（chip層への中継） |
+| `target_test.h` | `INTNO1`（CTIMER1 IRQ11＝クロック未供給の空きIRQ・`intno1_clear()`空）を追加 |
+| `target_rename.def`／`target_rename.h`・`target_unrename.h` | `INCLUDE "chip"` 形式で再生成 |
+| `target_os_awareness.py` | **新規**：chip層APIの再エクスポート |
+| `target.cmake`・`presets.json`（プリセット名 `mimxrt685evk`） | **新規**：FPU_LAZYSTACKING相当のdefs・`-Wl,--undefined=flexspi_config`・**`TOPPERS_ENABLE_TRUSTZONE`は未定義**（プレーンイメージ起動＝EXC_RETURN 0xFFFFFFBC の実績構成。stm32h5xxと同論点） |
+| `target_user.md` | `target_user.txt`（3.7.0）をMarkdown化・CMake手順に更新（JP22注意・メモリマップ・XIP解説含む） |
+
+**その他**：ルート`CMakePresets.json`にinclude追記。削除ファイルなし
+（TECS関連の `tUsart.{c,cdl}`・`target.cdl`・`tSIOPortTarget*`・`.trb`・
+`Makefile.*`・`MCUXpresso/` は持ち込まない）。
+
+#### Git情報
+
+- ベースコミット：`96b8be5`
+- 関連コミット：`feat/mimxrt685evk` ブランチの `feat(target): add mimxrt685evk` 以降
+- ファイルリスト再現：`git diff --stat main feat/mimxrt685evk -- arch/arm_m_gcc/imxrt600 target/mimxrt685evk_gcc`
+
+#### 検証結果
+
+| テスト | 実施 | 結果 |
+|---|---|---|
+| ビルド sample1（`--preset mimxrt685evk`） | ○ | 警告ゼロ・リンク成功（FLASH 27KB/SRAM 12KB） |
+| ビルド test_porting（+`tap.c`） | ○ | 警告ゼロ・リンク成功 |
+| ビルド test_int1（+`test_svc.c`） | ○ | 警告ゼロ・リンク成功 |
+| ELF構造検査 | ○ | FCFBタグ@0x08000400・ベクタテーブル@0x08001000・ベクタ9=0x4000（プレーンイメージ）を確認 |
+| 実機（test_porting 6/6→sample1→testexec→dlynse較正→OS Awareness） | − | **未実施（次ステップ）** |
+
+QEMUにRT685モデルは無いため，POSIX/QEMU回帰は本ターゲットには適用外
+（既存ターゲットへの影響なし＝既存ファイルの変更はCMakePresets.jsonのinclude追記のみ）。
+
+#### DIVERGENCE_MAP との関連
+
+`target/mimxrt685evk_gcc/`・`arch/arm_m_gcc/imxrt600/` のNEW行を追加
+（PRISTINE領域への変更なし）。
+
+#### 実機検証の手順メモ（再開点）
+
+1. EVK-MIMXRT685 のJP22（2-3短絡推奨）・J5（MCU-Link USB）接続
+2. 書込み：LinkServer（`LinkServer flash MIMXRT685S:EVK-MIMXRT685 load asp.elf`）
+   または J-Link / MCUXpresso IDE。**確定した手順を `target_user.md` に反映すること**
+3. test_porting（6項目TAP）→ sample1 → testexec → `SIL_DLY_TIM*` 較正確認
+4. OS Awareness（target層は実装済・実機gdbで確認）
+
+### Phase B：MCUXpresso SDK統合
+
+未着手（`asp3_mcuxsdk` リポジトリ骨格のみ作成済）。

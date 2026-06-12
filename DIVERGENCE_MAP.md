@@ -21,6 +21,7 @@
 | `target/mps2_an521_gcc/`（非TECS化） | 新規追加（`cmsdk_uart.[ch]`・`target_serial.{c,h,cfg}`）＋改変 | TECSレス化 | （ターゲット自体がNEW・上流衝突なし） | target(NEW) | — |
 | `target/stm32mp257f_dk_arm64_gcc/`・`arch/arm64_gcc/stm32mp2/`（非TECS化） | 新規追加（`stm32usart.c`・`target_serial.{c,h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING_ASP3_STM32MP2.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
 | `target/pico2_arm_gcc/`・`arch/arm_m_gcc/rp2350/`（非TECS化） | 新規追加（`rp2350_uart.[ch]`・`chip_serial.{c,h,cfg}`・`target_serial.{h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING.md`）．`rp2350_uart_cls_por()`に送信FIFOドレイン待ちを追加（終了時の末尾出力欠落の修正．`docs/dev/porting-test.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
+| `target/mimxrt685evk_gcc/`・`arch/arm_m_gcc/imxrt600/`（非TECS化） | 新規追加（`imxrt600_usart.[ch]`・`chip_serial.{c,h,cfg}`・`target_serial.{h,cfg}`） | genuine ASP3 3.7.0のMIMXRT685-EVK移植をTECSレス化＋Python cfg化＋CMake化（経緯は`docs/dev/nxp-integration.md`）．`imxrt600_usart_cls_por()`に送信FIFOドレイン待ちを追加（pico2と同趣旨） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
 | `target/linux_gcc/`・`arch/posix_gcc/` | 上流SVN（3.7.2）から取込み | POSIXシミュレーション環境（3.7.2 tarball未収録のため別途取込み） | 上流posix_gccパッケージの更新に追従 | target/arch | 3.7.2 |
 | `target/linux_gcc/target_kernel_impl.c` | 改変（CLIターゲット） | main()のargc/argv化＋`--tap`/`--slog`/`--help`追加（経緯は`docs/dev/cli-target.md`） | 上流posix_gccのmain()変更時に要手動マージ | target | 3.7.2 |
 | `arch/posix_gcc/posix_timer_itimer.c` | 改変（HRT単調性） | `get_current_abstim()`にHRT単調クランプを追加（itimer量子化による1μs逆行の修正．hrt1テスト対応．経緯は`docs/dev/ci.md`既知事項） | 上流posix_gcc更新時に要手動マージ（クランプ部は【asp3_core変更】コメント） | arch | 3.7.2 |

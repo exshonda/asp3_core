@@ -201,6 +201,7 @@ python3 ../test_cfg/testcfg.py all
 | zybo_z7_gcc | zybo_z7／**zybo_z7-qemu** | 実機（xilinx_sdk/jtag.tcl）／QEMU（run） |
 | zcu102_arm64_gcc | zcu102_arm64／**zcu102_arm64-qemu** | 実機（実行手段は今後整備）／QEMU（run）．aarch64-none-elf が無い環境は `-DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-` を付与 |
 | pico2_arm_gcc | pico2_arm | 実機（run=OpenOCD書込み．gdb/console等） |
+| mimxrt685evk_gcc | mimxrt685evk | 実機（XIP実行．書込み=MCU-Link（LinkServer等）．手順は`target_user.md`） |
 | stm32mp257f_dk_arm64_gcc | stm32mp257f_dk_arm64 | 実機（swd-run/osdebug/console等．リンクは aarch64-none-elf 環境） |
 | polarfire_soc_kit_gcc | polarfire_soc_kit／**polarfire_soc_kit-qemu** | 実機（実行手段は今後整備）／QEMU（run）．qemu-system-riscv64 がPATHにない場合は `-DQEMU_SYSTEM_RISCV64=...` を付与 |
 | dummy_gcc | （プリセット無し．`-DASP3_TARGET=dummy_gcc`） | cfgテスト用ホストビルド |

@@ -45,6 +45,11 @@
 | QEMU AArch64ベアメタル実行 | `zcu102_arm64_gcc` | `target.cmake`・`target_kernel_impl.c` | xlnx-zcu102,secure=on／SYS_EXIT終了／glibc系ツールチェーン対策 |
 | MMUART（PolarFire SoC） | `arch/riscv_gcc/polarfire_soc` | `mmuart.[ch]`・`chip_serial.c` | 非TECS SIO（16550系） |
 | QEMU RISC-Vベアメタル実行 | `polarfire_soc_kit_gcc` | `target.cmake`・`target_kernel_impl.c` | microchip-icicle-kit／-bios none／ハートパーキング／SYS_EXIT終了 |
+| Flexcomm USART（i.MX RT600） | `arch/arm_m_gcc/imxrt600` | `imxrt600_usart.[ch]`・`chip_serial.c` | 非TECS SIO（FRG分周＋FIFOTRIG割込み） |
+| CTimerによるHRTタイマ | `mimxrt685evk_gcc` | `target_timer.c`・`target_timer.h` | 1MHzプリスケーラ＋MR0マッチ割込み（32bitアップカウンタ） |
+| XIP実行（FlexSPI設定ブロック） | `mimxrt685evk_gcc` | `flash_config.c`・`mimxrt685.ld`・`target_kernel.py` | `.flash_conf`@0x400・ベクタ9=イメージタイプ(bit14)・ベクタテーブル@0x1000 |
+| テーブル駆動のDATA/BSS初期化（XIP用） | `arch/arm_m_gcc/imxrt600` | `start_imxrt600.S`・`chip.cmake` | `__data_section_table`方式．chip.cmakeでcommon/start.Sと差し替え |
+| PMIC（I2C）・FBB・PLLの起動時初期化 | `mimxrt685evk_gcc` | `target_kernel_impl.c` | hardware_init_hook（PCA9420設定・300MHz PLL・キャッシュ有効化） |
 
 ---
 
