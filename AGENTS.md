@@ -46,6 +46,7 @@ TOPPERS/ASP3カーネルを上流追従しながら、各社SDK（Raspberry Pi P
 | STM32 HAL統合 | STM32Cube HALと協調動作（第一目的の第3弾）。**完了**（2026-06-12）：外側リポジトリ(asp3_stm32cube)で管理＝`ASP3_TARGET_DIR`。旧世代asp3(TECS/Ruby)から非TECS+Python cfg化を実施。NUCLEO-H563ZI/H533RE 実機検証済み（test_porting 6/6・testexec）。toolchainはarm-none-eabi gcc・CubeMX生成依存 | 中 |
 | NXP MCUXpresso SDK統合 | NXP MCUXpresso SDKと協調動作（第一目的の第4弾・EVK-MIMXRT685/CM33）。Phase A＝ベアメタルターゲットをasp3_core本体へ（genuine 3.7.0移植を非TECS+Python cfg変換・SDK不要・CIビルド可）→Phase B＝外側リポジトリでSDK統合 | 中 |
 | skillパッケージ | 移植ガイドskill。**完了**（2026-06-12）：各SDKリポジトリ内 `.claude/skills/` に実装（asp3_fsp=porting-asp3-to-renesas-ra・asp3_stm32cube=porting-asp3-to-stm32。picoは不要と判断） | 中 |
+| メモリ保護 | Zephyr相当のセーフティネット型保護（コードRO・SRAM実行禁止・NULL検出．スタック下限保護=PSPLIMは実装済み）。MPU(arm_m)/MMU(arm64)/PMP(riscv)で静的設定・kernel/無改変 | 中 |
 
 ### 機能追加の実施ルール
 
