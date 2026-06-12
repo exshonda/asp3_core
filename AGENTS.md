@@ -17,7 +17,7 @@ TOPPERS/ASP3カーネルを上流追従しながら、各社SDK（Raspberry Pi P
 | 名称 | **TOPPERS/ASP3 Core**（リポジトリ `asp3_core`、ソース識別子 `asp3`） |
 | ベース | TOPPERS/ASP3（手動マージで上流追従） |
 | API | TOPPERS API互換（識別子プレフィックス `asp3`） |
-| 第一目的 | 各社SDKとの協調動作（3リポジトリを共通基盤に統合） |
+| 第一目的 | 各社SDKとの協調動作（4リポジトリを共通基盤に統合） |
 | ライセンス | TOPPERSライセンス（改変版である旨を明示。「TOPPERS/」名は規則第4条＝運営委員会承認マター） |
 | 対象ターゲット | ARMv8-M(Cortex-M33) / ARMv8-A(Cortex-A35) / RISC-V(Hazard3) ＋ POSIX / QEMU（3 ISAとも実機対応済み：PICO2(ARM/RISC-V)・STM32MP257F-DK） |
 
@@ -382,9 +382,9 @@ scope: target / syssvc / cfg / cmake / upstream / ci
 
 ## 14. SDK統合リポジトリ（外側リポジトリ）
 
-3リポジトリとも **asp3_core を submodule（`asp3/asp3_core`）参照し、SDK固有の
+4リポジトリとも **asp3_core を submodule（`asp3/asp3_core`）参照し、SDK固有の
 arch/target/アプリ/移植skill を外側で管理**する構成（`ASP3_TARGET_DIR` 方式）。
-統合の経緯は `docs/dev/{pico-sdk,fsp,stm32}-integration.md` を参照。
+統合の経緯は `docs/dev/{pico-sdk,fsp,stm32,nxp}-integration.md` を参照。
 
 | リポジトリ | 内容 | 実機検証 |
 |---|---|---|
