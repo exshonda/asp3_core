@@ -43,7 +43,7 @@ TOPPERS/ASP3カーネルを上流追従しながら、各社SDK（Raspberry Pi P
 | devcontainer / Docker | ツールチェーン・QEMU・Pythonをピン留めした開発コンテナ。開発機/CI/エージェント環境の再現性を確保 | 中 |
 | Pico SDK統合 | pico-sdkと協調動作（第一目的の第1弾）。SDK固有のarch/targetは外側リポジトリ(asp3_pico_sdk)で管理し、asp3_coreは`ASP3_TARGET_DIR`で受け入れる | 中 |
 | FSP統合 | Renesas FSPと協調動作（第一目的の第2弾）。外側リポジトリ(asp3_fsp)で管理＝`ASP3_TARGET_DIR`。ツールチェーンはLLVM-ARM/clang・RASC生成依存 | 中 |
-| STM32 HAL統合 | STM32Cube HALと協調動作（第一目的の第3弾）。**完了**（2026-06-12）：外側リポジトリ(asp3_stm32cubemx)で管理＝`ASP3_TARGET_DIR`。旧世代asp3(TECS/Ruby)から非TECS+Python cfg化を実施。NUCLEO-H563ZI/H533RE 実機検証済み（test_porting 6/6・testexec）。toolchainはarm-none-eabi gcc・CubeMX生成依存 | 中 |
+| STM32 HAL統合 | STM32Cube HALと協調動作（第一目的の第3弾）。**完了**（2026-06-12）：外側リポジトリ(asp3_stm32cube)で管理＝`ASP3_TARGET_DIR`。旧世代asp3(TECS/Ruby)から非TECS+Python cfg化を実施。NUCLEO-H563ZI/H533RE 実機検証済み（test_porting 6/6・testexec）。toolchainはarm-none-eabi gcc・CubeMX生成依存 | 中 |
 | skillパッケージ | build/flash/debug/cfg生成skill（別リポジトリ） | 中 |
 
 ### 機能追加の実施ルール
@@ -382,4 +382,4 @@ scope: target / syssvc / cfg / cmake / upstream / ci
 |---|---|
 | [asp3_pico_sdk](https://github.com/exshonda/asp3_pico_sdk) | RP2350ターゲット・CMake実装のベース |
 | [asp3_fsp](https://github.com/exshonda/asp3_fsp) | Renesas FSP統合 |
-| [asp3_stm32cubemx](https://github.com/exshonda/asp3_stm32cubemx)（旧 stm32_vscode_asp） | STM32 HAL統合（STM32H5）・STM32MP257/A35ターゲットの移植元 |
+| [asp3_stm32cube](https://github.com/exshonda/asp3_stm32cube)（旧 stm32_vscode_asp） | STM32 HAL統合（STM32H5）・STM32MP257/A35ターゲットの移植元 |

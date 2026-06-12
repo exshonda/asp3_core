@@ -1,8 +1,12 @@
 # STM32 HAL統合（STM32Cube / Cortex-M）
 
-> **注**：外側リポジトリは 2026-06-12 に `stm32_vscode_asp` から
-> **`asp3_stm32cubemx`** へ改名した（https://github.com/exshonda/asp3_stm32cubemx）。
-> 本文中の旧名は経緯ログとしてそのまま維持している。
+> **注**：外側リポジトリは 2026-06-12 に `stm32_vscode_asp` →
+> `asp3_stm32cubemx` → **`asp3_stm32cube`** へ改名した
+> （https://github.com/exshonda/asp3_stm32cube ・命名規約 asp3_＋SDK名に統一。
+> CubeMXはFSPにおけるRASC相当の生成ツールのためリポ名にしない）。
+> 同時に glue を `asp3_stm32cube.cmake`、H563ターゲットを
+> `target/stm32cubemx` → **`target/stm32h563_nucleo`**（H533の
+> `stm32h533_nucleo` と対称）へ改名した。本文中の旧名は経緯ログとしてそのまま維持している。
 
 ## 項目
 
