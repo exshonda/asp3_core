@@ -180,6 +180,7 @@
 #define GICD_ISPENDR(n)		(GICD_BASE + 0x200 + (n) * 4)
 #define GICD_ICPENDRn		(GICD_BASE + 0x0280)		/* 割込みクリアーペンディング */
 #define GICD_ISACTIVERn		(GICD_BASE + 0x0300)		/* 割込みセットアクティブレジスター */
+#define GICD_ICACTIVERn		(GICD_BASE + 0x0380)		/* 割込みクリアーアクティブレジスター */
 #define GICD_IPRIORITYRn	(GICD_BASE + 0x0400)		/* 割込み優先度レジスタ */
 #define GICD_IPRIORITYR(n)	(GICD_BASE + 0x0400 + (n) * 4)
 #define GICD_ITARGETSRn		(GICD_BASE + 0x0800)		/* 割込みターゲットレジスタ/CA9はSPIターゲットレジスタ */

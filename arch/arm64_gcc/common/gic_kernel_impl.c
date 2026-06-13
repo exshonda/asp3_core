@@ -112,6 +112,30 @@ gicd_initialize_common(void)
 		sil_wrw_mem((void *)(GICD_ICPENDRn + (uintptr_t)(4 * i)), 0xffffffff);
 	}
 
+	/*
+	 *  残留するアクティブ／ペンディング状態の正規化（リセット無し再起動対策）
+	 *
+	 *  リセットを介さずにカーネルを再起動した場合（JTAGによる再ロード等）に，
+	 *  前回実行時に完了せず残ったアクティブ割込みや，ハルト中に発生したペン
+	 *  ディング割込みがディストリビュータに残存することがある．アクティブが
+	 *  残るとその実行優先度により以降の割込みがマスクされる．通常のリセット
+	 *  起動時はいずれも存在しないため，本処理は実質的な副作用を持たない．
+	 *
+	 *  上のペンディングクリアはグローバル割込み（SPI，番号32以上）のみを対象
+	 *  とするため，ここでは (1) アクティブ状態を banked 割込み（SGI 0-15／
+	 *  PPI 16-31，セキュア物理タイマ INTID 29 を含む）も含めて全割込みでクリ
+	 *  アし，(2) banked 割込みのペンディングもクリアする．
+	 */
+	for(i = 0; i < GIC_TNUM_INT/32; i++){
+		sil_wrw_mem((void *)(GICD_ICACTIVERn + (uintptr_t)(4 * i)), 0xffffffff);
+	}
+	/* banked 割込み（SGI/PPI, 0-31）のペンディングをクリア */
+	sil_wrw_mem((void *)(GICD_ICPENDRn), 0xffffffff);
+	sil_wrw_mem((void *)(GICD_CPENDSGIRn + 0), 0xffffffff);
+	sil_wrw_mem((void *)(GICD_CPENDSGIRn + 4), 0xffffffff);
+	sil_wrw_mem((void *)(GICD_CPENDSGIRn + 8), 0xffffffff);
+	sil_wrw_mem((void *)(GICD_CPENDSGIRn + 12), 0xffffffff);
+
 	/* 優先度最低に設定  */
 	for(i = TMIN_GLOBAL_INTNO/4; i < GIC_TNUM_INT/4; i++){
 		sil_wrw_mem((void *)(GICD_IPRIORITYRn + (uintptr_t)(4 * i)), 0xffffffff);
@@ -179,6 +203,29 @@ gicc_init(void)
 #else  /* !TOPPERS_TZ_S */
 	sil_wrw_mem((void *)GICC_CTLR, GICC_CTLR_ENABLE);
 #endif /* TOPPERS_TZ_S */
+
+	/*
+	 *  残留ペンディング割込みのドレイン（リセット無し再起動対策）
+	 *
+	 *  CPUインタフェース有効化後に IAR で ack→EOIR で完了，を spurious(1023)
+	 *  が返るまで繰り返し，前回実行から残ったペンディング割込み（ハルト中に
+	 *  発生したタイマ割込み等）を排出して CPUインタフェースの実行優先度を
+	 *  アイドルへ戻す．有効化前の IAR は CTLR=0 では機能しないため，ここで
+	 *  改めて行う．通常のリセット起動時は即座に spurious が返り無害．
+	 *  （ディストリビュータ側の残留 active/pending クリアは gicd_initialize_common）
+	 */
+	{
+		uint_t		i;
+		uint32_t	iar;
+
+		for (i = 0; i < 64U; i++) {
+			iar = sil_rew_mem((void *)GICC_IAR);
+			if ((iar & 0x03ffU) == 0x03ffU) {
+				break;					/* spurious(1023)＝ペンディング無し */
+			}
+			sil_wrw_mem((void *)GICC_EOIR, iar);
+		}
+	}
 }
 
 /*
