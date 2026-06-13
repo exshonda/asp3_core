@@ -21,7 +21,8 @@ list(APPEND ASP3_LINK_OPTIONS
 
 list(APPEND ASP3_COMPILE_DEFS
     TOPPERS_CORTEX_A35
-    GIC_NO_FIQ_IN_SECURE
+    # セキュア割込みは FIQ 配送・CPUロック=FIQマスク(chip_kernel.h の TOPPERS_TZ_S 分岐)．
+    # zynqmp と同じネイティブ Secure 構成で GIC_NO_FIQ_IN_SECURE は不要(実機実証済み)．
 )
 
 list(APPEND ASP3_ARCH_C_FILES

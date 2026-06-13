@@ -62,6 +62,18 @@
 #define TOPPERS_TARGET_SUPPORT_PRB_INT		/* prb_int */
 //#define TOPPERS_TARGET_SUPPORT_OVRHDR
 
+#ifdef TOPPERS_TZ_S
+/*
+ *  CPUロック状態で使用するフラグ（セキュア: Group0割込みはFIQ配送のためFIQマスク）
+ *  ネイティブな GICv2+Secure 構成．GIC_NO_FIQ_IN_SECURE は不要．
+ */
+#define DAIF_CPULOCK		DAIF_F_BIT
+
+/*
+ *  割込みロック状態で使用するフラグ
+ */
+#define DAIF_INTLOCK		DAIF_I_BIT
+#else /* TOPPERS_TZ_NS */
 /*
  *  CPUロック状態で使用するフラグ
  */
@@ -71,6 +83,7 @@
  *  割込みロック状態で使用するフラグ
  */
 #define DAIF_INTLOCK		DAIF_F_BIT
+#endif /* TOPPERS_TZ_S */
 
 /*
  *  ZynqMPのハードウェア資源の定義
