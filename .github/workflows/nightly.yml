@@ -121,6 +121,15 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v5
+      - name: Verify TTSP3_TOKEN secret is present
+        env:
+          TOK: ${{ secrets.TTSP3_TOKEN }}
+        run: |
+          if [ -z "$TOK" ]; then
+            echo "::error::secret TTSP3_TOKEN が空/未検出です。exshonda/asp3_core の Settings → Secrets and variables → Actions の Repository secrets に、名前を厳密に TTSP3_TOKEN として、exshonda/TTSP3 を読める PAT を登録してください。"
+            exit 1
+          fi
+          echo "TTSP3_TOKEN present (length ${#TOK})."
       - name: Checkout TTSP3 (private, read-only test source)
         uses: actions/checkout@v5
         with:
