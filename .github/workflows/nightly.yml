@@ -17,6 +17,12 @@
 #  - cpuexc1・cpuexc4（mps2）：CPU例外がHardFaultへエスカレートし
 #    Unregistered Exceptionとなる既存挙動（要調査）
 #
+#  TTSP3 適合性テスト（ttsp3-mps2 ジョブ）：TOPPERSテストスイート TTSP3 の
+#  functional 全件を mps2-an521（Cortex-M33）build+run で回す（設計は
+#  docs/dev/ttsp3-conformance.md）．TTSP3 は private 別リポジトリのため
+#  checkout に **secret `TTSP3_TOKEN`**（exshonda/TTSP3 read 権限の PAT）が要る．
+#  ttg が Ruby 依存のため apt で ruby を都度導入する（イメージ非同梱）．
+#
 name: Nightly
 
 on:
@@ -91,4 +97,60 @@ jobs:
         with:
           name: nightly-${{ matrix.name }}-logs
           path: build/testexec-${{ matrix.name }}/testexec.log
+          if-no-files-found: ignore
+
+  #
+  #  TTSP3 適合性テスト：mps2-an521（Cortex-M33）で functional 全件 build+run
+  #
+  #  - TTSP3（private 別リポジトリ・読み取り専用のテスト供給源）を checkout．
+  #    要 secret TTSP3_TOKEN（exshonda/TTSP3 への read 権限 PAT）．
+  #  - ttg（Ruby）でテスト生成するため ruby を apt 導入（イメージ非同梱）．
+  #  - **gate＝functional（--only yaml）の FAIL 0**（HW依存は driver が SKIP）．
+  #    staticAPI のエラー系はターゲット依存の cfg エラーコード差があり
+  #    （docs/dev/ttsp3-conformance.md）非gate（continue-on-error）で可視化のみ．
+  #  - 全 yaml の逐次 build+run のため重い（nightly 専用）．
+  #
+  ttsp3-mps2:
+    name: TTSP3 conformance mps2-an521 (Cortex-M33)
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      options: --user root
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Checkout TTSP3 (private, read-only test source)
+        uses: actions/checkout@v5
+        with:
+          repository: exshonda/TTSP3
+          ref: main
+          token: ${{ secrets.TTSP3_TOKEN }}
+          path: TTSP3
+      - name: Install ruby (ttg)
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ruby
+          rm -rf /var/lib/apt/lists/*
+      - name: TTSP3 functional full (build+run, gate＝FAIL 0)
+        run: |
+          set -o pipefail
+          python3 test/ttsp/run_ttsp.py --target mps2_an521 --only yaml --tap \
+            --ttsp3-root "$GITHUB_WORKSPACE/TTSP3" api_test/ASP \
+            | tee ttsp3-mps2-functional.tap
+      - name: TTSP3 staticAPI (error/runtime, non-gating＝ターゲット依存差あり)
+        continue-on-error: true
+        run: |
+          python3 test/ttsp/run_ttsp.py --target mps2_an521 --tap \
+            --ttsp3-root "$GITHUB_WORKSPACE/TTSP3" api_test/ASP/staticAPI \
+            | tee ttsp3-mps2-staticapi.tap
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-ttsp3-mps2
+          path: |
+            ttsp3-mps2-functional.tap
+            ttsp3-mps2-staticapi.tap
           if-no-files-found: ignore
