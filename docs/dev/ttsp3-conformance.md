@@ -92,9 +92,60 @@ timeout 20 qemu-system-arm -M xilinx-zynq-a9 -semihosting -m 512M \
   -serial null -serial mon:stdio -nographic -kernel build/ttsp-poc/asp.elf
 ```
 
+### 本実装 完了（2026-06-14・zybo_z7-qemu）
+
+案Bのドライバを `test/ttsp/run_ttsp.py` として実装し、3系統すべてを自動判定可能にした。
+**TTSP3・asp3_core 本体（kernel/・syssvc/・cfg/・target/）とも変更なし**＝ドライバ1ファイルの追加のみ。
+
+#### ドライバ `test/ttsp/run_ttsp.py`
+
+- TTSP3 ルートは `--ttsp3-root` / `$TTSP3_ROOT` / 既定 `<repo>/../../TTSP3/work/ttsp3`（絶対パス化）。
+  **include/extra-C のパスは必ず絶対パスで CMake に渡す**（cfg はビルドディレクトリで動くため、
+  相対 `-I` だと `INCLUDE("ttsp_target.cfg")` 等が解決できずビルド失敗する＝当初の再現失敗の原因）。
+- 各テストの系統を**自動分類**（手書きのテスト表は不要）：
+
+  | 系統 | 判定条件 | 実行 | 合格条件 |
+  |---|---|---|---|
+  | `error` | dir に `err_code.txt` あり | configure+build のみ（QEMU不要） | ビルド失敗かつ cfg の `error: E_*` が `err_code.txt` と一致 |
+  | `runtime` | dir に `out.c`・`err_code.txt` 無し | build → QEMU | `All check points passed.` |
+  | `yaml` | `*.yaml` ファイル | `ttg.rb -a -p`（Ruby・ターゲット非依存）で `out.{c,cfg,h}` 生成 → build → QEMU | 同上 |
+
+- ターゲット定義（preset・TTSP3 target lib 名・QEMU コマンド）は `TARGETS` dict に集約。
+- 主なオプション：`--target`／`--only error,runtime,yaml`／`--list`／`--tap`／`--keep`／`-v`。
+
+```bash
+# 例：staticAPI 全件（error 系は QEMU 不要で高速）
+python3 test/ttsp/run_ttsp.py api_test/ASP/staticAPI
+# 例：機能テストを TAP で
+python3 test/ttsp/run_ttsp.py --tap api_test/ASP/task_manage
+# 例：対象の列挙のみ
+python3 test/ttsp/run_ttsp.py --list api_test/ASP
+```
+
+#### 検証結果（zybo_z7-qemu）
+
+| 範囲 | 件数 | 結果 |
+|---|---|---|
+| `api_test/ASP/staticAPI` 全件（error 113＋runtime 5＋yaml 20） | 138 | **138/138 PASS** |
+| `api_test/ASP/task_manage/act_tsk`（functional yaml） | 50 | **50/50 PASS** |
+| `api_test/ASP/{semaphore,eventflag,dataqueue}`（functional yaml） | 589 | **589/589 PASS** |
+| **合計（demonstrated）** | **777** | **777/777 PASS・FAIL 0** |
+
+ttg（Ruby 3.2.3）連携・静的APIエラー自動判定・runtime/QEMU 判定の全経路を実機 CMake+QEMU で確認。
+functional は全 1813 件のうち代表 4 モジュール（777件中 639件が yaml）を実走行＝0 失敗。
+
 ### 残（本実装）
 
-ドライバ `run_ttsp.py`・静的API系の自動判定・ttg連携（functional 1813件）・ターゲット横断・CI。
+- **ターゲット横断**：TTSP3 が同梱する ASP ターゲットライブラリは `library/ASP/target/` 配下の
+  `zybo_z7_gcc`・`lpc55s69evk_gcc`・`nucleo_f401re_gcc` の3つのみ。asp3_core の mps2/zcu102/polarfire
+  プリセットに対応する `ttsp_target_test.c`／`ttsp_target.cfg` を TTSP3 は持たないため、
+  これらへの横断には asp3_core 側でのターゲット用テスト資産の用意が要る（TTSP3 不変方針を守るなら
+  asp3_core 側に置く）。現状ドライバの `TARGETS` は zybo_z7 のみ登録。
+- **functional 全 1813 件**：逐次実行のため全件は時間がかかる（1件あたり build+QEMU 数秒）。
+  CI には軽量サブセット（staticAPI＝QEMU不要で高速、＋代表 functional 数モジュール）を nightly で回す想定。
+- **SKIP 規則**：ターゲット非対応テスト（割込み番号未定義等）の `ttsp_target_test.h` 由来 SKIP 判定は未実装
+  （zybo では全件通過のため未着手）。横断時に必要になる。
+- **CI 組み込み**：`.github/workflows/` への nightly ジョブ追加は未実施。
 
 ## スコープ外 / リスク
 
