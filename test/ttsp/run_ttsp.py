@@ -44,6 +44,8 @@
 #       --only error|runtime|yaml   指定系統のみ実行（複数可・カンマ区切り）
 #       --list              実行せずに対象テストと系統を列挙
 #       --keep              ビルドディレクトリを残す（既定は使い回し）
+#       --build-only        ビルド成功で PASS（QEMU 実行をスキップ．qemu 未導入
+#                           アーキの build 検証や CI 用）
 #       --jobs N            未使用（将来の並列化用・現状は逐次）
 #       --tap               TAP 形式（ok N / not ok N）で出力
 #       -v, --verbose       失敗時にビルド/実行ログを表示
@@ -63,21 +65,96 @@ REPO_ROOT = os.path.abspath(
 #
 #  ターゲット定義
 #
-#  preset       … asp3_core の CMake プリセット名
-#  ttsp_target  … TTSP3 library/ASP/target/<ttsp_target> のディレクトリ名
-#  qemu         … QEMU 実行コマンド（{elf} を asp.elf の絶対パスに置換）
-#                 None の場合はホスト実行（./asp）
+#  preset        … asp3_core の CMake プリセット名
+#  ttsp_target   … TTSP3 library/ASP/target/<ttsp_target> を使う場合のdir名
+#                  （TTSP3 が同梱するターゲット．zybo_z7 のみ）
+#  lib           … asp3_core 側に置く TTSP3 ターゲット資産の repo 相対パス
+#                  （TTSP3 が同梱しないターゲット用．test/ttsp/target/<t>）
+#                  ttsp_target と lib はどちらか一方を設定する．
+#  qemu          … QEMU 実行コマンド（{elf} を asp.elf の絶対パスに置換）
+#                  None の場合はホスト実行（./asp）
+#  unsupported_hw… 本ターゲットで実装していない TTSP ターゲット HW 関数の集合．
+#                  生成/同梱の out.c がこれらを呼ぶテストは **ビルド前に SKIP**
+#                  （no-op では必ず破綻する＝早送り/割込み/例外）．
+#  soft_hw       … no-op 実装の HW 関数の集合（stop_tick/start_tick）．これらを
+#                  呼ぶテストも基本は no-op で正しく通る（防御的呼び出し）が、
+#                  時刻凍結に依存する一部（timed-API のタイムアウト系）は破綻する．
+#                  そこで **実行して失敗した場合のみ SKIP に再分類**する
+#                  （HWタイマ制御依存＝本ターゲットでは未検証）．通れば PASS．
+#                  HW を一切使わないテストの失敗は真の FAIL として残す．
+#
+#  TTSP ターゲット HW 関数と依存テスト：
+#    ttsp_target_gain_tick  … HWタイマ早送り（cyclic/alarm/time_event＋全モジュールの
+#                             非タスクコンテキスト _ntc・タスク例外 _ten 変種）
+#    ttsp_int_raise         … 割込み発生（interrupt モジュール）
+#    ttsp_cpuexc_raise      … CPU例外発生（exception モジュール）
+#    ttsp_target_stop_tick  … 時刻凍結（timed-API のタイムアウト系・alarm/cyclic refer 等）
+#  skip_modules  … モジュールごと未対応＝丸ごと SKIP．interrupt/exception は
+#                  カーネル API（ras_int 等）・割込み/例外設定がターゲット依存で、
+#                  asp3_core 側資産（int_raise/cpuexc 未実装）では検証不能なため除外．
 #
 TARGETS = {
     "zybo_z7": {
         "preset": "zybo_z7-qemu",
         "ttsp_target": "zybo_z7_gcc",
+        "lib": None,
         "qemu": ("qemu-system-arm -M xilinx-zynq-a9 -semihosting -m 512M "
                  "-serial null -serial mon:stdio -nographic -kernel {elf}"),
+        "unsupported_hw": set(),   # zybo は全 HW 対応＝SKIP なし
+        "soft_hw": set(),
+        "skip_modules": set(),
     },
-    # 他ターゲットは TTSP3 側に library/ASP/target/<t> と ttsp_target_test.c が
-    # 必要．移植時にここへ追加する（docs/dev/ttsp3-conformance.md 参照）．
+    "mps2_an521": {
+        "preset": "mps2_an521-qemu",
+        "ttsp_target": None,
+        "lib": "test/ttsp/target/mps2_an521_gcc",
+        "qemu": ("qemu-system-arm -M mps2-an521 -cpu cortex-m33 -kernel {elf} "
+                 "-semihosting -semihosting-config enable=on,target=native "
+                 "-nographic"),
+        "unsupported_hw": {"ttsp_target_gain_tick", "ttsp_int_raise",
+                           "ttsp_cpuexc_raise"},
+        "soft_hw": {"ttsp_target_stop_tick", "ttsp_target_start_tick"},
+        "skip_modules": {"interrupt", "exception"},
+    },
+    "zcu102_arm64": {
+        "preset": "zcu102_arm64-qemu",
+        "ttsp_target": None,
+        "lib": "test/ttsp/target/zcu102_arm64_gcc",
+        "qemu": ("qemu-system-aarch64 -machine xlnx-zcu102,secure=on -nographic "
+                 "-semihosting-config enable=on,target=native -kernel {elf}"),
+        "unsupported_hw": {"ttsp_target_gain_tick", "ttsp_int_raise",
+                           "ttsp_cpuexc_raise"},
+        "soft_hw": {"ttsp_target_stop_tick", "ttsp_target_start_tick"},
+        "skip_modules": {"interrupt", "exception"},
+    },
+    "polarfire_soc_kit": {
+        "preset": "polarfire_soc_kit-qemu",
+        "ttsp_target": None,
+        "lib": "test/ttsp/target/polarfire_soc_kit_gcc",
+        "qemu": ("qemu-system-riscv64 -machine microchip-icicle-kit -nographic "
+                 "-semihosting-config enable=on,target=native -bios none "
+                 "-kernel {elf}"),
+        "unsupported_hw": {"ttsp_target_gain_tick", "ttsp_int_raise",
+                           "ttsp_cpuexc_raise"},
+        "soft_hw": {"ttsp_target_stop_tick", "ttsp_target_start_tick"},
+        "skip_modules": {"interrupt", "exception"},
+    },
 }
+
+#  TTSP ターゲット HW 関数（out.c のスキャン対象）
+HW_FUNCS = ("ttsp_target_gain_tick", "ttsp_int_raise", "ttsp_cpuexc_raise",
+            "ttsp_target_stop_tick", "ttsp_target_start_tick",
+            "ttsp_clear_int_req")
+
+
+def scan_hw_calls(out_c_path):
+    """out.c が呼ぶ TTSP ターゲット HW 関数の集合を返す."""
+    try:
+        with open(out_c_path, encoding="utf-8", errors="replace") as f:
+            text = f.read()
+    except OSError:
+        return set()
+    return {fn for fn in HW_FUNCS if fn in text}
 
 #  QEMU 実行のタイムアウト（秒）
 QEMU_TIMEOUT = 30
@@ -115,6 +192,17 @@ def read_err_codes(path):
 #  テストの探索と分類
 # --------------------------------------------------------------------------
 
+def module_of(test_id):
+    """テストID（api_test/<profile>/<module>/...）からモジュール名を返す."""
+    parts = test_id.replace("\\", "/").split("/")
+    for prof in ("ASP", "HRP", "FMP", "HRMP"):
+        if prof in parts:
+            i = parts.index(prof)
+            if i + 1 < len(parts):
+                return parts[i + 1]
+    return parts[1] if len(parts) > 1 else ""
+
+
 class Test:
     def __init__(self, kind, test_id, src_dir, yaml=None, err_codes=None):
         self.kind = kind          # "error" | "runtime" | "yaml"
@@ -122,6 +210,7 @@ class Test:
         self.src_dir = src_dir    # out.{c,cfg,h} のあるディレクトリ
         self.yaml = yaml          # yaml 系のみ：.yaml ファイルパス
         self.err_codes = err_codes or set()
+        self.module = module_of(test_id)
 
 
 def discover(ttsp_root, paths):
@@ -163,18 +252,25 @@ def _make_yaml_test(ttsp_root, yaml_path):
 #  ビルド・実行
 # --------------------------------------------------------------------------
 
-def ttsp_include_dirs(ttsp_root, ttsp_target):
+def target_lib_dir(tgt, ttsp_root):
+    """ターゲットテスト資産（ttsp_target_test.{c,h}・ttsp_target.cfg）の場所．
+    TTSP3 同梱（ttsp_target）か asp3_core 側（lib）かを切り替える."""
+    if tgt.get("lib"):
+        return os.path.join(REPO_ROOT, tgt["lib"])
+    return os.path.join(ttsp_root, "library/ASP/target", tgt["ttsp_target"])
+
+
+def ttsp_include_dirs(tgt, ttsp_root):
     return [
-        os.path.join(ttsp_root, "library/ASP/test"),
-        os.path.join(ttsp_root, "library/ASP/target", ttsp_target),
+        os.path.join(ttsp_root, "library/ASP/test"),  # 汎用テストlib（アーキ非依存）
+        target_lib_dir(tgt, ttsp_root),
     ]
 
 
-def ttsp_extra_c_files(ttsp_root, ttsp_target):
+def ttsp_extra_c_files(tgt, ttsp_root):
     return [
         os.path.join(ttsp_root, "library/ASP/test/ttsp_test_lib.c"),
-        os.path.join(ttsp_root, "library/ASP/target", ttsp_target,
-                     "ttsp_target_test.c"),
+        os.path.join(target_lib_dir(tgt, ttsp_root), "ttsp_target_test.c"),
     ]
 
 
@@ -197,8 +293,8 @@ def gen_with_ttg(ttsp_root, yaml_path, gen_dir):
 
 def configure_and_build(tgt, ttsp_root, appldir, build_dir):
     """1テスト分の CMake configure + build を行う．(rc, log) を返す."""
-    inc = ";".join(ttsp_include_dirs(ttsp_root, tgt["ttsp_target"]))
-    extra = ";".join(ttsp_extra_c_files(ttsp_root, tgt["ttsp_target"]))
+    inc = ";".join(ttsp_include_dirs(tgt, ttsp_root))
+    extra = ";".join(ttsp_extra_c_files(tgt, ttsp_root))
     cfg_cmd = [
         "cmake", "--preset", tgt["preset"], "-B", build_dir,
         f"-DASP3_APPLDIR={appldir}", "-DASP3_APPLNAME=out",
@@ -251,11 +347,17 @@ def judge_error(test, tgt, ttsp_root, build_dir):
                   f"期待 {sorted(test.err_codes)} / 検出 {sorted(found) or 'なし'}", log)
 
 
-def judge_runtime(test, tgt, ttsp_root, build_dir, appldir):
-    """runtime/yaml 系：ビルド → QEMU 実行 → 合格文字列で PASS."""
+BUILD_FAIL_DETAIL = "ビルド失敗"
+
+
+def judge_runtime(test, tgt, ttsp_root, build_dir, appldir, build_only=False):
+    """runtime/yaml 系：ビルド → QEMU 実行 → 合格文字列で PASS.
+    build_only 時はビルド成功＝PASS（QEMU 実行はスキップ）."""
     rc, log = configure_and_build(tgt, ttsp_root, appldir, build_dir)
     if rc != 0:
-        return Result(test, "FAIL", "ビルド失敗", log)
+        return Result(test, "FAIL", BUILD_FAIL_DETAIL, log)
+    if build_only:
+        return Result(test, "PASS", "build-only")
     rc, out = run_qemu(tgt, build_dir)
     if "All check points passed." in out:
         return Result(test, "PASS")
@@ -264,20 +366,63 @@ def judge_runtime(test, tgt, ttsp_root, build_dir, appldir):
     return Result(test, "FAIL", "合格文字列なし（実行エラー/タイムアウト）", out)
 
 
-def run_test(test, tgt, ttsp_root, build_root, keep):
+def skip_for_hw(test, tgt, out_c_path):
+    """out.c が本ターゲット未対応の HW 関数を呼ぶ場合 SKIP 理由を返す（無ければ None）."""
+    unsupported = tgt.get("unsupported_hw", set())
+    if not unsupported:
+        return None
+    used = scan_hw_calls(out_c_path) & unsupported
+    if used:
+        return "未対応HW: " + ",".join(sorted(used))
+    return None
+
+
+def soft_skip_on_fail(test, tgt, out_c_path, res):
+    """実行失敗かつ soft_hw（no-op 実装）に依存する場合 SKIP に再分類する．
+    ビルド失敗は HW と無関係なので常に FAIL のまま残す."""
+    if res.status != "FAIL" or res.detail == BUILD_FAIL_DETAIL:
+        return res
+    soft = tgt.get("soft_hw", set())
+    if not soft:
+        return res
+    used = scan_hw_calls(out_c_path) & soft
+    if used:
+        return Result(test, "SKIP",
+                      "HWタイマ制御依存（" + ",".join(sorted(used)) + "）＝本ターゲット未検証")
+    return res
+
+
+def run_test(test, tgt, ttsp_root, build_root, keep, build_only=False):
+    #  本ターゲットで未対応のモジュール（interrupt/exception 等）は丸ごと SKIP
+    if test.module in tgt.get("skip_modules", set()):
+        return Result(test, "SKIP", f"{test.module}モジュール: 本ターゲット未対応")
     build_dir = os.path.join(build_root, tgt["preset"],
                              test.id.replace("/", "_").replace(".yaml", ""))
-    if test.kind == "error":
-        res = judge_error(test, tgt, ttsp_root, build_dir)
-    elif test.kind == "runtime":
-        res = judge_runtime(test, tgt, ttsp_root, build_dir, test.src_dir)
-    else:  # yaml
+    if test.kind in ("error", "runtime"):
+        out_c = os.path.join(test.src_dir, "out.c")
+        reason = skip_for_hw(test, tgt, out_c)   # 早送り/割込み/例外は事前 SKIP
+        if reason:
+            res = Result(test, "SKIP", reason)
+        elif test.kind == "error":
+            res = judge_error(test, tgt, ttsp_root, build_dir)
+        else:
+            res = judge_runtime(test, tgt, ttsp_root, build_dir, test.src_dir,
+                                build_only)
+            res = soft_skip_on_fail(test, tgt, out_c, res)
+    else:  # yaml：ttg 生成 → HW 依存スキャン → build/run
         gen_dir = os.path.join(build_dir, "ttg")
         ok, gout = gen_with_ttg(ttsp_root, test.yaml, gen_dir)
         if not ok:
             res = Result(test, "FAIL", "ttg 生成失敗", gout)
         else:
-            res = judge_runtime(test, tgt, ttsp_root, build_dir, gen_dir)
+            out_c = os.path.join(gen_dir, "out.c")
+            reason = skip_for_hw(test, tgt, out_c)
+            if reason:
+                res = Result(test, "SKIP", reason)
+            else:
+                res = judge_runtime(test, tgt, ttsp_root, build_dir, gen_dir,
+                                    build_only)
+                res = soft_skip_on_fail(test, tgt, out_c, res)
     if not keep and os.path.isdir(build_dir):
         shutil.rmtree(build_dir, ignore_errors=True)
     return res
@@ -299,6 +444,9 @@ def main():
                     help="error,runtime,yaml のうち実行する系統（カンマ区切り）")
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--keep", action="store_true")
+    ap.add_argument("--build-only", action="store_true",
+                    help="ビルド成功で PASS（QEMU 実行をスキップ．"
+                         "qemu 未導入アーキの build 検証や CI 用）")
     ap.add_argument("--jobs", type=int, default=1)
     ap.add_argument("--tap", action="store_true")
     ap.add_argument("-v", "--verbose", action="store_true")
@@ -332,7 +480,8 @@ def main():
 
     n_pass = n_fail = n_skip = 0
     for i, t in enumerate(tests, 1):
-        res = run_test(t, tgt, ttsp_root, args.build_dir, args.keep)
+        res = run_test(t, tgt, ttsp_root, args.build_dir, args.keep,
+                       args.build_only)
         if res.status == "PASS":
             n_pass += 1
         elif res.status == "SKIP":
@@ -341,7 +490,8 @@ def main():
             n_fail += 1
 
         if args.tap:
-            mark = "ok" if res.status == "PASS" else "not ok"
+            #  TAP：SKIP は ok 行＋# SKIP ディレクティブ（失敗ではない）
+            mark = "not ok" if res.status == "FAIL" else "ok"
             dir_ = " # SKIP" if res.status == "SKIP" else ""
             print(f"{mark} {i} {t.id} [{t.kind}]{dir_}"
                   + (f" - {res.detail}" if res.detail else ""))

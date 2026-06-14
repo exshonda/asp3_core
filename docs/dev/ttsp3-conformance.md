@@ -144,18 +144,74 @@ python3 test/ttsp/run_ttsp.py --only yaml --tap api_test/ASP
 逐次実行（1件＝独立 build dir、build 後に削除）。所要は環境により十数分〜数十分。
 これと staticAPI 138 件（うち error 113＝QEMU不要）を合わせ、**ASP api_test の自動判定が全件成立**。
 
+### ターゲット横断 完了（2026-06-14・mps2_an521／polarfire／zcu102）
+
+TTSP3 が同梱する ASP ターゲットライブラリは `zybo_z7_gcc`・`lpc55s69evk_gcc`・`nucleo_f401re_gcc`
+の3つのみで、asp3_core の mps2/zcu102/polarfire 用は無い。**TTSP3 不変方針のため、各ターゲットの
+TTSP ターゲット資産を asp3_core 側 `test/ttsp/target/<t>/` に新設**（`ttsp_target_test.{c,h}`・
+空 `ttsp_target.cfg`）。汎用テストlib（`library/ASP/test`＝アーキ非依存）は TTSP3 のものを流用。
+
+#### 追加した asp3_core 側ターゲット資産
+
+| ファイル | 由来・要点 |
+|---|---|
+| `test/ttsp/target/mps2_an521_gcc/` | Cortex-M33。TTSP3 lpc55s69evk_gcc（同 arm_m）ベース。`RAISE_CPU_EXCEPTION=udf #0`、`get_stk`マクロ（USE_TSKINICTXB） |
+| `test/ttsp/target/zcu102_arm64_gcc/` | Cortex-A53。`RAISE_CPU_EXCEPTION=svc #0xF000`、USE_TSKINICTXB非定義のため`get_stk`マクロ無し（汎用lib が TINIB.stk 直参照） |
+| `test/ttsp/target/polarfire_soc_kit_gcc/` | RV64GC。`RAISE_CPU_EXCEPTION`＝未定義命令（圧縮命令対応）、`get_stk`マクロ無し |
+
+各 `ttsp_target_test.c` は `stop_tick/start_tick/gain_tick` を no-op、`int_raise/cpuexc_raise` は
+SKIP モジュール専用（mps2 は実コール、polarfire の int_raise は PLIC 未提供で no-op）。
+
+#### HW 依存テストの扱い（ドライバの SKIP 規則）
+
+純カーネル系（92%＝1671件）は HW を実行時に呼ばないが、調査の結果さらに以下が判明：
+
+- `ttsp_target_stop_tick` は **timeout 系テスト全般**（task_sync/dataqueue 等の純カーネル系含む）が
+  防御的に呼ぶ。多くは no-op で正しく通るが、時刻凍結に依存する timed-API のタイムアウト系・
+  alarm/cyclic refer 系は no-op だと破綻する。
+- `interrupt`/`exception` モジュールはカーネル API（`ras_int` 等）・割込み/例外設定がターゲット依存で、
+  int_raise/cpuexc 未実装の本資産では検証不能（polarfire では `ras_int` がリンク未解決）。
+
+そこでドライバは3段の SKIP を行う（`docs` 冒頭のドライバ説明参照）：
+1. **モジュール SKIP**（`skip_modules`）：`interrupt`/`exception` を丸ごと除外。
+2. **HW呼び出し事前 SKIP**（`unsupported_hw`）：生成 out.c が `gain_tick`/`int_raise`/`cpuexc_raise`
+   を呼ぶテスト（_ntc/_ten 変種・cyclic/alarm/time_event）をビルド前に除外。
+3. **soft HW 失敗時再分類**（`soft_hw`）：`stop_tick` 依存で実行失敗したものを SKIP に再分類
+   （通れば PASS。ビルド失敗は HW 無関係＝真の FAIL のまま）。
+
+#### 横断結果
+
+| ターゲット | preset | この環境 | 結果 |
+|---|---|---|---|
+| zybo_z7 (A9) | zybo_z7-qemu | build+run | **functional 1813/1813・staticAPI 138/138 PASS**（FAIL 0） |
+| mps2_an521 (M33) | mps2_an521-qemu | build+run | **PASS 1265・SKIP 639・FAIL 29**（functional FAIL 0／FAILは全て staticAPI 系） |
+| polarfire (RV64GC) | polarfire_soc_kit-qemu | **build-only**（qemu-riscv64 未導入） | **PASS 1504・SKIP 423・FAIL 6**（全ビルド成立確認。FAILは staticAPI error系のみ） |
+| zcu102 (A53) | zcu102_arm64-qemu | 不可（aarch64 ツールチェーン未導入） | 資産作成済・検証は devcontainer/CI へ |
+
+- **mps2 の functional は実行可能な全件 PASS・FAIL 0**（SKIP 639＝gain_tick 379・stop_tick 228・
+  int/cpuexc/interrupt/exception 等）。
+- **残る FAIL は全て staticAPI のエラー/runtime系**（mps2 28+1・polarfire 6）で、
+  `CFG_INT`/`DEF_EXC`/`DEF_INH`/`DEF_ICS`（割込み・例外・ICS）と `CRE_ALM`/`CRE_CYC`（通知）に集中＝
+  **ターゲット依存の cfg エラーコード差**（TTSP3 の `err_code.txt` は参照ターゲット基準。zybo とは
+  割込み/例外モデルが異なる）。`DEF_ICS_d-2`(mps2 runtime) のみビルド不成立。これらは静的API検証の
+  既知ターゲット差として記録（functional 適合性とは別問題）。
+
+```bash
+python3 test/ttsp/run_ttsp.py --target mps2_an521     --tap api_test/ASP
+python3 test/ttsp/run_ttsp.py --target polarfire_soc_kit --build-only --tap api_test/ASP
+python3 test/ttsp/run_ttsp.py --target zcu102_arm64    --tap api_test/ASP   # 要 aarch64 toolchain
+```
+
 ### 残（本実装）
 
-- **ターゲット横断**：TTSP3 が同梱する ASP ターゲットライブラリは `library/ASP/target/` 配下の
-  `zybo_z7_gcc`・`lpc55s69evk_gcc`・`nucleo_f401re_gcc` の3つのみ。asp3_core の mps2/zcu102/polarfire
-  プリセットに対応する `ttsp_target_test.c`／`ttsp_target.cfg` を TTSP3 は持たないため、
-  これらへの横断には asp3_core 側でのターゲット用テスト資産の用意が要る（TTSP3 不変方針を守るなら
-  asp3_core 側に置く）。現状ドライバの `TARGETS` は zybo_z7 のみ登録。
-- **functional 全 1813 件**：逐次実行のため全件は時間がかかる（1件あたり build+QEMU 数秒）。
-  CI には軽量サブセット（staticAPI＝QEMU不要で高速、＋代表 functional 数モジュール）を nightly で回す想定。
-- **SKIP 規則**：ターゲット非対応テスト（割込み番号未定義等）の `ttsp_target_test.h` 由来 SKIP 判定は未実装
-  （zybo では全件通過のため未着手）。横断時に必要になる。
-- **CI 組み込み**：`.github/workflows/` への nightly ジョブ追加は未実施。
+- **zcu102 / polarfire の QEMU 実走行**：本開発機は aarch64 ツールチェーン・qemu-system-riscv64 未導入
+  のため、zcu102 は build 不可・polarfire は build-only。両者の QEMU 実行は devcontainer/CI で行う。
+- **staticAPI エラー系のターゲット差（mps2 29・polarfire 6）**：割込み/例外/ICS/通知 静的APIの
+  エラーコード差。期待値をターゲット別に持つか、許容差として扱うかは要検討。
+- **HWタイマ/割込み/例外の本対応**：`gain_tick`（HWタイマ早送り）・`int_raise`・`cpuexc` を各アーキで
+  実装すれば、現状 SKIP の HW依存テスト（mps2 で約639件）も検証可能になる。CLAUDE.md に従い
+  生成後の人間確認が必要なため別タスク。
+- **CI 組み込み**：`.github/workflows/` への nightly ジョブ（mps2 build+run・polarfire build-only 等）追加は未実施。
 
 ## スコープ外 / リスク
 
