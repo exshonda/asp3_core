@@ -57,6 +57,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 
 #  ソースルート（本スクリプト test/ttsp/ の2つ上）
 REPO_ROOT = os.path.abspath(
@@ -104,6 +105,30 @@ TARGETS = {
         "soft_hw": set(),
         "skip_modules": set(),
     },
+    #  Zybo Z7 実機（Cortex-A9）．QEMU の代わりに xsct(Vitis) で実機ロード＆実行し，
+    #  UART を別途キャプチャして "All check points passed." で判定する．
+    #  ハードは全 HW 対応（zybo_z7 と同様に SKIP なし）．連続再ロードは
+    #  rst -system でクリーンになるため正規化スタブ不要（TTSP3_HOWTO.md A 方式）．
+    "zybo_z7_hw": {
+        "preset": "zybo_z7",            # 実機ビルド（ZYBO_QEMU=OFF）
+        "ttsp_target": "zybo_z7_gcc",   # TTSP3 同梱の ASP ターゲットライブラリ
+        "lib": None,
+        "qemu": None,
+        "hw": {
+            "kind": "xsct_zybo",
+            #  実機ロード資産・結果は各ターゲット依存部フォルダに置く
+            #  （target/zybo_z7_gcc/ttsp3/, 結果は TTSP3_HOWTO.md）
+            "jtag_tcl": "target/zybo_z7_gcc/ttsp3/jtag.tcl",
+            "ps7_init": "target/zybo_z7_gcc/xilinx_sdk/zybo_z7_hw/ps7_init.tcl",
+            "serial": "/dev/ttyUSB1",   # FT2232 ch.B（$TTSP_HW_SERIAL で上書き可）
+            "baud": 115200,
+            "vitis_settings": "/usr/local/tools/Vitis/2024.2/settings64.sh",
+            "capture": 35,              # UART キャプチャ上限（秒．早期検出で短縮）
+        },
+        "unsupported_hw": set(),
+        "soft_hw": set(),
+        "skip_modules": set(),
+    },
     "mps2_an521": {
         "preset": "mps2_an521-qemu",
         "ttsp_target": None,
@@ -134,6 +159,31 @@ TARGETS = {
         "qemu": ("qemu-system-riscv64 -machine microchip-icicle-kit -nographic "
                  "-semihosting-config enable=on,target=native -bios none "
                  "-kernel {elf}"),
+        "unsupported_hw": {"ttsp_target_gain_tick", "ttsp_int_raise",
+                           "ttsp_cpuexc_raise"},
+        "soft_hw": {"ttsp_target_stop_tick", "ttsp_target_start_tick"},
+        "skip_modules": {"interrupt", "exception"},
+    },
+    #  STM32MP257F-DK 実機（Cortex-A35 / AArch64）．QEMU の代わりに OpenOCD/SWD で
+    #  実機ロード＆実行する（既存 run.cmake の `swd-run` ターゲットを再利用＝OpenOCD
+    #  だけで reset→load→resume→shutdown．ボードは走り続ける）．UART(/dev/ttyACM0)
+    #  を別途キャプチャし "All check points passed." で判定する（判定ロジックは
+    #  QEMU 版と共通・_current_boot で最後のバナー以降に限定）．
+    #  AArch64＝zcu102_arm64 と同形の SKIP 規則（interrupt/exception を skip，
+    #  gain_tick/int_raise/cpuexc を unsupported，stop/start_tick を soft）．
+    #  前提：FSBL + landing pad 入り SD でボードが "Connect using OpenOCD" でハング
+    #  していること（target/stm32mp257f_dk_arm64_gcc/target_user.md §4-5）．
+    "stm32mp257f_dk_arm64_hw": {
+        "preset": "stm32mp257f_dk_arm64",     # 実機ビルド（QEMU 非対応ターゲット）
+        "ttsp_target": None,
+        "lib": "test/ttsp/target/stm32mp257f_dk_arm64_gcc",
+        "qemu": None,
+        "hw": {
+            "kind": "openocd_swd",
+            "serial": "/dev/ttyACM0",   # USART2/ST-LINK VCP（$TTSP_HW_SERIAL で上書き可）
+            "baud": 115200,
+            "capture": 45,              # UART キャプチャ上限（秒．swd-run 起動 ~8s 込み）
+        },
         "unsupported_hw": {"ttsp_target_gain_tick", "ttsp_int_raise",
                            "ttsp_cpuexc_raise"},
         "soft_hw": {"ttsp_target_stop_tick", "ttsp_target_start_tick"},
@@ -309,7 +359,147 @@ def configure_and_build(tgt, ttsp_root, appldir, build_dir):
     return rc, log + blog
 
 
+#  実機完走を表すマーカ（早期検出に使用）
+HW_DONE_MARKERS = ("All check points passed.", "Unexpected", "ssertion")
+#  ブート境界（このマーカ以降＝今回ロード分．前テストの残骸を除去するため）
+HW_BANNER = "TOPPERS/ASP3 Kernel Release"
+
+
+def _current_boot(txt):
+    """UART ログのうち「最後のカーネルバナー以降」だけを返す．
+
+    実機は rst -system が効くまで前テストの出力（"All check points passed."
+    を含みうる）が UART に残る．最後のバナー以降に限定して誤判定を防ぐ．
+    バナー未出現時は全体を返す（保守的）．"""
+    i = txt.rfind(HW_BANNER)
+    return txt[i:] if i >= 0 else txt
+
+
+def run_hw(tgt, build_dir):
+    """実機でロード＆実行し，UART 出力を返す（QEMU の代わり）．
+
+    実機ローダの種別（hw["kind"]）で分岐する：
+      xsct_zybo  … Zybo Z7（Vitis xsct）
+      openocd_swd… STM32MP257F-DK（OpenOCD/SWD．既存 run.cmake の swd-run を再利用）
+    """
+    if tgt["hw"].get("kind") == "openocd_swd":
+        return run_hw_openocd_swd(tgt, build_dir)
+    return run_hw_xsct(tgt, build_dir)
+
+
+def run_hw_openocd_swd(tgt, build_dir):
+    """STM32MP257F-DK 実機（OpenOCD/SWD）でロード＆実行し，UART 出力を返す．
+
+    既存の run.cmake の `swd-run` ターゲット（OpenOCD だけで reset→load→resume
+    →shutdown．ボードは走り続ける）を `ninja -C <build_dir> swd-run` で再利用する．
+    UART(/dev/ttyACM0) を背景 cat でキャプチャし，最後のカーネルバナー以降に限定
+    して完走マーカを検出したら早期に打ち切る．シリアル1本＝実行は逐次のみ．
+
+    注：swd-run は readelf 等にツールチェーン（aarch64-none-elf-）を PATH 経由で
+    使う．run_ttsp.py 実行前にツールチェーンを PATH へ通しておくこと．
+    """
+    hw = tgt["hw"]
+    serial = os.environ.get("TTSP_HW_SERIAL", hw["serial"])
+    baud = str(hw.get("baud", 115200))
+    cap = int(os.environ.get("TTSP_HW_CAPTURE", hw.get("capture", 45)))
+    log = os.path.join(build_dir, "uart.log")
+
+    #  シリアルを raw 設定（失敗は無視＝既に設定済みのことがある）
+    subprocess.run(["stty", "-F", serial, baud, "raw", "-echo"],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    #  UART を時間制限付きでバックグラウンド・キャプチャ
+    with open(log, "wb") as lf:
+        catp = subprocess.Popen(["timeout", str(cap), "cat", serial],
+                                stdout=lf, stderr=subprocess.DEVNULL)
+        time.sleep(1)
+        #  既存 run.cmake の swd-run（OpenOCD だけでロード＆実行）を同期実行．
+        #  内部の reset run + sleep で ~8s かかってから resume → カーネル起動．
+        run(["ninja", "-C", build_dir, "swd-run"], timeout=120)
+        #  完走マーカを「今回ブート分」（最後のバナー以降）に限定して検出．
+        deadline = time.time() + cap
+        while time.time() < deadline and catp.poll() is None:
+            try:
+                with open(log, "r", encoding="utf-8", errors="replace") as rf:
+                    txt = _current_boot(rf.read())
+            except OSError:
+                txt = ""
+            if HW_BANNER in txt and any(m in txt for m in HW_DONE_MARKERS):
+                break
+            time.sleep(0.5)
+        if catp.poll() is None:
+            catp.terminate()
+        try:
+            catp.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            catp.kill()
+    try:
+        with open(log, "r", encoding="utf-8", errors="replace") as rf:
+            out = _current_boot(rf.read())
+    except OSError:
+        out = ""
+    return 0, out
+
+
+def run_hw_xsct(tgt, build_dir):
+    """実機（xsct 経由）でロード＆実行し，UART 出力を返す．
+
+    QEMU の代わりに使用する．UART をバックグラウンドで キャプチャしながら
+    xsct で rst -system → ps7_init → dow → con を実行し，完走マーカを検出
+    したら早期にキャプチャを打ち切る．シリアルは1本＝実行は逐次のみ（--jobs 1）．
+    """
+    hw = tgt["hw"]
+    elf = os.path.join(build_dir, "asp.elf")
+    if not os.path.exists(elf):
+        elf = os.path.join(build_dir, "asp")
+    serial = os.environ.get("TTSP_HW_SERIAL", hw["serial"])
+    baud = str(hw.get("baud", 115200))
+    cap = int(os.environ.get("TTSP_HW_CAPTURE", hw.get("capture", 35)))
+    jtag = os.path.join(REPO_ROOT, hw["jtag_tcl"])
+    ps7 = os.path.join(REPO_ROOT, hw["ps7_init"])
+    settings = hw.get("vitis_settings", "")
+    log = os.path.join(build_dir, "uart.log")
+
+    #  シリアルを raw 設定（失敗は無視＝既に設定済みのことがある）
+    subprocess.run(["stty", "-F", serial, baud, "raw", "-echo"],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    #  UART を時間制限付きでバックグラウンド・キャプチャ
+    with open(log, "wb") as lf:
+        catp = subprocess.Popen(["timeout", str(cap), "cat", serial],
+                                stdout=lf, stderr=subprocess.DEVNULL)
+        time.sleep(1)
+        #  xsct（Vitis 環境を source）．con 後すぐ exit するため数秒〜十数秒で戻る
+        src = f"source {settings} >/dev/null 2>&1; " if settings else ""
+        xcmd = f"{src}xsct {jtag} {ps7} {elf}"
+        run(["bash", "-c", xcmd], timeout=120)
+        #  完走マーカを検出するまで（最大 cap 秒）ポーリングして早期終了．
+        #  判定は「今回ブート分」（最後のバナー以降）に限定する．
+        deadline = time.time() + cap
+        while time.time() < deadline and catp.poll() is None:
+            try:
+                with open(log, "r", encoding="utf-8", errors="replace") as rf:
+                    txt = _current_boot(rf.read())
+            except OSError:
+                txt = ""
+            if HW_BANNER in txt and any(m in txt for m in HW_DONE_MARKERS):
+                break
+            time.sleep(0.5)
+        if catp.poll() is None:
+            catp.terminate()
+        try:
+            catp.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            catp.kill()
+    try:
+        with open(log, "r", encoding="utf-8", errors="replace") as rf:
+            out = _current_boot(rf.read())
+    except OSError:
+        out = ""
+    return 0, out
+
+
 def run_qemu(tgt, build_dir):
+    if tgt.get("hw"):
+        return run_hw(tgt, build_dir)
     elf = os.path.join(build_dir, "asp.elf")
     if not os.path.exists(elf):
         elf = os.path.join(build_dir, "asp")

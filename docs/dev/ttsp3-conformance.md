@@ -205,6 +205,18 @@ python3 test/ttsp/run_ttsp.py --target polarfire_soc_kit --build-only --tap api_
 python3 test/ttsp/run_ttsp.py --target zcu102_arm64    --tap api_test/ASP   # 要 aarch64 toolchain
 ```
 
+### 実機実行（各ターゲット依存部フォルダに記録）
+
+本ファイルは **QEMU 実行**の設計・検証記録に限定する。**実機（実ボード）での TTSP3 結果は
+各ターゲット依存部フォルダ**（`target/<t>/`）に置く（FMP3 が `target/<t>/TTSP3_HOWTO.md` に
+実機手順を置くのと同じ方針）。ドライバ `test/ttsp/run_ttsp.py` 自体は QEMU/実機共通で、実機は
+`--target <t>_hw` を選ぶと QEMU の代わりに実機ローダ（例: Zybo は xsct/Vitis）で実走行する。
+
+| ターゲット | 実機結果ドキュメント |
+|---|---|
+| Zybo Z7（Cortex-A9・xsct/Vitis） | [`target/zybo_z7_gcc/TTSP3_HOWTO.md`](../../target/zybo_z7_gcc/TTSP3_HOWTO.md) |
+| STM32MP257F-DK（Cortex-A35/AArch64・OpenOCD/SWD） | [`target/stm32mp257f_dk_arm64_gcc/TTSP3_HOWTO.md`](../../target/stm32mp257f_dk_arm64_gcc/TTSP3_HOWTO.md) |
+
 ### 残（本実装）
 
 - **zcu102 / polarfire の QEMU 実走行**：本開発機は aarch64 ツールチェーン・qemu-system-riscv64 未導入
