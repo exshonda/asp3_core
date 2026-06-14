@@ -221,6 +221,7 @@ python3 test/ttsp/run_ttsp.py --target zcu102_arm64    --tap api_test/ASP   # �
 |---|---|
 | Zybo Z7（Cortex-A9・xsct/Vitis） | [`target/zybo_z7_gcc/TTSP3_HOWTO.md`](../../target/zybo_z7_gcc/TTSP3_HOWTO.md) |
 | STM32MP257F-DK（Cortex-A35/AArch64・OpenOCD/SWD） | [`target/stm32mp257f_dk_arm64_gcc/TTSP3_HOWTO.md`](../../target/stm32mp257f_dk_arm64_gcc/TTSP3_HOWTO.md) |
+| PICO2 ARM（Cortex-M33/rp2350・OpenOCD/CMSIS-DAP） | [`target/pico2_arm_gcc/TTSP3_HOWTO.md`](../../target/pico2_arm_gcc/TTSP3_HOWTO.md) |
 
 ### 残（本実装）
 

@@ -320,6 +320,7 @@ def run_hw_openocd_swd(tgt, build_dir):
     serial = os.environ.get("TTSP_HW_SERIAL", hw["serial"])
     baud = str(hw.get("baud", 115200))
     cap = int(os.environ.get("TTSP_HW_CAPTURE", hw.get("capture", 45)))
+    ninja_target = hw.get("ninja_target", "swd-run")
     log = os.path.join(build_dir, "uart.log")
 
     #  シリアルを raw 設定（失敗は無視＝既に設定済みのことがある）
@@ -330,9 +331,10 @@ def run_hw_openocd_swd(tgt, build_dir):
         catp = subprocess.Popen(["timeout", str(cap), "cat", serial],
                                 stdout=lf, stderr=subprocess.DEVNULL)
         time.sleep(1)
-        #  既存 run.cmake の swd-run（OpenOCD だけでロード＆実行）を同期実行．
-        #  内部の reset run + sleep で ~8s かかってから resume → カーネル起動．
-        run(["ninja", "-C", build_dir, "swd-run"], timeout=120)
+        #  既存 run.cmake のロード＆実行ターゲットを同期実行（OpenOCD 経由）．
+        #  stm32mp2=swd-run（reset run→load→resume），pico2=run（program verify
+        #  reset exit）．いずれも完了で OpenOCD が終了しボードは走り続ける．
+        run(["ninja", "-C", build_dir, ninja_target], timeout=120)
         #  完走マーカを「今回ブート分」（最後のバナー以降）に限定して検出．
         deadline = time.time() + cap
         while time.time() < deadline and catp.poll() is None:
