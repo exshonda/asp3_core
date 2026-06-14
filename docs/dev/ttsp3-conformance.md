@@ -151,16 +151,21 @@ python3 test/ttsp/run_ttsp.py --only yaml --tap api_test/ASP
 
 TTSP3 が同梱する ASP ターゲットライブラリは `zybo_z7_gcc`・`lpc55s69evk_gcc`・`nucleo_f401re_gcc`
 の3つのみで、asp3_core の mps2/zcu102/polarfire 用は無い。**TTSP3 不変方針のため、各ターゲットの
-TTSP ターゲット資産を asp3_core 側 `test/ttsp/target/<t>/` に新設**（`ttsp_target_test.{c,h}`・
-空 `ttsp_target.cfg`）。汎用テストlib（`library/ASP/test`＝アーキ非依存）は TTSP3 のものを流用。
+TTSP ターゲット資産を asp3_core 側の各ターゲット依存部 `target/<t>/ttsp3/` に新設**
+（`ttsp_target_test.{c,h}`・空 `ttsp_target.cfg`、＋ドライバ用 `ttsp_target.py`）。
+汎用テストlib（`library/ASP/test`＝アーキ非依存）は TTSP3 のものを流用。
 
-#### 追加した asp3_core 側ターゲット資産
+> ターゲット定義（旧 `run_ttsp.py` 中央 `TARGETS`）と資産はすべて各依存部 `target/<t>/ttsp3/` に
+> 集約し、ドライバは `target/*/ttsp3/ttsp_target.py` を**自動探索**する（ターゲット追加時に共有
+> ドライバを編集しない）。
 
-| ファイル | 由来・要点 |
+#### 追加した asp3_core 側ターゲット資産（各依存部 `target/<t>/ttsp3/`）
+
+| フォルダ | 由来・要点 |
 |---|---|
-| `test/ttsp/target/mps2_an521_gcc/` | Cortex-M33。TTSP3 lpc55s69evk_gcc（同 arm_m）ベース。`RAISE_CPU_EXCEPTION=udf #0`、`get_stk`マクロ（USE_TSKINICTXB） |
-| `test/ttsp/target/zcu102_arm64_gcc/` | Cortex-A53。`RAISE_CPU_EXCEPTION=svc #0xF000`、USE_TSKINICTXB非定義のため`get_stk`マクロ無し（汎用lib が TINIB.stk 直参照） |
-| `test/ttsp/target/polarfire_soc_kit_gcc/` | RV64GC。`RAISE_CPU_EXCEPTION`＝未定義命令（圧縮命令対応）、`get_stk`マクロ無し |
+| `target/mps2_an521_gcc/ttsp3/` | Cortex-M33。TTSP3 lpc55s69evk_gcc（同 arm_m）ベース。`RAISE_CPU_EXCEPTION=udf #0`、`get_stk`マクロ（USE_TSKINICTXB） |
+| `target/zcu102_arm64_gcc/ttsp3/` | Cortex-A53。`RAISE_CPU_EXCEPTION=svc #0xF000`、USE_TSKINICTXB非定義のため`get_stk`マクロ無し（汎用lib が TINIB.stk 直参照） |
+| `target/polarfire_soc_kit_gcc/ttsp3/` | RV64GC。`RAISE_CPU_EXCEPTION`＝未定義命令（圧縮命令対応）、`get_stk`マクロ無し |
 
 各 `ttsp_target_test.c` は `stop_tick/start_tick/gain_tick` を no-op、`int_raise/cpuexc_raise` は
 SKIP モジュール専用（mps2 は実コール、polarfire の int_raise は PLIC 未提供で no-op）。

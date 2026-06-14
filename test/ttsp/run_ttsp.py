@@ -52,6 +52,7 @@
 #
 
 import argparse
+import glob
 import os
 import re
 import shutil
@@ -64,132 +65,49 @@ REPO_ROOT = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 
 #
-#  ターゲット定義
+#  ターゲット定義（自動探索）
+#
+#  各ターゲットの TTSP 定義はターゲット依存部 target/<t>/ttsp3/ttsp_target.py に
+#  置く（dict 名 TTSP_TARGETS）。本ドライバは target/*/ttsp3/ttsp_target.py を
+#  すべて読み込んで TARGETS を組み立てる＝中央の定義表を持たない（ターゲット追加時に
+#  本ファイルを編集しない）。各エントリの意味：
 #
 #  preset        … asp3_core の CMake プリセット名
 #  ttsp_target   … TTSP3 library/ASP/target/<ttsp_target> を使う場合のdir名
 #                  （TTSP3 が同梱するターゲット．zybo_z7 のみ）
 #  lib           … asp3_core 側に置く TTSP3 ターゲット資産の repo 相対パス
-#                  （TTSP3 が同梱しないターゲット用．test/ttsp/target/<t>）
+#                  （TTSP3 が同梱しないターゲット用．target/<t>/ttsp3）
 #                  ttsp_target と lib はどちらか一方を設定する．
-#  qemu          … QEMU 実行コマンド（{elf} を asp.elf の絶対パスに置換）
-#                  None の場合はホスト実行（./asp）
-#  unsupported_hw… 本ターゲットで実装していない TTSP ターゲット HW 関数の集合．
-#                  生成/同梱の out.c がこれらを呼ぶテストは **ビルド前に SKIP**
-#                  （no-op では必ず破綻する＝早送り/割込み/例外）．
-#  soft_hw       … no-op 実装の HW 関数の集合（stop_tick/start_tick）．これらを
-#                  呼ぶテストも基本は no-op で正しく通る（防御的呼び出し）が、
-#                  時刻凍結に依存する一部（timed-API のタイムアウト系）は破綻する．
-#                  そこで **実行して失敗した場合のみ SKIP に再分類**する
-#                  （HWタイマ制御依存＝本ターゲットでは未検証）．通れば PASS．
-#                  HW を一切使わないテストの失敗は真の FAIL として残す．
+#  qemu          … QEMU 実行コマンド（{elf} を asp.elf の絶対パスに置換）．
+#                  None かつ "hw" なしならホスト実行（./asp）
+#  hw            … 実機実行の設定（kind/serial/jtag_tcl/ps7_init/vitis_settings/
+#                  capture 等）．run_hw() が kind で分岐する．パスは repo 相対．
+#  unsupported_hw… 本ターゲットで未実装の TTSP ターゲット HW 関数の集合．生成/同梱の
+#                  out.c がこれらを呼ぶテストは **ビルド前に SKIP**（早送り/割込み/例外）．
+#  soft_hw       … no-op 実装の HW 関数（stop_tick/start_tick）．呼ぶテストは基本 no-op で
+#                  通るが、時刻凍結依存の一部は破綻＝**実行して失敗した場合のみ SKIP**．
+#                  HW を使わないテストの失敗は真の FAIL として残す．
+#  skip_modules  … モジュールごと未対応＝丸ごと SKIP（interrupt/exception 等）．
 #
-#  TTSP ターゲット HW 関数と依存テスト：
-#    ttsp_target_gain_tick  … HWタイマ早送り（cyclic/alarm/time_event＋全モジュールの
-#                             非タスクコンテキスト _ntc・タスク例外 _ten 変種）
-#    ttsp_int_raise         … 割込み発生（interrupt モジュール）
-#    ttsp_cpuexc_raise      … CPU例外発生（exception モジュール）
-#    ttsp_target_stop_tick  … 時刻凍結（timed-API のタイムアウト系・alarm/cyclic refer 等）
-#  skip_modules  … モジュールごと未対応＝丸ごと SKIP．interrupt/exception は
-#                  カーネル API（ras_int 等）・割込み/例外設定がターゲット依存で、
-#                  asp3_core 側資産（int_raise/cpuexc 未実装）では検証不能なため除外．
+#  TTSP ターゲット HW 関数：gain_tick（HWタイマ早送り）/ int_raise（割込み）/
+#  cpuexc_raise（CPU例外）/ stop_tick・start_tick（時刻凍結）．
 #
-TARGETS = {
-    "zybo_z7": {
-        "preset": "zybo_z7-qemu",
-        "ttsp_target": "zybo_z7_gcc",
-        "lib": None,
-        "qemu": ("qemu-system-arm -M xilinx-zynq-a9 -semihosting -m 512M "
-                 "-serial null -serial mon:stdio -nographic -kernel {elf}"),
-        "unsupported_hw": set(),   # zybo は全 HW 対応＝SKIP なし
-        "soft_hw": set(),
-        "skip_modules": set(),
-    },
-    #  Zybo Z7 実機（Cortex-A9）．QEMU の代わりに xsct(Vitis) で実機ロード＆実行し，
-    #  UART を別途キャプチャして "All check points passed." で判定する．
-    #  ハードは全 HW 対応（zybo_z7 と同様に SKIP なし）．連続再ロードは
-    #  rst -system でクリーンになるため正規化スタブ不要（TTSP3_HOWTO.md A 方式）．
-    "zybo_z7_hw": {
-        "preset": "zybo_z7",            # 実機ビルド（ZYBO_QEMU=OFF）
-        "ttsp_target": "zybo_z7_gcc",   # TTSP3 同梱の ASP ターゲットライブラリ
-        "lib": None,
-        "qemu": None,
-        "hw": {
-            "kind": "xsct_zybo",
-            #  実機ロード資産・結果は各ターゲット依存部フォルダに置く
-            #  （target/zybo_z7_gcc/ttsp3/, 結果は TTSP3_HOWTO.md）
-            "jtag_tcl": "target/zybo_z7_gcc/ttsp3/jtag.tcl",
-            "ps7_init": "target/zybo_z7_gcc/xilinx_sdk/zybo_z7_hw/ps7_init.tcl",
-            "serial": "/dev/ttyUSB1",   # FT2232 ch.B（$TTSP_HW_SERIAL で上書き可）
-            "baud": 115200,
-            "vitis_settings": "/usr/local/tools/Vitis/2024.2/settings64.sh",
-            "capture": 35,              # UART キャプチャ上限（秒．早期検出で短縮）
-        },
-        "unsupported_hw": set(),
-        "soft_hw": set(),
-        "skip_modules": set(),
-    },
-    "mps2_an521": {
-        "preset": "mps2_an521-qemu",
-        "ttsp_target": None,
-        "lib": "test/ttsp/target/mps2_an521_gcc",
-        "qemu": ("qemu-system-arm -M mps2-an521 -cpu cortex-m33 -kernel {elf} "
-                 "-semihosting -semihosting-config enable=on,target=native "
-                 "-nographic"),
-        "unsupported_hw": {"ttsp_target_gain_tick", "ttsp_int_raise",
-                           "ttsp_cpuexc_raise"},
-        "soft_hw": {"ttsp_target_stop_tick", "ttsp_target_start_tick"},
-        "skip_modules": {"interrupt", "exception"},
-    },
-    "zcu102_arm64": {
-        "preset": "zcu102_arm64-qemu",
-        "ttsp_target": None,
-        "lib": "test/ttsp/target/zcu102_arm64_gcc",
-        "qemu": ("qemu-system-aarch64 -machine xlnx-zcu102,secure=on -nographic "
-                 "-semihosting-config enable=on,target=native -kernel {elf}"),
-        "unsupported_hw": {"ttsp_target_gain_tick", "ttsp_int_raise",
-                           "ttsp_cpuexc_raise"},
-        "soft_hw": {"ttsp_target_stop_tick", "ttsp_target_start_tick"},
-        "skip_modules": {"interrupt", "exception"},
-    },
-    "polarfire_soc_kit": {
-        "preset": "polarfire_soc_kit-qemu",
-        "ttsp_target": None,
-        "lib": "test/ttsp/target/polarfire_soc_kit_gcc",
-        "qemu": ("qemu-system-riscv64 -machine microchip-icicle-kit -nographic "
-                 "-semihosting-config enable=on,target=native -bios none "
-                 "-kernel {elf}"),
-        "unsupported_hw": {"ttsp_target_gain_tick", "ttsp_int_raise",
-                           "ttsp_cpuexc_raise"},
-        "soft_hw": {"ttsp_target_stop_tick", "ttsp_target_start_tick"},
-        "skip_modules": {"interrupt", "exception"},
-    },
-    #  STM32MP257F-DK 実機（Cortex-A35 / AArch64）．QEMU の代わりに OpenOCD/SWD で
-    #  実機ロード＆実行する（既存 run.cmake の `swd-run` ターゲットを再利用＝OpenOCD
-    #  だけで reset→load→resume→shutdown．ボードは走り続ける）．UART(/dev/ttyACM0)
-    #  を別途キャプチャし "All check points passed." で判定する（判定ロジックは
-    #  QEMU 版と共通・_current_boot で最後のバナー以降に限定）．
-    #  AArch64＝zcu102_arm64 と同形の SKIP 規則（interrupt/exception を skip，
-    #  gain_tick/int_raise/cpuexc を unsupported，stop/start_tick を soft）．
-    #  前提：FSBL + landing pad 入り SD でボードが "Connect using OpenOCD" でハング
-    #  していること（target/stm32mp257f_dk_arm64_gcc/target_user.md §4-5）．
-    "stm32mp257f_dk_arm64_hw": {
-        "preset": "stm32mp257f_dk_arm64",     # 実機ビルド（QEMU 非対応ターゲット）
-        "ttsp_target": None,
-        "lib": "test/ttsp/target/stm32mp257f_dk_arm64_gcc",
-        "qemu": None,
-        "hw": {
-            "kind": "openocd_swd",
-            "serial": "/dev/ttyACM0",   # USART2/ST-LINK VCP（$TTSP_HW_SERIAL で上書き可）
-            "baud": 115200,
-            "capture": 45,              # UART キャプチャ上限（秒．swd-run 起動 ~8s 込み）
-        },
-        "unsupported_hw": {"ttsp_target_gain_tick", "ttsp_int_raise",
-                           "ttsp_cpuexc_raise"},
-        "soft_hw": {"ttsp_target_stop_tick", "ttsp_target_start_tick"},
-        "skip_modules": {"interrupt", "exception"},
-    },
-}
+def _load_target_configs():
+    """target/*/ttsp3/ttsp_target.py の TTSP_TARGETS を全て読み込んで結合する."""
+    targets = {}
+    pattern = os.path.join(REPO_ROOT, "target", "*", "ttsp3", "ttsp_target.py")
+    for path in sorted(glob.glob(pattern)):
+        ns = {}
+        with open(path, encoding="utf-8") as f:
+            exec(compile(f.read(), path, "exec"), ns)  # repo 管理下の定義のみ
+        spec = ns.get("TTSP_TARGETS")
+        if isinstance(spec, dict):
+            for name, t in spec.items():
+                targets[name] = t
+    return targets
+
+
+TARGETS = _load_target_configs()
 
 #  TTSP ターゲット HW 関数（out.c のスキャン対象）
 HW_FUNCS = ("ttsp_target_gain_tick", "ttsp_int_raise", "ttsp_cpuexc_raise",
