@@ -127,12 +127,22 @@ python3 test/ttsp/run_ttsp.py --list api_test/ASP
 | 範囲 | 件数 | 結果 |
 |---|---|---|
 | `api_test/ASP/staticAPI` 全件（error 113＋runtime 5＋yaml 20） | 138 | **138/138 PASS** |
-| `api_test/ASP/task_manage/act_tsk`（functional yaml） | 50 | **50/50 PASS** |
-| `api_test/ASP/{semaphore,eventflag,dataqueue}`（functional yaml） | 589 | **589/589 PASS** |
-| **合計（demonstrated）** | **777** | **777/777 PASS・FAIL 0** |
+| `api_test/ASP` functional 全件（`--only yaml`・ttg 生成→build→QEMU） | 1813 | **1813/1813 PASS** |
 
 ttg（Ruby 3.2.3）連携・静的APIエラー自動判定・runtime/QEMU 判定の全経路を実機 CMake+QEMU で確認。
-functional は全 1813 件のうち代表 4 モジュール（777件中 639件が yaml）を実走行＝0 失敗。
+
+#### functional 全 1813 件 通し走行（2026-06-14・zybo_z7-qemu）
+
+`api_test/ASP` 配下の functional yaml **全 1813 件**を ttg 生成→ビルド→QEMU 実行で通し、
+**1813/1813 PASS・FAIL 0・SKIP 0**（zybo_z7-qemu で全件 QEMU 上の `All check points passed.`）。
+
+```bash
+python3 test/ttsp/run_ttsp.py --only yaml --tap api_test/ASP
+#   == TTSP3 [zybo_z7] PASS=1813 FAIL=0 SKIP=0 / 1813 ==
+```
+
+逐次実行（1件＝独立 build dir、build 後に削除）。所要は環境により十数分〜数十分。
+これと staticAPI 138 件（うち error 113＝QEMU不要）を合わせ、**ASP api_test の自動判定が全件成立**。
 
 ### 残（本実装）
 
