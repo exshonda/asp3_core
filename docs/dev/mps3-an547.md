@@ -163,7 +163,7 @@ MVE は未着手（Step 2）．`target/mps3_an547_gcc/` を `mps2_an505_gcc` か
 | testexec スモーク（task1/sem1/flg1/tmevt1/hrt1） | ○ | **5/5 PASS** |
 | objdump FP 命令 | ○ | `vpush/vpop {s16-s31}`・`vldr d7`・`vstr` 生成．MVE 命令なし |
 | MVE VPR 退避（+mve ビルド・QEMU） | ○ | Step 2 参照 |
-| TTSP3 staticAPI | − | Step 1 範囲外（ttsp3 資産は番地/CPU を M55 へ更新済み・未実行） |
+| TTSP3 staticAPI | ○ | **PASS 100・FAIL 29・SKIP 9 / 138**（an505 と FAIL 内訳完全一致＝MVE arch 変更の影響なし。2026-06-16 実行） |
 
 ### Step 2（MVE(Helium) VPR 退避の復活・共通 arch）：完了（2026-06-16）
 

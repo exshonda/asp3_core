@@ -148,7 +148,7 @@ M4 化・`TTSP_INTNO_A〜F` を SIO 線 16/17 と衝突しない IRQ24〜29→IN
 | QEMU (mps2-an386) sample | ○ | バナー "ARM MPS2-AN386"・task1 周期実行 |
 | QEMU (mps2-an386) testexec | ○ | 6/6 PASS（task1/sem1/flg1/int1/tmevt1/hrt1） |
 | FP 命令（objdump） | ○ | `vldr`/`vstr`・ディスパッチャに `vpush`/`vpop {s16-s31}`（FPv4-SP 退避） |
-| TTSP3 staticAPI（error+runtime） | ○ | PASS 91/FAIL 29（an505 と同一・退行なし） |
+| TTSP3 staticAPI（全138件） | ○ | **PASS 100・FAIL 29・SKIP 9 / 138**（an505 と FAIL 内訳完全一致・退行なし。2026-06-16 実行） |
 | 既存 an505 回帰 | ○ | build OK・sample OK（arch 共通部 無改変） |
 
 ### DIVERGENCE_MAP との関連
