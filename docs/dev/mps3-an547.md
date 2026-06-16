@@ -164,6 +164,7 @@ MVE は未着手（Step 2）．`target/mps3_an547_gcc/` を `mps2_an505_gcc` か
 | objdump FP 命令 | ○ | `vpush/vpop {s16-s31}`・`vldr d7`・`vstr` 生成．MVE 命令なし |
 | MVE VPR 退避（+mve ビルド・QEMU） | ○ | Step 2 参照 |
 | TTSP3 staticAPI | ○ | **PASS 100・FAIL 29・SKIP 9 / 138**（an505 と FAIL 内訳完全一致＝MVE arch 変更の影響なし。2026-06-16 実行） |
+| TTSP3 functional（--only yaml） | ○ | **PASS 1174・FAIL 0・SKIP 639 / 1813**（an505/mps2 と一致＝MVE arch 変更後も全ディスパッチ経路で回帰なし。2026-06-16 実行） |
 
 ### Step 2（MVE(Helium) VPR 退避の復活・共通 arch）：完了（2026-06-16）
 

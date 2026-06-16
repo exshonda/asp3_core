@@ -195,7 +195,7 @@ SKIP モジュール専用（mps2 は実コール、polarfire の int_raise は 
 | mps2_an521 (M33) | mps2_an521-qemu | build+run | **PASS 1265・SKIP 639・FAIL 29**（functional FAIL 0／FAILは全て staticAPI 系）〔2026-06-14 時点。下記注参照〕 |
 | mps2_an505 (M33+FPU) | mps2_an505-qemu | build+run | **staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（an521 と FAIL 内訳一致＝退行なし）〔2026-06-16 置換後の再検証〕 |
 | mps2_an386 (M4/v7-M) | mps2_an386-qemu | build+run | **staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（an505 と FAIL 内訳完全一致＝退行なし）〔2026-06-16 新規〕 |
-| mps3_an547 (M55/v8.1-M+MVE) | mps3_an547-qemu | build+run | **staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（an505 と FAIL 内訳完全一致＝MVE arch 変更の影響なし）〔2026-06-16 新規〕 |
+| mps3_an547 (M55/v8.1-M+MVE) | mps3_an547-qemu | build+run | **functional PASS 1174・FAIL 0・SKIP 639 / 1813**＋**staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（functional FAIL 0／staticAPI FAIL 内訳まで an505 と完全一致＝MVE arch 変更の影響なし）〔2026-06-16 新規〕 |
 | polarfire (RV64GC) | polarfire_soc_kit-qemu | **build-only**（qemu-riscv64 未導入） | **PASS 1504・SKIP 423・FAIL 6**（全ビルド成立確認。FAILは staticAPI error系のみ） |
 
 > **2026-06-16 注**：M33 QEMU ターゲットを `mps2-an521`（SSE-200・CPU0 に FPU 無し）から
