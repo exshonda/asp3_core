@@ -65,6 +65,30 @@ extern void target_fput_initialize(void);
 void
 target_initialize(void)
 {
+#ifdef TOPPERS_SAFEG_M
+    /*
+     *  【SAFEG】SAU の設定（AN505 アドレス空間）。core_initialize() の
+     *  ITNS 全 NS 化 / AIRCR.PRIS より前に NS 領域を確定する。
+     *    R0: NSC(Secure gate veneer) 0x101FFE00..0x101FFFFF
+     *    R1: NS code  0x00200000..0x005FFFFF
+     *    R2: NS RAM   0x28200000..0x283FFFFF
+     *  その他は Secure（SAU 有効時の既定）。
+     */
+    sil_wrw_mem((uint32_t *)SAU_RNR, 0);
+    sil_wrw_mem((uint32_t *)SAU_RBAR, 0x101FFE00);
+    sil_wrw_mem((uint32_t *)SAU_RLAR,
+                (0x101FFFFF & SAU_RLAR_LADDR_MASK) | SAU_RLAR_NSC | SAU_RLAR_ENABLE);
+    sil_wrw_mem((uint32_t *)SAU_RNR, 1);
+    sil_wrw_mem((uint32_t *)SAU_RBAR, 0x00200000);
+    sil_wrw_mem((uint32_t *)SAU_RLAR,
+                (0x005FFFFF & SAU_RLAR_LADDR_MASK) | SAU_RLAR_ENABLE);
+    sil_wrw_mem((uint32_t *)SAU_RNR, 2);
+    sil_wrw_mem((uint32_t *)SAU_RBAR, 0x28200000);
+    sil_wrw_mem((uint32_t *)SAU_RLAR,
+                (0x283FFFFF & SAU_RLAR_LADDR_MASK) | SAU_RLAR_ENABLE);
+    sil_wrw_mem((uint32_t *)SAU_CTRL, SAU_CTRL_ENABLE);
+#endif /* TOPPERS_SAFEG_M */
+
     /*
      *  コア依存部の初期化（VTOR・例外優先度・FPU の設定）
      */

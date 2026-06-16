@@ -382,6 +382,18 @@ target_include_directories(asp
 )
 target_link_libraries(asp PRIVATE asp3 ${ASP3_LINK_LIBS})
 target_link_options(asp PRIVATE ${ASP3_LINK_OPTIONS})
+#  【SAFEG】CMSE Secure import library(secure_nsclib.o)を最終ELFリンク時に生成．
+#  Non-secure 側ビルドが Secure gate veneer を参照するために必要．
+#  cfg1_out(補助ELF)には付けない（cfg1_outは gate veneer を持たずリンク失敗するため）．
+#  implib は Secure gate(cmse_nonsecure_entry)を持つアプリ(test 等)でのみ生成可
+#  （gate が無いと ld が "no symbols" で失敗する）。gate を持つアプリのビルドで
+#  -DENABLE_SAFEG_IMPLIB=ON を指定する。素のサンプル(gate 無)では OFF のまま。
+option(ENABLE_SAFEG_IMPLIB "Generate CMSE import lib (app must have cmse_nonsecure_entry)" OFF)
+if(ENABLE_SAFEG_M AND ENABLE_SAFEG_IMPLIB)
+    set(SAFEG_NSCLIB ${CMAKE_BINARY_DIR}/secure_nsclib.o)
+    target_link_options(asp PRIVATE -Wl,--cmse-implib,--out-implib=${SAFEG_NSCLIB})
+    message(STATUS "[SAFEG] CMSE import lib -> ${SAFEG_NSCLIB}")
+endif()
 #  リンカスクリプトの変更で再リンクされるようにする（-Wl,-Tは依存に
 #  ならないため．忘れると.ld編集が反映されない）
 if(DEFINED ASP3_LDSCRIPT)
