@@ -174,4 +174,35 @@ delay_for_interrupt(void)
     Asm("nop" : : : "memory");
 }
 
+#ifdef TOPPERS_SAFEG_M
+/*
+ *  【SAFEG】Non-secure バンクレジスタのセット / アクセス権限チェック(tt命令)
+ */
+Inline void set_msp_ns(uint32_t val)
+{
+	Asm("msr msp_ns, %0" : : "r"(val) : "memory");
+}
+
+Inline void set_control_ns(uint32_t val)
+{
+	Asm("msr control_ns, %0" : : "r"(val) : "memory");
+}
+
+Inline void set_faultmask_ns(uint32_t val)
+{
+	Asm("msr faultmask_ns, %0" : : "r"(val) : "memory");
+}
+
+Inline bool_t is_secure(uintptr_t address)
+{
+	uint32_t result;
+	Asm("tt %0, %1" : "=r"(result) : "r"(address));
+	if (result & TT_RESP_S) {
+		return true;
+	} else {
+		return false;
+	}
+}
+#endif /* TOPPERS_SAFEG_M */
+
 #endif /* CORE_INSN_H */

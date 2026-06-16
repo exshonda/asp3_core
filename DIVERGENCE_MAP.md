@@ -51,7 +51,15 @@
 | `target/polarfire_soc_kit_gcc/` | 新規追加 | QEMU(microchip-icicle-kit)用RISC-Vターゲット（FMP3のPolarFire SoC Kit移植をASP3変換．経緯は`docs/dev/qemu-target-riscv.md`） | （上流に存在せず・衝突なし．FMP3側の更新は手動反映） | target(NEW) | — |
 | `arch/arm_m_gcc/common/core_support.S` | 改変【SAFEG】 | SafeG-M(デュアルOS)取り込み(M1)．`#ifdef TOPPERS_SAFEG_M` 7サイト(pendsv #1#2#3／svc #4#5／do_dispatch #6／dispatcher_0 #7)．BTASKのFPU退避skip(修正A)とNS向けbasepri制御 | **pendsv #3/svc #4の#elseは最脆弱・上流変更時要再確認**．残サイト⑧⑨(deactivate/usagefault)はM2 | arch【SAFEG】 | 3.7.2 |
 | `arch/arm_m_gcc/common/arm_m.h` | 改変【SAFEG】 | SafeG-M(M1)．`#error`ガード(SAFEG_M⇒TRUSTZONE必須)＋`EXC_RETURN_S`/`EXC_RETURN_NESTED`純追加(`#ifdef TOPPERS_ENABLE_TRUSTZONE`下) | C1: bare CPACR/FPCCR非持込(CPACR_BASE/FPCCR_ADDR使用)．SAU/SCB_NS等の純追加はM2 | arch【SAFEG】 | 3.7.2 |
-| `arch/arm_m_gcc/common/arch.cmake` | 改変【SAFEG】 | SafeG-M(M1)．`option(ENABLE_SAFEG_M OFF)`→`-DTOPPERS_SAFEG_M`＋TrustZone強制 | 既定OFFで素ASP3不変 | arch【SAFEG】 | 3.7.2 |
+| `arch/arm_m_gcc/common/arch.cmake` | 改変【SAFEG】 | SafeG-M(M1/M2)．`option(ENABLE_SAFEG_M OFF)`→`-DTOPPERS_SAFEG_M`＋TrustZone強制(M1)．SAFEG時 `-mcmse`(M2, cmse_nonsecure_call用) | 既定OFFで素ASP3不変．CMSE import lib(--out-implib)はNS連携時に最終ELFのみへ(M3) | arch【SAFEG】 | 3.7.2 |
+| `arch/arm_m_gcc/common/core_support.S` | 改変【SAFEG】(M2) | M2: ⑦ deactivate群(usagefault_handler/deactivate_nonsecure_interrupts ほか)をファイル末尾に自己完結追加(`#ifdef TOPPERS_SAFEG_M`) | NS割込デアクティベートの核心．依存(SCB_NS/ITNS/IABR/launch_ns等)は他サイトで充足 | arch【SAFEG】 | 3.7.2 |
+| `arch/arm_m_gcc/common/arm_m.h` | 改変【SAFEG】(M2) | M2: SAU_*/SCB_NS_*/SCB_AIRCR*/SCB_SCR*/SCB_UFSR/NSACR*/NVIC_ITNS0/NVIC_NS_IABR0/FPCCR_NS_ADDR/TT_RESP_S を純追加(`#ifdef`) | C1: FPCCR_NSは`FPCCR_NS_ADDR`命名(bare禁止) | arch【SAFEG】 | 3.7.2 |
+| `arch/arm_m_gcc/common/core_kernel_impl.c` | 改変【SAFEG】(M2) | M2: core_initialize(Deep sleep禁止/NSACR/AIRCR.PRIS/ITNS全NS化)・config_int(IRQをSecureへ戻す)・launch_ns本体 | SAUリージョン値はtarget側(分類D)．launch_nsは`FPCCR_NS_ADDR`(C1)・`-mcmse`前提 | arch【SAFEG】 | 3.7.2 |
+| `arch/arm_m_gcc/common/core_kernel_impl.h` | 改変【SAFEG】(M2) | M2: `IIPM_ENAALL`(0x80)・`INT_IPM/EXT_IPM`シフト(7起点)を`#ifdef/#else`swap＋launch_ns/deactivate/usagefault_handler extern | chip(TBITW_IPRI)と必ず同期．波及最大 | arch【SAFEG】 | 3.7.2 |
+| `arch/arm_m_gcc/common/core_insn.h` | 改変【SAFEG】(M2) | M2: set_msp_ns/set_control_ns/set_faultmask_ns/is_secure を`#ifdef`追加 | — | arch【SAFEG】 | 3.7.2 |
+| `arch/arm_m_gcc/common/core_rename.{def,h}`,`core_unrename.h` | 改変【SAFEG】(M2) | M2: launch_ns/deactivate_nonsecure_interrupts/usagefault_handler の識別子追加 | rename.hは静的生成物のため手追記 | arch【SAFEG】 | 3.7.2 |
+| `arch/arm_m_gcc/common/core_kernel.py` | 改変【SAFEG】(M2) | M2: ベクタ#6(UsageFault)を SAFEG時`_kernel_usagefault_handler`へ(生成Cに`#ifdef`出力) | py自体はSAFEG非依存(Cマクロで分岐) | arch【SAFEG】 | 3.7.2 |
+| `arch/arm_m_gcc/imxrt600/chip_kernel.h`,`chip_sil.h` | 改変【SAFEG】(M2) | M2: `TMIN_INTPRI`(-3)/`TBITW_IPRI`(2)を`#ifdef/#else`swap | common impl.hと同期必須 | chip【SAFEG】 | 3.7.2 |
 
 ---
 

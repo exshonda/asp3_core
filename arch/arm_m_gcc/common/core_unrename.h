@@ -47,5 +47,10 @@
 #undef current_iipm_enable_mask
 #undef iipm_enable_irq_tbl
 
+/* 【SAFEG】SafeG-M デュアルOS */
+#undef launch_ns
+#undef deactivate_nonsecure_interrupts
+#undef usagefault_handler
+
 
 #endif /* TOPPERS_CORE_RENAME_H */

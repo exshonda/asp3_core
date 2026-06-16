@@ -246,9 +246,17 @@ core_initialize(void)
 	 */
 	sil_andw((void *)CCR_BASE, ~CCR_STKALIGN);
 
+#ifdef TOPPERS_SAFEG_M
+	/* 【SAFEG】Non-secureからのDeep sleepを禁止 */
+	sil_wrw_mem((uint32_t *)SCB_SCR, SCB_SCR_SLEEPDEEPS);
+#endif /* TOPPERS_SAFEG_M */
+
 #ifdef TOPPERS_FPU_ENABLE
 	sil_orw((uint32_t *)CPACR_BASE, CPACR_FPU_ENABLE);
 	sil_wrw_mem((uint32_t *)FPCCR_ADDR, FPCCR_INIT);
+#ifdef TOPPERS_SAFEG_M
+	sil_wrw_mem((uint32_t *)NSACR, NSACR_FPU_ENABLE);   /* 【SAFEG】NSへFPU許可 */
+#endif /* TOPPERS_SAFEG_M */
 #endif /* TOPPERS_FPU_ENABLE */
 
 	/*
@@ -257,6 +265,15 @@ core_initialize(void)
 	for (int i = 0; i < tnum_tsk; ++i) {
 		tcb_table[i].tskctxb.stk_top = tinib_table[i].tskinictxb.stk_top;
 	}
+
+#ifdef TOPPERS_SAFEG_M
+	/* 【SAFEG】Non-secure 割り込みの優先度を下半分に設定(AIRCR.PRIS) */
+	sil_wrw_mem((uint32_t *)SCB_AIRCR, SCB_AIRCR_DIS_GROUP);
+	/* 【SAFEG】一旦全ての割り込みを Non-secure に設定 */
+	for (int i = 0; i <= (TMAX_INTNO - 16) / 32; ++i) {
+		sil_wrw_mem((uint32_t *)(NVIC_ITNS0 + 4 * i), 0xFFFFFFFF);
+	}
+#endif /* TOPPERS_SAFEG_M */
 #else
 	set_exc_int_priority(EXCNO_SVCALL, 0);
 	set_exc_int_priority(EXCNO_PENDSV, INT_NVIC_PRI(-1));
@@ -311,6 +328,14 @@ config_int(INTNO intno, ATR intatr, PRI intpri)
 	if ((intatr & TA_ENAINT) != 0U) {
 		(void)enable_int(intno);
 	}
+
+#ifdef TOPPERS_SAFEG_M
+	/* 【SAFEG】CFG_INTで設定した割り込みを Secure に戻す */
+	if (intno > IRQNO_SYSTICK) {
+		const uint32_t irqn = intno - 16;
+		sil_andw((uint32_t *)(NVIC_ITNS0 + 4 * (irqn / 32)), ~(1 << (irqn % 32)));
+	}
+#endif /* TOPPERS_SAFEG_M */
 }
 
 /*
@@ -390,3 +415,28 @@ default_int_handler(void)
 	target_exit();
 }
 #endif /* OMIT_DEFAULT_INT_HANDLER */
+
+#ifdef TOPPERS_SAFEG_M
+/*
+ *  【SAFEG】Non-secure の起動
+ *    exinf = Non-secure ベクタテーブル先頭(=TOPPERS_NS_VTOR)
+ */
+typedef void __attribute__((cmse_nonsecure_call)) (*nonsecure_call_t)(void);
+void launch_ns(intptr_t exinf)
+{
+	set_faultmask_ns(1); /* Non-secure の割り込みを禁止 */
+	set_control_ns(0); /* 特権かつスタックポインタを MSP に設定 */
+	set_msp_ns(*(uint32_t *)exinf); /* スタックポインタの初期値を設定 */
+	sil_wrw_mem((uint32_t *)SCB_NS_VTOR, exinf); /* ベクタテーブルオフセットを設定 */
+	/*
+	 * Non-secure 側で Lazy stack preservation がアクティブだと，Secure 側の
+	 * 割り込みで Non-secure タスクを終了した場合に FPCCR_NS.LSPACT=1 となり，
+	 * 次回起動時の浮動小数点命令で無効スタックへ退避され Fault する．
+	 * これを防ぐため FPCCR_NS.LSPACT をクリアする．
+	 */
+	sil_wrw_mem((uint32_t *)FPCCR_NS_ADDR, FPCCR_INIT);
+	set_basepri(0);
+	nonsecure_call_t entry = (nonsecure_call_t)*(uint32_t *)(exinf + 4);
+	entry();
+}
+#endif /* TOPPERS_SAFEG_M */

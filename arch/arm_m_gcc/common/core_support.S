@@ -611,3 +611,179 @@ ALABEL(sil_dly_nse1)
 	cmp   r0, #0
 	bgt   sil_dly_nse1
 	bx    lr
+
+/* 【SAFEG】#7 Non-secure 割込みデアクティベート群(usagefault_handler /
+ *  deactivate_nonsecure_interrupts ほか)．SafeG-M デュアルOS の核心ルーチン．
+ *  自己完結ブロックとしてファイル末尾に追加(M2 spec §1.1⑦)． */
+#ifdef TOPPERS_SAFEG_M
+
+	ATHUMB(usagefault_handler)
+	AGLOBAL(usagefault_handler)
+ALABEL(usagefault_handler)
+	/*
+	 * Usagefault 例外ハンドラ
+	 * 通常の Usagefault であるか，deactivate_first_entry で意図的に発生させた
+	 * Usagefault かを判定する．
+	 * 意図的な Usagefault であるかは次の手順で判定する．
+	 * 1. 例外が Secure の Thread モードで発生し，
+	 *    コンテキスト保存に PSP が使用されたことを確かめる．
+	 * 2. 戻り先が deactivate_first_entry の udf 命令であることを確かめる．
+	 * これらに当てはまらない場合は core_exc_entry へ分岐する．
+	 *
+	 * このハンドラは最高優先度で実行されるので，なるべく早く終了させる．
+	 */
+	and   r0, lr, #(EXC_RETURN_S | EXC_RETURN_THREAD | EXC_RETURN_PSP)
+	cmp   r0, #(EXC_RETURN_S | EXC_RETURN_THREAD | EXC_RETURN_PSP)
+	bne   core_exc_entry
+	mrs   r0, psp
+	ldr   r1, [r0, #(4 * 6)]
+	ldr   r2, =deactivate_udef_entry
+	cmp   r1, r2
+	bne   core_exc_entry
+	/* この時点で意図的な Usagefault であることが確定 */
+	/* udf の次命令にリターンするよう設定 */
+	add   r1, #2
+	str   r1, [r0, #(4 * 6)]
+	/* Usagefault のステータスをクリア */
+	ldr   r0, =#SCB_UFSR
+	mov   r1, #1
+	strh  r1, [r0]
+	/* 1回目はダミーのレジスタ情報をスタックに積む */
+	/* NVIC_IABR は読み取り専用なので安全 */
+	push  {r4, r5}
+	ATHUMB(deactivate_nest_entry)
+ALABEL(deactivate_nest_entry)
+	/* MSP にダミーコンテキストを準備 */
+	stmfd sp!, {r7, r8} /* RETPSR と戻り先番地を設定 */
+	sub   sp, #(4 * 6)
+	ldr   pc, =#EXC_RETURN_NESTED /* 例外リターンで deactivate_exc_point へ */
+
+/*
+ * Non-secure でアクティブなままになっている割り込みを完了させる．
+ * アクティブな割り込みがなければ，このルーチンは終始 Thread モードで動作する．
+ * 最初にアクティブな割り込みを発見すると Usagefault を発生させ，Handler モードへ移行する．
+ * その後 Usagefault のハンドラから対象の割り込みのハンドラへ移行し実行を続ける．
+ * 2回目にアクティブな割り込みを発見した場合はそのまま次の割り込みハンドラへ移行する．
+ * これを繰り返し最後の割り込みハンドラから Thread モードへリターンし，終了する．
+ * Handler モードである間の実行優先度は Usagefault のハンドラである間を除いて 0x80 である．
+ * すなわち，ほとんど全ての時間でこのルーチンは割り込みによりプリエンプト可能である．
+ *
+ * Thread モードと 複数の Handler モードでレジスタの値を共有するため，
+ * 次のように非スクラッチレジスタを利用する．
+ * r4  : NVIC non-secure active bit register 0
+ * r5  : loop counter
+ * r6  : アクティブな割り込みに対する分岐先
+ * r7  : 例外リターンの戻り先 (deactivate_exc_point)
+ * r8  : RETPSR
+ * r9  : 処理済みの割り込みを分別するマスク
+ * r10 : NVIC target nonsecure register のバックアップ
+ * r11 : リターン先アドレス
+ *
+ * なお，r0 は launch_ns の引数として使用するため変更できない．
+ */
+	ATHUMB(deactivate_nonsecure_interrupts)
+	AGLOBAL(deactivate_nonsecure_interrupts)
+ALABEL(deactivate_nonsecure_interrupts)
+	/* Non-secure の例外をデアクティベート */
+	ldr  r1, =#SCB_NS_SHCSR /* SCB_NS.SHCSR */
+	mov  r2, #0
+	str  r2, [r1]
+	ldr  r4, =#NVIC_NS_IABR0 /* r4 は常に NVIC_NS.IABR0 */
+	mov  r5, #0 /* r5 は 0 から 15 の間で変化させる */
+	/* 初めて例外を発見した際は deactivate_first_entry に分岐する */
+	ldr  r6, =deactivate_first_entry
+	ldr  r7, =deactivate_exc_point /* r7 は常に deactivate_exc_point */
+	/* アクティブな例外がなかった場合はそのまま launch_ns に分岐 */
+	ldr  r11, =launch_ns
+ALABEL(deactivate_loop_start)
+	cmp  r5, #16
+	blt  deactivate_loop_body
+	/* NVIC_NS.IABR を全て調べ終わるとここに来る */
+	/* 戻り先は launch_ns または 例外リターンにより deactivate_udef_entry の udf 命令後 */
+	bx   r11
+	/* for (r5 = 0; r5 < 16; ++r5) { */
+ALABEL(deactivate_loop_body)
+	mvn  r9, #0 /* 新しい NVIC_NS.IABRn に対してマスクを全て 1 に初期化 */
+ALABEL(deactivate_loop2_start)
+	/*
+	 * 割り込みのアクティブ状態を取得してマスクする．
+	 * いま，IRQ A, B が同じ NVIC_NS.IABR 内でアクティブであったとする．
+	 * 最初ここに到達した際は A, B 両方がアクティブであり，A の割り込みハンドラへ分岐する．
+	 * 次にここに到達した際は，A の割り込みハンドラとして実行されることになる．
+	 * この時まだ A はアクティブであるから，処理の対象から A を外す必要がある．
+	 * そこで 2 回目は A をマスクすれば，B の割り込みハンドラへ分岐することができる．
+	 */
+	ldr  r1, [r4, r5, lsl #2]
+	and  r1, r9
+	cbz  r1, deactivate_loop_end /* アクティブな例外がなければ次のレジスタへ */
+	/* 最上位の 1 であるビットを処理対象にする．*/
+	mov  r2, #31
+	clz  r1, r1
+	sub  r1, r2, r1 /* r1 に最上位ビットが何ビット目であるかが格納される */
+	mov  r10, #1
+	lsl  r10, r1 /* r10 が最上位ビットに等しくなる (1 << r1) */
+	bic  r9, r10 /* マスクを更新し，この割り込みを次回の処理対象から外す */
+	mov  r3, #32
+	mul  r3, r5
+	add  r1, r3 /* r1 が割り込み番号になる */
+	ldr  r3, =#NVIC_PRI0 /* NVIC priority register */
+	mov  r12, #IIPM_ENAALL
+	/*
+	 * 優先度を Thread モードと同じにする．
+	 * Secure の割り込みでプリエンプト可能であり，ペンディングされても発行されない．
+	 */
+	strb r12, [r3, r1]
+	/* 一旦割り込みの対象を Secure にする */
+	ldr  r3, =#NVIC_ITNS0
+	ldr  r2, [r3, r5, lsl #2]
+	bic  r12, r2, r10
+	str  r12, [r3, r5, lsl #2]
+	add  r8, r1, #16 /* r8 が例外番号になる */
+	movt r8, #(EPSR_T >> 16)
+	/*
+	 * 初めてここに到達した際は deactivate_first_entry に分岐し，Handler モードへ移行する．
+	 * 2 回目以降はすでに Handler モードであるから，直接 deactivate_nest_entry に分岐する．
+	 */
+	bx   r6
+	ATHUMB(deactivate_exc_point)
+ALABEL(deactivate_exc_point)
+	/* ここへは 1 つ前の命令から例外リターンで分岐する */
+	/* 例外リターンにより inactive となった 1 つ前の割り込みを Non-secure に戻す */
+	pop  {r1, r2}
+	ldr  r3, [r1]
+	orr  r2, r3
+	str  r2, [r1]
+	/* 次回の例外リターン後に Non-secure に戻せるよう，今回の割り込みをスタックに保存 */
+	ldr  r1, =#NVIC_ITNS0
+	lsl  r2, r5, #2
+	add  r1, r2
+	push {r1, r10}
+	/* これらスタック操作は全て MSP に対して行われることに気を付ける */
+	b    deactivate_loop2_start /* 次の割り込みを調べる */
+	/* } */
+ALABEL(deactivate_loop_end)
+	add  r5, #1
+	b    deactivate_loop_start /* 次の NVIC_NS.IABRn へ */
+
+	ATHUMB(deactivate_first_entry)
+ALABEL(deactivate_first_entry)
+	/* ここへは最初にアクティブな割り込みを発見した際に分岐する */
+	/* 次回以降は直接 deactivate_nest_entry へ分岐させる */
+	ldr  r6, =deactivate_nest_entry
+	/* 終了時は直接 launch_ns ではなく deactivate_exit へ分岐させる */
+	ldr  r11, =deactivate_exit
+ALABEL(deactivate_udef_entry)
+	udf  #0 /* Usagefault を発生させる */
+	/* ここへは deactivate_exit から例外リターンで分岐する */
+	/* 最後の割り込みを Non-secure に戻す */
+	ldr  r1, [r4]
+	orr  r5, r1
+	str  r5, [r4]
+	b    launch_ns /* launch_ns へ分岐 */
+
+	ATHUMB(deactivate_exit)
+ALABEL(deactivate_exit)
+	pop  {r4, r5} /* 最後の割り込みを Non-secure に戻すためスタックから復帰 */
+	ldr  pc, =#EXC_RETURN /* 例外リターンで deactivate_udef_entry の udf 命令後へ */
+
+#endif /* TOPPERS_SAFEG_M */

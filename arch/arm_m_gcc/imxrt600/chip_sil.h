@@ -57,7 +57,11 @@
 /*
  * 割込み優先度のビット幅(core_sil.hで参照するためここで定義)
  */
+#ifdef TOPPERS_SAFEG_M
+#define TBITW_IPRI 2   /* 【SAFEG】NSへ1本譲るためSecure側ビット幅 3→2 */
+#else
 #define TBITW_IPRI 3
+#endif /* TOPPERS_SAFEG_M */
 
 /*
  * プロセッサで共通な定義 

@@ -197,6 +197,11 @@
  */
 #define NVIC_VECTTBL        0xE000ED08
 
+#ifdef TOPPERS_SAFEG_M
+/* 【SAFEG】Interrupt Target Non-secure / NS Interrupt Active Bit Register */
+#define NVIC_ITNS0          0xE000E380
+#define NVIC_NS_IABR0       0xE002E300
+#endif /* TOPPERS_SAFEG_M */
 
 /*
  *  SYSTIC関連レジスタ
@@ -222,6 +227,23 @@
 #define CCR_STKALIGN    0x00000200
 #define CPACR_BASE      0xE000ED88U                            /*!< System Control Space Base Address  */
 
+#ifdef TOPPERS_SAFEG_M
+/*
+ * 【SAFEG】System Control Block (AIRCR/SCR/UFSR と NS バンク VTOR/SHCSR)
+ */
+#define SCB_AIRCR              0xE000ED0C
+#define SCB_AIRCR_VECTKEY      (0x5FA << 16)
+#define SCB_AIRCR_PRIS         (1 << 14)
+#define SCB_AIRCR_PRIGROUP_7   (0b111 << 8)
+#define SCB_AIRCR_SYSRESETREQS (1 << 3)
+#define SCB_AIRCR_DIS_GROUP    (SCB_AIRCR_VECTKEY | SCB_AIRCR_PRIS | SCB_AIRCR_SYSRESETREQS)
+#define SCB_SCR                0xE000ED10
+#define SCB_SCR_SLEEPDEEPS     (1 << 3)
+#define SCB_UFSR               0xE000ED2A
+#define SCB_NS_VTOR            0xE002ED08
+#define SCB_NS_SHCSR           0xE002ED24
+#endif /* TOPPERS_SAFEG_M */
+
 /*
  * FPU関連レジスタ
  *
@@ -230,12 +252,22 @@
  * アドレスは既存の CPACR_BASE（=0xE000ED88U）と FPCCR_ADDR を使う。
  */
 #define FPCCR_ADDR 0xE000EF34
+#ifdef TOPPERS_SAFEG_M
+/* 【SAFEG】FPCCR の NS バンク（C1規則: bare FPCCR_NS でなく _ADDR 命名） */
+#define FPCCR_NS_ADDR 0xE002EF34
+#endif /* TOPPERS_SAFEG_M */
 
 #define CPACR_FPU_ENABLE       0x00f00000
 #define FPCCR_NO_PRESERV       0x00000000
 #define FPCCR_NO_LAZYSTACKING  0x80000000
 #define FPCCR_LAZYSTACKING     0xC0000000
 #define FPCCR_LSPACT           0x00000001
+
+#ifdef TOPPERS_SAFEG_M
+/* 【SAFEG】Non-secure Access Control Register（NS への FPU 許可） */
+#define NSACR 0xE000ED8C
+#define NSACR_FPU_ENABLE       0x00000C00
+#endif /* TOPPERS_SAFEG_M */
 
 /*
  *  FPCCRの初期値
@@ -247,5 +279,26 @@
 #elif defined(TOPPERS_FPU_LAZYSTACKING)
 #define FPCCR_INIT FPCCR_LAZYSTACKING
 #endif /* defined(TOPPERS_FPU_NO_PRESERV) */
+
+#ifdef TOPPERS_SAFEG_M
+/*
+ *  【SAFEG】Security Attribution Unit
+ */
+#define SAU_CTRL            0xE000EDD0
+#define SAU_CTRL_ALLNS      (1 << 1)
+#define SAU_CTRL_ENABLE     (1 << 0)
+#define SAU_TYPE            0xE000EDD4
+#define SAU_RNR             0xE000EDD8
+#define SAU_RBAR            0xE000EDDC
+#define SAU_RLAR            0xE000EDE0
+#define SAU_RLAR_LADDR_MASK 0xFFFFFFE0
+#define SAU_RLAR_NSC        (1 << 1)
+#define SAU_RLAR_ENABLE     (1 << 0)
+
+/*
+ *  【SAFEG】TT 命令レスポンス（Secure 判定ビット）
+ */
+#define TT_RESP_S (1 << 22)
+#endif /* TOPPERS_SAFEG_M */
 
 #endif  /* ARM_M_H */

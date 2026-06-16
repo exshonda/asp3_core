@@ -91,6 +91,19 @@ for excno in range(2, 15):
         kernelCfgC.add(f"    (FP)({GenResVectVal(13)}),")
     elif excno == 14:
         kernelCfgC.add("    (FP)(_kernel_pendsv_handler),      /* 14 PendSV handler */")
+    elif excno == 6:
+        # 【SAFEG】UsageFault は SafeG-M 時 NS割込デアクティベート用の
+        #  usagefault_handler に差し替え（生成Cに #ifdef を出力）。
+        exc = cfgData.get("DEF_EXC", {}).get(excno)
+        if exc and (exc["excatr"] & TA_DIRECT) != 0:
+            nonsafeg = f"(FP)({exc['exchdr']})"
+        else:
+            nonsafeg = "(FP)(_kernel_core_exc_entry)"
+        kernelCfgC.add("#ifdef TOPPERS_SAFEG_M")
+        kernelCfgC.add("    (FP)(_kernel_usagefault_handler), /* 6 UsageFault (SAFEG) */")
+        kernelCfgC.add("#else")
+        kernelCfgC.add(f"    {nonsafeg}, /* 6 */")
+        kernelCfgC.add("#endif")
     else:
         exc = cfgData.get("DEF_EXC", {}).get(excno)
         if exc and (exc["excatr"] & TA_DIRECT) != 0:

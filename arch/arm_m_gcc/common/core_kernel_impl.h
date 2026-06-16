@@ -176,8 +176,14 @@ sense_context(void)
  *  割込み優先度のビット幅(TBITW_IPRI)が 8 の場合は，内部優先度 255
  *  は，外部優先度 -1 に対応する．
  */
+#ifdef TOPPERS_SAFEG_M
+/* 【SAFEG】NSへ優先度ビットを1本譲る(AIRCR.PRIS)ためシフト量を7起点に */
+#define EXT_IPM(iipm)   (CAST(PRI,((iipm >> (7 - TBITW_IPRI)) - (1 << TBITW_IPRI))))       /* 内部表現を外部表現に */
+#define INT_IPM(ipm)    (((1 << TBITW_IPRI) - CAST(uint8_t, -(ipm)))  << (7 - TBITW_IPRI)) /* 外部表現を内部表現に */
+#else /* TOPPERS_SAFEG_M */
 #define EXT_IPM(iipm)   (CAST(PRI,((iipm >> (8 - TBITW_IPRI)) - (1 << TBITW_IPRI))))       /* 内部表現を外部表現に */
 #define INT_IPM(ipm)    (((1 << TBITW_IPRI) - CAST(uint8_t, -(ipm)))  << (8 - TBITW_IPRI)) /* 外部表現を内部表現に */
+#endif /* TOPPERS_SAFEG_M */
 
 /*
  *  CPUロック状態での割込み優先度マスク
@@ -197,7 +203,11 @@ sense_context(void)
  *
  *  BASEPRIに '0' を設定することで，全割込みを許可する．
  */
+#ifdef TOPPERS_SAFEG_M
+#define IIPM_ENAALL  (0x80)   /* 【SAFEG】NS割込みをマスクする内部優先度(0x80) */
+#else
 #define IIPM_ENAALL  (0)
+#endif /* TOPPERS_SAFEG_M */
 
 
 #ifndef TOPPERS_MACRO_ONLY
@@ -815,6 +825,16 @@ extern void default_exc_handler(void *p_excinf);
  * 未登録の割込みが発生した場合に呼び出される
  */
 extern void default_int_handler(void);
+
+#ifdef TOPPERS_SAFEG_M
+/*
+ * 【SAFEG】Non-secure 割込みデアクティベート(BTASK本体) / Non-secure 起動 /
+ *  UsageFault ハンドラ(deactivate の意図的 UsageFault を捕捉)
+ */
+extern void deactivate_nonsecure_interrupts(void);
+extern void launch_ns(intptr_t exinf);
+extern void usagefault_handler(void);
+#endif /* TOPPERS_SAFEG_M */
 
 #endif /* TOPPERS_MACRO_ONLY */
 #endif /* TOPPERS_CORE_KERNEL_IMPL_H */

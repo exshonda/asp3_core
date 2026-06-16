@@ -55,7 +55,11 @@
  * TMIN_INTPRIの定義を変更することで，このレベルよりも高い割込み優先度
  * を持つものをカーネル管理外の割込みとするかを変更できる．
  */
+#ifdef TOPPERS_SAFEG_M
+#define TMIN_INTPRI (-3) /* 【SAFEG】Secure有効ビット縮小(3→2)で最高値 -7→-3 */
+#else
 #define TMIN_INTPRI (-7) /* 割込み優先度の最小値（最高値）*/
+#endif /* TOPPERS_SAFEG_M */
 
 
 /*

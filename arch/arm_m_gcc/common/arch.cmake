@@ -35,5 +35,10 @@ list(APPEND ASP3_ARCH_C_FILES
 option(ENABLE_SAFEG_M "Enable SafeG-M dual-OS monitor (implies TrustZone)" OFF)
 if(ENABLE_SAFEG_M)
     list(APPEND ASP3_COMPILE_DEFS TOPPERS_SAFEG_M TOPPERS_ENABLE_TRUSTZONE)
-    message(STATUS "[SAFEG] SafeG-M enabled: -DTOPPERS_SAFEG_M (+TrustZone forced)")
+    # 【SAFEG】Secure gate / cmse_nonsecure_call(launch_ns) のため -mcmse 必須．
+    #  CMSE import lib(secure_nsclib.o) の生成は NS ビルド連携(M3)で最終実行ファイルに
+    #  対してのみ付与する(cfg1_out 等 cmse entry を持たない補助ELFで失敗するため)．
+    list(APPEND ASP3_COMPILE_OPTIONS -mcmse)
+    list(APPEND ASP3_LINK_OPTIONS -mcmse)
+    message(STATUS "[SAFEG] SafeG-M enabled: -DTOPPERS_SAFEG_M -mcmse (+TrustZone forced)")
 endif()

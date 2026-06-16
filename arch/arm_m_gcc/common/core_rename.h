@@ -46,5 +46,10 @@
 #define current_iipm_enable_mask	_kernel_current_iipm_enable_mask
 #define iipm_enable_irq_tbl			_kernel_iipm_enable_irq_tbl
 
+/* 【SAFEG】SafeG-M デュアルOS */
+#define launch_ns					_kernel_launch_ns
+#define deactivate_nonsecure_interrupts	_kernel_deactivate_nonsecure_interrupts
+#define usagefault_handler			_kernel_usagefault_handler
+
 
 #endif /* TOPPERS_CORE_RENAME_H */

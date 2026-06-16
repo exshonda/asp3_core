@@ -34,3 +34,8 @@ call_exit_kernel
 iipm_enable_masks
 current_iipm_enable_mask
 iipm_enable_irq_tbl
+
+# 【SAFEG】SafeG-M デュアルOS
+launch_ns
+deactivate_nonsecure_interrupts
+usagefault_handler
