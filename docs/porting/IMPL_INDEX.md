@@ -25,9 +25,9 @@
 
 | 実装したいもの | 参照ターゲット | ファイル | パターン |
 |---|---|---|---|
-| SysTickによるHRTタイマ | `mps2_an521_gcc` | `target_timer.c` | SysTickダウンカウンタ |
-| NVIC割込みプライオリティ設定 | `mps2_an521_gcc` | `target_config.h` | prio_bits考慮 |
-| セミホスティングシリアル | `mps2_an521_gcc` | `target_serial.c` | bkpt #0xAB / SYS_WRITEC |
+| SysTickによるHRTタイマ | `mps2_an505_gcc` | `target_timer.c` | SysTickダウンカウンタ |
+| NVIC割込みプライオリティ設定 | `mps2_an505_gcc` | `target_config.h` | prio_bits考慮 |
+| セミホスティングシリアル | `mps2_an505_gcc` | `target_serial.c` | bkpt #0xAB / SYS_WRITEC |
 | QEMUクリーン終了 | `syssvc/qemu_exit.c` | — | SYS_EXIT (0x18) |
 | Pico SDK統合（タイマ/UART/ブート） | 外部 `asp3_pico_sdk` リポジトリ | （SDK統合版・`ASP3_TARGET_DIR`方式） | add_repeating_timer_us / uart_putc_raw / stdio_init |
 | RP2350 RISC-V起動（IMAGE_DEF） | `pico2_riscv_gcc` | `image_def.S` | RISC-V EXE（0x1101）＋ENTRY_POINT item |
@@ -89,7 +89,7 @@
 
 | 条件 | 推奨パターン | 参照 |
 |---|---|---|
-| Cortex-M でSysTickが空いている | SysTick直接制御 | `mps2_an521_gcc` |
+| Cortex-M でSysTickが空いている | SysTick直接制御 | `mps2_an505_gcc` |
 | SDKがタイマAPIを提供（Pico等） | SDKラッパー経由 | 外部 `asp3_pico_sdk` リポジトリ |
 | Cortex-A | アーキテクチャタイマ（CNTP） | `stm32mp257f_dk_arm64_gcc` |
 | RISC-V | CLINT mtime/mtimecmp | `arch/riscv_gcc/common`（mtimer） |
@@ -100,6 +100,6 @@
 
 | 条件 | 推奨パターン | 参照 |
 |---|---|---|
-| QEMU・デバッガ接続あり | セミホスティング | `mps2_an521_gcc` |
+| QEMU・デバッガ接続あり | セミホスティング | `mps2_an505_gcc` |
 | SDKがUART APIを提供 | SDKラッパー経由 | 外部 `asp3_pico_sdk` リポジトリ |
 | メモリマップドUART直接 | レジスタポーリング | `stm32mp257f_dk_arm64_gcc` |

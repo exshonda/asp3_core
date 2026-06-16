@@ -37,20 +37,20 @@
  */
 
 /*
- *  ARM MPS2+ (AN521 / SSE-200, Cortex-M33) サポートモジュール
+ *  ARM MPS2+ (AN505 / IoTKit, シングル Cortex-M33) サポートモジュール
  *
- *  本ファイルは，QEMU の "mps2-an521" マシンを対象とする．ハードウェア
+ *  本ファイルは，QEMU の "mps2-an505" マシンを対象とする．ハードウェア
  *  資源のアドレス・割込み番号は QEMU の hw/arm/mps2-tz.c および
  *  hw/arm/armsse.c に基づく．
  */
 
-#ifndef TOPPERS_MPS2_AN521_H
-#define TOPPERS_MPS2_AN521_H
+#ifndef TOPPERS_MPS2_AN505_H
+#define TOPPERS_MPS2_AN505_H
 
 /*
  *  コアのクロック周波数
  *
- *  QEMU の AN521 マシンの sysclk は 20MHz（mps2-tz.c の
+ *  QEMU の AN505 マシンの sysclk は 20MHz（mps2-tz.c の
  *  mmc->sysclk_frq = 20 * 1000 * 1000）．SysTick はプロセッサクロックで
  *  駆動され，APB ペリフェラル（UART）のクロックも同一である．
  */
@@ -75,20 +75,20 @@
 /*
  *  CMSDK APB UART
  *
- *  AN521 では UART0 のセキュアエイリアスが 0x40200000 に配置される．
+ *  AN505 では UART0 のセキュアエイリアスが 0x40200000 に配置される．
  *  割込みは rx / tx / combined の 3 本があり（mps2-tz.c の make_uart 参照），
  *  combined（任意の要因で発火）を SIO ドライバの割込みに用いる．
  */
-#define MPS2_AN521_UART0_BASE           0x40200000
-#define MPS2_AN521_UART1_BASE           0x40201000
-#define MPS2_AN521_UART2_BASE           0x40202000
+#define MPS2_AN505_UART0_BASE           0x40200000
+#define MPS2_AN505_UART1_BASE           0x40201000
+#define MPS2_AN505_UART2_BASE           0x40202000
 
-#define MPS2_AN521_UART0_RX_IRQn        32
-#define MPS2_AN521_UART0_TX_IRQn        33
-#define MPS2_AN521_UART0_COMBINED_IRQn  42
-#define MPS2_AN521_UART1_RX_IRQn        34
-#define MPS2_AN521_UART1_TX_IRQn        35
-#define MPS2_AN521_UART1_COMBINED_IRQn  43
+#define MPS2_AN505_UART0_RX_IRQn        32
+#define MPS2_AN505_UART0_TX_IRQn        33
+#define MPS2_AN505_UART0_COMBINED_IRQn  42
+#define MPS2_AN505_UART1_RX_IRQn        34
+#define MPS2_AN505_UART1_TX_IRQn        35
+#define MPS2_AN505_UART1_COMBINED_IRQn  43
 
 /*
  *  CMSDK APB UART レジスタ（ベースアドレスからのオフセット）
@@ -123,4 +123,4 @@
 #define CMSDK_UART_INT_TXOVRRUN     0x04U   /* 送信オーバラン割込み */
 #define CMSDK_UART_INT_RXOVRRUN     0x08U   /* 受信オーバラン割込み */
 
-#endif /* TOPPERS_MPS2_AN521_H */
+#endif /* TOPPERS_MPS2_AN505_H */

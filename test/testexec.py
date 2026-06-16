@@ -35,7 +35,7 @@
 #	CMakeのconfigure引数を，TARGET_OPTIONSの1行目に記述する．
 #	例：
 #		--preset m33-qemu
-#		-G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-arm-none-eabi.cmake -DASP3_TARGET=mps2_an521_gcc
+#		-G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-arm-none-eabi.cmake -DASP3_TARGET=mps2_an505_gcc
 #
 #	テストプログラム共通で必要な test_svc.c は自動で追加される．
 #

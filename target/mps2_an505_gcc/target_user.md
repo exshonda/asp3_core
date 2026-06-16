@@ -1,7 +1,7 @@
-# TOPPERS/ASP3 ターゲット依存部（ARM MPS2-AN521 / QEMU 用）
+# TOPPERS/ASP3 ターゲット依存部（ARM MPS2-AN505 / QEMU 用）
 
-ARM MPS2+ FPGA ボードの AN521（SSE-200，デュアル Cortex-M33）イメージを，
-QEMU の `mps2-an521` マシン上で動作させるためのターゲット依存部である．
+ARM MPS2+ FPGA ボードの AN505（IoTKit，シングル Cortex-M33）イメージを，
+QEMU の `mps2-an505` マシン上で動作させるためのターゲット依存部である．
 RaspberryPi Pico2（`pico2_arm_gcc`，Cortex-M33）の依存部をベースに，
 チップ依存部を持たない自己完結型のボード依存部として構成している．
 
@@ -11,15 +11,15 @@ GNU Arm Embedded ツールチェイン（`arm-none-eabi-gcc`）と QEMU
 （`qemu-system-arm`，11.0 以降）が必要である．
 
 ```sh
-cmake --preset mps2_an521-qemu -B build/mps2_an521-qemu
-cmake --build build/mps2_an521-qemu
-ninja -C build/mps2_an521-qemu run   # QEMU(mps2-an521) で実行．UART0 が標準入出力に接続される
+cmake --preset mps2_an505-qemu -B build/mps2_an505-qemu
+cmake --build build/mps2_an505-qemu
+ninja -C build/mps2_an505-qemu run   # QEMU(mps2-an505) で実行．UART0 が標準入出力に接続される
 ```
 
 `run` ターゲットは次を実行する（終了は Ctrl-A X）：
 
 ```
-qemu-system-arm -machine mps2-an521 -nographic \
+qemu-system-arm -machine mps2-an505 -nographic \
     -semihosting-config enable=on,target=native -kernel asp.elf
 ```
 
@@ -34,24 +34,30 @@ qemu-system-arm -machine mps2-an521 -nographic \
 - チップ依存部は持たない（`target.cmake` がコア共通の `arch.cmake` を直接イン
   クルード）．チップ層が提供していた定義（`TMIN_INTPRI`，`TBITW_IPRI`，
   エンディアン，`sil_orw` 等のビット操作，CMSIS 相当のレジスタ定義）は
-  ボード依存部（`target_*.h`，`mps2_an521.h`）に取り込んでいる．
+  ボード依存部（`target_*.h`，`mps2_an505.h`）に取り込んでいる．
 
 ### FPU
-- **使用しない（FPU関連の定義・コンパイルオプションを設定しない）**．QEMU の SSE-200 では，QEMU が
-  実行するコア（CPU0）に FPU が実装されていない
-  （`hw/arm/armsse.c` の `sse200_properties`：`CPU0_FPU = false`，CPU1 のみ
-  FPU を持つ）．このため CPACR の CP10/CP11 を有効化しても無視され，FP 命令
-  は NOCP UsageFault となる．ハードウェア FPU を有効にすると，64bit 値の
-  移動に `vldr`/`vstr` が使われた箇所で確実にフォールトするため，ソフトウェ
-  ア浮動小数点でビルドする．
+- **ハードウェア FPU（FPv5-SP・単精度）を有効化する**．AN505 は IoTKit 構成で
+  CPU0 が FPU を実装する（`hw/arm/armsse.c` の `iotkit_properties`：
+  `CPU0_FPU = true`）ため，CPACR の CP10/CP11 を有効化すれば FP 命令を実行で
+  きる．`target.cmake` で以下を設定する：
+  - コンパイル定義：`TOPPERS_FPU_ENABLE`（`core_kernel_impl.c` が CPACR・FPCCR
+    を設定）／`TOPPERS_FPU_CONTEXT`（`core_support.S` がディスパッチ時に
+    `S16-S31` を退避）．
+  - コンパイル/リンクオプション：`-mfloat-abi=softfp -mfpu=fpv5-sp-d16`
+    （`pico2_arm_gcc`・`mimxrt685evk_gcc` と同一）．
+- 旧 AN521（SSE-200）では CPU0 に FPU が無く（`CPU0_FPU = false`，FPU を持つの
+  は CPU1 のみ），ソフト浮動小数点でビルドしていた．AN505 への置換でこの制約が
+  解消し，QEMU 上で FPU コンテキスト退避を含む動作検証が可能になった．
 
 ### 割込み優先度ビット幅
-- `TBITW_IPRI = 3`．実機 SSE-200 は 3bit（8 レベル）を実装する．QEMU は
+- `TBITW_IPRI = 3`．実機 IoTKit は 3bit（8 レベル）を実装する．QEMU は
   8bit を実装するが，3bit で設定した値は優先度レジスタの上位 3bit に置かれ
   るため，QEMU・実機の双方で正しく動作する．
 
-### メモリマップ（リンカスクリプト `mps2_an521.ld`）
-SSE-200 のメモリマップ（`hw/arm/armsse.c`）に基づく．
+### メモリマップ（リンカスクリプト `mps2_an505.ld`）
+IoTKit のメモリマップ（`hw/arm/armsse.c`・`hw/arm/mps2-tz.c`，AN505 と AN521 は
+同一マップ）に基づく．
 - `FLASH 0x10000000, 4MB`：コード用 SSRAM（`0x00000000` のエイリアス）．
   CPU はリセット時に init-svtor（=`0x10000000`）からベクタテーブルを読むた
   め，ベクタ（`.vector`）を FLASH 先頭に配置する．
@@ -97,14 +103,14 @@ SSE-200 のメモリマップ（`hw/arm/armsse.c`）に基づく．
 - `TARGET_OPTIONS`（1 行目＝CMake の configure 引数）：
 
   ```
-  --preset mps2_an521-qemu
+  --preset mps2_an505-qemu
   ```
 
 - `TARGET_RUN`（実行コマンド．QEMU で起動し，テスト終了時に
   セミホスティングで QEMU が終了する）：
 
   ```
-  timeout 30 qemu-system-arm -machine mps2-an521 -nographic -semihosting-config enable=on,target=native -kernel asp.elf
+  timeout 30 qemu-system-arm -machine mps2-an505 -nographic -semihosting-config enable=on,target=native -kernel asp.elf
   ```
 
 実行例（`TEST/` で）：

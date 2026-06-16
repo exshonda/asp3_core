@@ -241,6 +241,8 @@ nightly.yml の全ジョブを開発コンテナイメージ
 
 **所要時間の実測**（feat/devcontainer・同一コミット相当の連続run）：
 
+（注：2026-06-16 に QEMU ターゲットを mps2-an505/IoTKit へ置換。FPU が CPU0 に実装されハード浮動小数点で再検証可能になった。以降の M33 QEMU 検証は mps2-an505 を使用。下表の `QEMU mps2-an521` 行は置換前の実測記録。）
+
 | ジョブ | 従来（apt install）run 27057520949 | コンテナ run 27057740846 |
 |---|---|---|
 | POSIX (linux) | 163s | 187s |

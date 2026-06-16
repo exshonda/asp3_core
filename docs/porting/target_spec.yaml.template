@@ -128,7 +128,7 @@ serial:
 # （AIがコード生成時に参照すべき既存ターゲット）
 # --------------------------------------------------------------
 reference:
-  closest_target: ""       # 最も近い実装（例: mps2_an521_gcc, pico2_arm_gcc）
+  closest_target: ""       # 最も近い実装（例: mps2_an505_gcc, pico2_arm_gcc）
   arch_dir: ""             # 使用するarch/配下ディレクトリ（例: arm_gcc, riscv_gcc）
   context_switch_ref: ""   # コンテキストスイッチの参照実装
   notes: ""                # 既存実装との差異・特記事項
@@ -199,7 +199,7 @@ ai_notes: |
 #   notes: "Pico SDKのuart_init()で初期化"
 #
 # reference:
-#   closest_target: mps2_an521_gcc
+#   closest_target: mps2_an505_gcc
 #   arch_dir: arm_gcc
 #   context_switch_ref: arch/arm_gcc/common/core_support.S
 #   notes: "SysTick以外はSDKラッパー経由で制御"

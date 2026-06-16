@@ -5,9 +5,9 @@
 #  スタンドアロンビルド（サンプルアプリ asp）として構成したもの．
 #
 #  使い方（例）：
-#    cmake --preset mps2_an521-qemu -B build/mps2_an521-qemu
-#    cmake --build build/mps2_an521-qemu
-#    cmake --build build/mps2_an521-qemu --target run    # QEMU実行
+#    cmake --preset mps2_an505-qemu -B build/mps2_an505-qemu
+#    cmake --build build/mps2_an505-qemu
+#    cmake --build build/mps2_an505-qemu --target run    # QEMU実行
 #
 cmake_minimum_required(VERSION 3.16)
 

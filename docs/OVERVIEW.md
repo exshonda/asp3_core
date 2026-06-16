@@ -20,7 +20,7 @@
 ### 新規に追加・統合するもの
 - 各社SDK協調（Pico SDK／Renesas FSP／STM32 HAL）を1つの共通カーネル基盤に統合
   （既存3リポジトリは submodule として本体を参照する形に再編）
-- 対象ターゲット追加：RISC-V Hazard3（RP2350）、ホスト(Linux)シミュレータ（上流 `extension/non_tecs/target/linux_gcc`／mac は `macos_xcode`）、QEMU（mps2-an521）
+- 対象ターゲット追加：RISC-V Hazard3（RP2350）、ホスト(Linux)シミュレータ（上流 `extension/non_tecs/target/linux_gcc`／mac は `macos_xcode`）、QEMU（mps2-an505）
 - 構造化ログ（`T=<tick>,EV=<event>` 形式）
 
 ### 維持する設計制約
@@ -52,7 +52,7 @@
 - `compile_commands.json` ＋ `.clangd`（クロスコンパイルのコード知能）
 
 ### CI・品質ゲート（生成コードの自動検証）
-- ビルド/テストマトリクス：POSIX・QEMU(mps2-an521)・各実機ターゲットを自動ビルドし、TAPテストを実行
+- ビルド/テストマトリクス：POSIX・QEMU(mps2-an505)・各実機ターゲットを自動ビルドし、TAPテストを実行
 - **静的解析のCI統合**：`clang-tidy` / `cppcheck`（MISRA-C:2012サブセット相当）。生成コードがこれを通過することを必須とする
 - 上記「自己検証ループ」をCIが自動実行し、回帰を検知（AI生成コードの品質ゲート）
 

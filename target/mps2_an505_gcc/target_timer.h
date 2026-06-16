@@ -13,7 +13,7 @@
  */
 
 /*
- *  タイマドライバ（ARM MPS2-AN521 用）
+ *  タイマドライバ（ARM MPS2-AN505 用）
  *
  *  高分解能タイマ（HRT）を SysTick で実現する．SysTick は 24bit のダウン
  *  カウンタであり，プロセッサクロック（QEMU では 20MHz）で駆動する．次の
@@ -31,7 +31,7 @@
 #define TOPPERS_TARGET_TIMER_H
 
 #include "kernel/kernel_impl.h"
-#include "mps2_an521.h"
+#include "mps2_an505.h"
 #include "arm_m.h"
 
 /*
@@ -43,7 +43,7 @@
 #define INTATR_TIMER TA_NULL                /* 割込み属性 */
 
 /*
- *  プロセッサクロックの 1us あたりのカウント数（QEMU AN521 は 20MHz）
+ *  プロセッサクロックの 1us あたりのカウント数（QEMU AN505 は 20MHz）
  */
 #define HRT_CLOCKS_PER_US   (CPU_CLOCK_HZ / 1000000U)
 

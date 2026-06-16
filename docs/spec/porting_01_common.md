@@ -295,7 +295,7 @@ TOPPERSプロジェクトが提供するソフトウェアのために，TOPPERS
 
 # ２．システム構築環境のターゲット依存部
 
-> **asp3_core注（本章の位置付け）**: asp3_coreでは**Makefileビルドは廃止され，CMakeのみ**です（`docs/building.md`）。本章のMakefile.targetに相当するものは，ターゲット依存部ディレクトリの **`target.cmake`**（変数を積み上げ，アーキ依存部の `arch.cmake` をincludeする形式）です。本章の原文は上流仕様の照合用に全文保持し，主な変数の対応を以下に示します（実例は `target/mps2_an521_gcc/target.cmake` 等）。
+> **asp3_core注（本章の位置付け）**: asp3_coreでは**Makefileビルドは廃止され，CMakeのみ**です（`docs/building.md`）。本章のMakefile.targetに相当するものは，ターゲット依存部ディレクトリの **`target.cmake`**（変数を積み上げ，アーキ依存部の `arch.cmake` をincludeする形式）です。本章の原文は上流仕様の照合用に全文保持し，主な変数の対応を以下に示します（実例は `target/mps2_an505_gcc/target.cmake` 等）。
 >
 > | 上流Makefile変数（本章） | asp3_core CMake変数（target.cmake/arch.cmake） |
 > |---|---|

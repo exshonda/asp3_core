@@ -19,6 +19,7 @@
 | .rbツールの.py化 | `rb-tools-python.md` | 完了 |
 | CMake対応 | `cmake.md` | 完了 |
 | ファイルの削除 | `file-cleanup.md` | 完了 |
+| QEMUターゲット(ARMv8-M) | `mps2-an505.md` | 完了（mps2-an521→an505/IoTKit 置換でハードFPU有効化。testexec 5/5・TTSP3 staticAPI 退行なし） |
 | QEMUターゲット(ARMv8-A) | `qemu-target-a64.md` | 完了 |
 | QEMUターゲット(RISC-V) | `qemu-target-riscv.md` | 完了 |
 | CLIターゲット | `cli-target.md` | 完了 |
@@ -88,7 +89,7 @@
 | テスト | 実施 | 結果 |
 |---|---|---|
 | POSIX | ○/− |  |
-| QEMU (mps2-an521) | ○/− |  |
+| QEMU (mps2-an505) | ○/− |  |
 | 実機 | ○/− |  |
 
 ### DIVERGENCE_MAP との関連

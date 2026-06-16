@@ -13,7 +13,7 @@
  */
 
 /*
- *  テストプログラムのターゲット依存定義（ARM MPS2-AN521 用）
+ *  テストプログラムのターゲット依存定義（ARM MPS2-AN505 用）
  */
 
 #ifndef TOPPERS_TARGET_TEST_H
@@ -24,7 +24,7 @@
 /*
  *  int1（割込み管理機能）テスト用の割込み定義
  *
- *  QEMU mps2-an521（AN521・numirq=92）でデバイスに接続されていない
+ *  QEMU mps2-an505（AN505・numirq=92）でデバイスに接続されていない
  *  予備の外部IRQ 60（→ NVIC例外番号 60+16=76）をソフト割込み源として使う
  *  （デバイスIRQは 32〜58 に集中＝uart/eth/dma/spi・uart_overflow=47）．
  *  arm_m は ras_int / prb_int をサポートし，NVIC のソフトpend（ISPR）で

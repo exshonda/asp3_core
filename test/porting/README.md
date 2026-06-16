@@ -38,11 +38,11 @@ ctest --test-dir build/test_porting-linux
 QEMUターゲットはプリセット名を替えるだけ（実行コマンドは AGENTS.md §4 と同じ）：
 
 ```bash
-cmake --preset mps2_an521-qemu -B build/test_porting-mps2 \
+cmake --preset mps2_an505-qemu -B build/test_porting-mps2 \
   -DASP3_APPLDIR=test/porting -DASP3_APPLNAME=test_porting \
   -DASP3_EXTRA_APP_C_FILES=test/porting/tap.c
 cmake --build build/test_porting-mps2
-timeout 30 qemu-system-arm -M mps2-an521 -cpu cortex-m33 \
+timeout 30 qemu-system-arm -M mps2-an505 -cpu cortex-m33 \
   -kernel build/test_porting-mps2/asp.elf \
   -semihosting -semihosting-config enable=on,target=native -nographic
 ```

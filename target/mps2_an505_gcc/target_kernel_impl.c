@@ -13,9 +13,9 @@
  */
 
 /*
- *  ターゲット依存モジュール（ARM MPS2-AN521 用）
+ *  ターゲット依存モジュール（ARM MPS2-AN505 用）
  *
- *  QEMU の mps2-an521 マシンでは，クロックや GPIO/パッドの初期化は不要で
+ *  QEMU の mps2-an505 マシンでは，クロックや GPIO/パッドの初期化は不要で
  *  あり，SysTick・NVIC・FPU の設定はコア依存部（core_initialize）が行う．
  *  このため hardware_init_hook / software_init_hook は start.S の弱いデフォ
  *  ルト定義をそのまま用い，本ファイルでは定義しない．
@@ -43,7 +43,7 @@ hardware_init_hook(void)
      *  UsageFault となる）．このため，カーネル初期化で FP 命令が使われる
      *  前に，ここでバリア付きで有効化しておく．
      */
-    *((volatile uint32_t *) CPACR) |= CPACR_FPU_ENABLE;
+    *((volatile uint32_t *) CPACR_BASE) |= CPACR_FPU_ENABLE;
     __asm__ volatile ("dsb 0xf" ::: "memory");
     __asm__ volatile ("isb 0xf" ::: "memory");
 #endif /* TOPPERS_FPU_ENABLE */
@@ -151,7 +151,7 @@ target_fput_initialize(void)
  *  SIOポートへのポーリング出力
  */
 static void
-mps2_an521_uart_fput(char c)
+mps2_an505_uart_fput(char c)
 {
     /*
      *  送信できるまでポーリング
@@ -168,9 +168,9 @@ void
 target_fput_log(char c)
 {
     if (c == '\n') {
-        mps2_an521_uart_fput('\r');
+        mps2_an505_uart_fput('\r');
     }
-    mps2_an521_uart_fput(c);
+    mps2_an505_uart_fput(c);
 }
 
 #endif /* TOPPERS_OMIT_TECS */
