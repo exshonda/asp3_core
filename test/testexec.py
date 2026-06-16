@@ -94,6 +94,8 @@ TEST_SPEC = {
     "sysstat1": {"SRC": "test_sysstat1"},
     "task1":    {"SRC": "test_task1"},
     "tmevt1":   {"SRC": "test_tmevt1"},
+    "mvevpr":   {"SRC": "test_mvevpr"},
+
 
     # メッセージバッファ機能拡張パッケージの機能テストプログラム
     "messagebuf1": {"SRC": "test_messagebuf1"},

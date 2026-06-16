@@ -194,11 +194,20 @@ __ARM_FEATURE_MVE`（外側 `#ifdef TOPPERS_FPU_CONTEXT`）でガードし、非
 | objdump VPR 退避 | ○ | `vmrs ip,VPR`/`vmsr VPR,ip` が**ちょうど3箇所**（=3ハンク） |
 | an547(+mve) testexec | ○ | **5/5 PASS**（VPR 退避経路を毎ディスパッチ通過しても回帰なし＝スタック収支均衡を確認） |
 | 非MVE回帰 an505 | ○ | build PASS・objdump vmrs/vmsr **0件**（`#ifdef` ガード有効）・testexec PASS |
-| 非MVE回帰 pico2_arm / mimxrt685 | ○ | build PASS（stalled subagent 確認分） |
+| 非MVE回帰 pico2_arm / mimxrt685 | ○ | build PASS |
+| **VPR 値保持テスト（`test_mvevpr`）** | ○ | **an547=PASS**（VPR がタスク跨ぎで保持＝6/6 check point）・**an505=SKIP**（非MVE） |
 
-> **残（任意の追加検証）**：VPR の**値**がタスク跨ぎで保持されることの専用テスト（MVE
-> 述語を使い分ける2タスク）は未実施。移植元が EK-RA8M2 実機で検証済み＋退避機構が対称＋
-> testexec 全通のため機構の正しさは担保されるが、値保持の直接確認は後続で追加可能。
+#### VPR 値保持の専用テスト（`test/test_mvevpr.{c,h,cfg}`）
+
+MVE 退避の「値」レベルの検証として `test_mvevpr` を新設。TASK1(中優先度)が VPR に
+パターンA を設定 → 高優先度 TASK2 を `act_tsk` で起動 → TASK2 が VPR にパターンB を
+設定して終了 → TASK1 復帰時に **VPR がパターンA のまま保持**されていることを
+`check_assert` で確認する（退避が無ければ TASK2 の値に破壊される）。
+
+- `#ifdef __ARM_FEATURE_MVE` で囲い、非MVEターゲットでは SKIP_MARK
+  （"This test program is not necessary."）を出力して SKIP 扱い。
+- 実行：`run_testexec.py … mvevpr`（`test/testexec.py` の TEST_SPEC に `mvevpr` を登録）。
+- 結果：**an547(+mve) PASS（cp 1..6）／an505 SKIP**。
 
 ### DIVERGENCE_MAP との関連
 
