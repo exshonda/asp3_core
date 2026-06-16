@@ -1,0 +1,31 @@
+{
+  "version": 4,
+  "include": [
+    "../../cmake/presets-base.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "mps3_an547-qemu",
+      "inherits": "_base",
+      "displayName": "Cortex-M55+FPU / QEMU (mps3-an547)",
+      "description": "QEMU専用ターゲット。ハードなし・ARMv8.1-M(SSE-300/M55/FPU)確認用。Step 1=スカラFPのみ(MVE無効)",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
+      "cacheVariables": {
+        "ASP3_TARGET": "mps3_an547_gcc"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "mps3_an547-qemu",
+      "configurePreset": "mps3_an547-qemu"
+    },
+    {
+      "name": "run-mps3_an547-qemu",
+      "configurePreset": "mps3_an547-qemu",
+      "targets": [
+        "run"
+      ]
+    }
+  ]
+}
