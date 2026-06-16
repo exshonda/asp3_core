@@ -75,7 +75,13 @@ list(APPEND ASP3_LINK_OPTIONS
 
 list(APPEND ASP3_LINK_LIBS c gcc)
 
-set(ASP3_LDSCRIPT ${TARGETDIR}/mps2_an505.ld)
+# 【SAFEG】SafeG-M(ENABLE_SAFEG_M=1)時は Secure/NS 分割＋NSC veneer(.gnu.sgstubs)を
+#  含む専用リンカスクリプトを使う。素のASP3(SAFEG=0)は従来の mps2_an505.ld のまま。
+if(ENABLE_SAFEG_M)
+    set(ASP3_LDSCRIPT ${TARGETDIR}/mps2_an505_safeg.ld)
+else()
+    set(ASP3_LDSCRIPT ${TARGETDIR}/mps2_an505.ld)
+endif()
 
 #
 #  ターゲット依存部のソース
