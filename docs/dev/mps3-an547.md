@@ -162,12 +162,46 @@ MVE は未着手（Step 2）．`target/mps3_an547_gcc/` を `mps2_an505_gcc` か
 | QEMU (mps3-an547) sample | ○ | PASS（バナー「for ARM MPS3-AN547」・task1 周期実行） |
 | testexec スモーク（task1/sem1/flg1/tmevt1/hrt1） | ○ | **5/5 PASS** |
 | objdump FP 命令 | ○ | `vpush/vpop {s16-s31}`・`vldr d7`・`vstr` 生成．MVE 命令なし |
-| MVE VPR 退避（+mve ビルド・QEMU） | − | Step 2 |
-| 非MVE 回帰（an505/an386/pico2/mimxrt685） | − | Step 2（本 Step は arch 無変更のため回帰なし） |
+| MVE VPR 退避（+mve ビルド・QEMU） | ○ | Step 2 参照 |
 | TTSP3 staticAPI | − | Step 1 範囲外（ttsp3 資産は番地/CPU を M55 へ更新済み・未実行） |
+
+### Step 2（MVE(Helium) VPR 退避の復活・共通 arch）：完了（2026-06-16）
+
+asp3_fsp@`30bf318` の bundled fork にあった MVE VPR 退避3ハンクを、現行
+`arch/arm_m_gcc/common/core_support.S` の同一アンカーへ忠実に移植。`#ifdef
+__ARM_FEATURE_MVE`（外側 `#ifdef TOPPERS_FPU_CONTEXT`）でガードし、非MVEターゲットは
+無影響。VPR はスタック退避（`push/pop {r12}`＝4バイト対称）で TCB/TINIB は無変更。
+
+#### 変更したファイル
+
+| ファイル | 変更内容概要 |
+|---|---|
+| `arch/arm_m_gcc/common/core_support.S`（EXTENDED） | MVE VPR 退避を3箇所追加：①`do_dispatch` 保存（`vpush {s16-s31}` 直後に `vmrs r12,VPR`/`push {r12}`）②`dispatcher` 復帰（`vpop {s16-s31}` 直前に `pop {r12}`/`vmsr VPR,r12`）③`return_to_thread_fp`（`ldmfd r0!,{r4-r11}` 直後に `ldmfd r0!,{r12}`/`vmsr VPR,r12`）。r12(ip)はいずれもスクラッチ |
+| `target/mps3_an547_gcc/target.cmake` | `-mcpu=cortex-m55+nomve` → `-mcpu=cortex-m55`（FPフラグ併用で `__ARM_FEATURE_MVE=3` が定義） |
+
+#### MVE 有効化の条件（重要）
+
+`-mcpu=cortex-m55` 単体では `__ARM_FEATURE_MVE` は**未定義**。`-mfpu=fpv5-d16
+-mfloat-abi=softfp` を併用したフルフラグ（＝本ターゲットのビルド構成）で
+`__ARM_FEATURE_MVE=3`（整数+浮動MVE）が定義され、3ハンクがコンパイルされる。
+
+#### 検証結果（実出力）
+
+| テスト | 実施 | 結果 |
+|---|---|---|
+| `__ARM_FEATURE_MVE` 定義（フルフラグ） | ○ | `=3`（整数+浮動MVE） |
+| an547(+mve) clean build | ○ | PASS |
+| objdump VPR 退避 | ○ | `vmrs ip,VPR`/`vmsr VPR,ip` が**ちょうど3箇所**（=3ハンク） |
+| an547(+mve) testexec | ○ | **5/5 PASS**（VPR 退避経路を毎ディスパッチ通過しても回帰なし＝スタック収支均衡を確認） |
+| 非MVE回帰 an505 | ○ | build PASS・objdump vmrs/vmsr **0件**（`#ifdef` ガード有効）・testexec PASS |
+| 非MVE回帰 pico2_arm / mimxrt685 | ○ | build PASS（stalled subagent 確認分） |
+
+> **残（任意の追加検証）**：VPR の**値**がタスク跨ぎで保持されることの専用テスト（MVE
+> 述語を使い分ける2タスク）は未実施。移植元が EK-RA8M2 実機で検証済み＋退避機構が対称＋
+> testexec 全通のため機構の正しさは担保されるが、値保持の直接確認は後続で追加可能。
 
 ### DIVERGENCE_MAP との関連
 
 - `target/mps3_an547_gcc/` は NEW。
-- `arch/arm_m_gcc/common/core_support.S`（EXTENDED）に MVE VPR 退避を追加＝要 DIVERGENCE_MAP 追記。
-- 関連：[`mps2-an505.md`](mps2-an505.md)（v8-M 先行）・[`fsp-integration.md`](fsp-integration.md)（MVE 原典・RA8M2 積み残し）。
+- `arch/arm_m_gcc/common/core_support.S`（EXTENDED）に MVE VPR 退避を追加＝DIVERGENCE_MAP 追記済み。
+- 関連：[`mps2-an505.md`](mps2-an505.md)（v8-M 先行）・[`fsp-integration.md`](fsp-integration.md)（MVE 原典・RA8M2 積み残しの解消）。

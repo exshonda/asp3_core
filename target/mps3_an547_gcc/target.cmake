@@ -10,8 +10,9 @@
 #  cpu-v7m.c：MVFR0=0x10110221 ＝ 単精度/倍精度とも実装）のため
 #  -mfpu=fpv5-d16 を用いる．
 #
-#  本ファイルは mps2_an505_gcc（IoTKit/Cortex-M33）から派生．Step 1 では
-#  スカラ FP まで（MVE/Helium は付けない：+mve 系フラグは付与しない）．
+#  本ファイルは mps2_an505_gcc（IoTKit/Cortex-M33）から派生．Step 2 で MVE
+#  (Helium) を有効化（-mcpu=cortex-m55 ＝ +mve.fp 既定）．__ARM_FEATURE_MVE が
+#  定義され，core_support.S の VPR 退避コードが有効になる．
 #
 
 set(TARGETDIR ${ASP3_ROOT_DIR}/target/mps3_an547_gcc)
@@ -56,7 +57,7 @@ list(APPEND ASP3_COMPILE_DEFS
 #  コンパイル・リンクオプション（Makefile.targetと同一）
 #
 list(APPEND ASP3_COMPILE_OPTIONS
-    -mcpu=cortex-m55+nomve   # Step 1：スカラ FP のみ（MVE/Helium は付けない）
+    -mcpu=cortex-m55         # Step 2：MVE(Helium) 有効（既定で +mve.fp ＝ __ARM_FEATURE_MVE）
     -mthumb
     -mlittle-endian
     -mfloat-abi=softfp
@@ -68,7 +69,7 @@ list(APPEND ASP3_COMPILE_OPTIONS
 list(APPEND ASP3_LINK_OPTIONS
     -nostdlib
     -nostartfiles
-    -mcpu=cortex-m55+nomve
+    -mcpu=cortex-m55
     -mthumb
     -mlittle-endian
     -mfloat-abi=softfp

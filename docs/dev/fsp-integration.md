@@ -189,5 +189,9 @@ EK-RA8M2 では `.balign` 修正後も実機固有の問題が3件残り、asp3_
 
 > 後続（別件）：①MVE(Helium) を使うアプリ向けの VPR レジスタ保存/復帰
 >   （`#ifdef __ARM_FEATURE_MVE`）の共通archへの取り込み（sample1 は MVE 未使用）。
+>   → **2026-06-16 解消**：mps3-an547(Cortex-M55) 追加の一環で、本ファイル由来の
+>   MVE VPR 退避3ハンク（origin: asp3_fsp@30bf318）を asp3_core 共通 arch
+>   `core_support.S` へ復活。詳細は [`mps3-an547.md`](mps3-an547.md) Step 2。
+>   RA8M2(M85) も asp3_core を bump すれば MVE 退避が有効化される。
 > ②`Config.cmake` の Windows前提（`rasc.exe`/`python.exe`/既定6.2.0）の Linux/OS非依存化
 > （現状は `-DRASC_EXE_PATH=` 等の上書きで対応）。
