@@ -69,7 +69,13 @@ list(APPEND ASP3_LINK_OPTIONS
 
 list(APPEND ASP3_LINK_LIBS c gcc)
 
-set(ASP3_LDSCRIPT ${TARGETDIR}/rpi_pico2.ld)
+# 【SAFEG】SafeG-M(ENABLE_SAFEG_M=1)時は Secure/NS 分割＋NSC veneer(.gnu.sgstubs)を
+#  含む専用リンカスクリプトを使う。素のASP3(SAFEG=0)は従来の rpi_pico2.ld のまま。
+if(ENABLE_SAFEG_M)
+    set(ASP3_LDSCRIPT ${TARGETDIR}/rpi_pico2_safeg.ld)
+else()
+    set(ASP3_LDSCRIPT ${TARGETDIR}/rpi_pico2.ld)
+endif()
 
 #
 #  ターゲット依存部のソース

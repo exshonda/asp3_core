@@ -187,6 +187,36 @@ extern void tPutLogSIOPort_initialize(void);
  */
 void target_initialize(void)
 {
+#ifdef TOPPERS_SAFEG_M
+    /*
+     *  【SAFEG】SAU の設定（RP2350 アドレス空間）。core_initialize() の
+     *  ITNS 全 NS 化 / AIRCR.PRIS より前に NS 領域を確定する。
+     *    R0: NSC(Secure gate veneer) 0x101FFE00..0x101FFFFF
+     *    R1: NS code  0x10200000..0x103FFFFF
+     *    R2: NS RAM   0x20040000..0x2007FFFF
+     *  その他は Secure（SAU 有効時の既定）。
+     *
+     *  注意(RP2350 固有): RP2350 は ARM SAU に加え ACCESSCTRL ブロックで
+     *  SRAM/ペリフェラルの Secure/NS アクセスを別途ゲートする。NS 側が NS RAM や
+     *  必要ペリフェラルへアクセスするには ACCESSCTRL の NS 許可設定が要る可能性が高い
+     *  （vanilla RP2350 ポートは Secure 単独のため未設定）。SAU のみで NS が
+     *  起動しない場合は ACCESSCTRL(0x40060000 系)の NS マスク設定を追加すること。
+     */
+    sil_wrw_mem((uint32_t *)SAU_RNR, 0);
+    sil_wrw_mem((uint32_t *)SAU_RBAR, 0x101FFE00);
+    sil_wrw_mem((uint32_t *)SAU_RLAR,
+                (0x101FFFFF & SAU_RLAR_LADDR_MASK) | SAU_RLAR_NSC | SAU_RLAR_ENABLE);
+    sil_wrw_mem((uint32_t *)SAU_RNR, 1);
+    sil_wrw_mem((uint32_t *)SAU_RBAR, 0x10200000);
+    sil_wrw_mem((uint32_t *)SAU_RLAR,
+                (0x103FFFFF & SAU_RLAR_LADDR_MASK) | SAU_RLAR_ENABLE);
+    sil_wrw_mem((uint32_t *)SAU_RNR, 2);
+    sil_wrw_mem((uint32_t *)SAU_RBAR, 0x20040000);
+    sil_wrw_mem((uint32_t *)SAU_RLAR,
+                (0x2007FFFF & SAU_RLAR_LADDR_MASK) | SAU_RLAR_ENABLE);
+    sil_wrw_mem((uint32_t *)SAU_CTRL, SAU_CTRL_ENABLE);
+#endif /* TOPPERS_SAFEG_M */
+
     /*
      *  コア依存部の初期化
      */

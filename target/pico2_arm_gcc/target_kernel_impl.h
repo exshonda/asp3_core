@@ -59,6 +59,15 @@
  */
 #define DEFAULT_ISTKSZ    (0x1000) /* 4KByte */
 
+#ifdef TOPPERS_SAFEG_M
+/*
+ *  【SAFEG】Non-secure ベクタテーブル先頭アドレス
+ *    RP2350: NS code 0x10200000（Secure code は 0x10000000）。SAU で NS 指定。
+ *    _SAFEG_BTASK の exinf として launch_ns に渡る。
+ */
+#define TOPPERS_NS_VTOR    0x10200000
+#endif /* TOPPERS_SAFEG_M */
+
 #ifndef TOPPERS_MACRO_ONLY
 
 /*
