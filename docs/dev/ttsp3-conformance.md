@@ -194,7 +194,7 @@ SKIP モジュール専用（mps2 は実コール、polarfire の int_raise は 
 | zybo_z7 (A9) | zybo_z7-qemu | build+run | **functional 1813/1813・staticAPI 138/138 PASS**（FAIL 0） |
 | mps2_an521 (M33) | mps2_an521-qemu | build+run | **PASS 1265・SKIP 639・FAIL 29**（functional FAIL 0／FAILは全て staticAPI 系）〔2026-06-14 時点。下記注参照〕 |
 | mps2_an505 (M33+FPU) | mps2_an505-qemu | build+run | **staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（an521 と FAIL 内訳一致＝退行なし）〔2026-06-16 置換後の再検証〕 |
-| mps2_an386 (M4/v7-M) | mps2_an386-qemu | build+run | **staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（an505 と FAIL 内訳完全一致＝退行なし）〔2026-06-16 新規〕 |
+| mps2_an386 (M4/v7-M) | mps2_an386-qemu | build+run | **functional PASS 1174・FAIL 0・SKIP 639 / 1813**＋**staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（functional FAIL 0／staticAPI FAIL 内訳まで an505 と完全一致＝ARMv7-M でも適合性同等）〔2026-06-16 新規〕 |
 | mps3_an547 (M55/v8.1-M+MVE) | mps3_an547-qemu | build+run | **functional PASS 1174・FAIL 0・SKIP 639 / 1813**＋**staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（functional FAIL 0／staticAPI FAIL 内訳まで an505 と完全一致＝MVE arch 変更の影響なし）〔2026-06-16 新規〕 |
 | polarfire (RV64GC) | polarfire_soc_kit-qemu | **build-only**（qemu-riscv64 未導入） | **PASS 1504・SKIP 423・FAIL 6**（全ビルド成立確認。FAILは staticAPI error系のみ） |
 
