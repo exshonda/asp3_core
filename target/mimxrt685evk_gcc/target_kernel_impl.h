@@ -41,6 +41,11 @@
 #ifndef TOPPERS_TARGET_KERNEL_IMPL_H
 #define TOPPERS_TARGET_KERNEL_IMPL_H
 
+#ifdef TOPPERS_SAFEG_M
+/* 【SAFEG】Non-secure ベクタテーブル先頭(=_SAFEG_BTASK exinf, launch_ns へ) */
+#define TOPPERS_NS_VTOR    0x8400000
+#endif /* TOPPERS_SAFEG_M */
+
 /*
  * ターゲット依存部モジュール（MIMXRT685-EVK用）
  *

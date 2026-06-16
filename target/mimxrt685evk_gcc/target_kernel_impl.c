@@ -273,6 +273,26 @@ extern void tPutLogSIOPort_initialize(void);
  */
 void target_initialize(void)
 {
+#ifdef TOPPERS_SAFEG_M
+    /*
+     *  【SAFEG】SAU 設定（i.MX RT685 アドレス空間, core_initialize の
+     *  ITNS 全NS化 / AIRCR.PRIS より前に NS 領域を確定）。
+     *    R0: NSC veneer 0x183FFE00..0x183FFFFF
+     *    R1: NS code    0x08400000..0x087FFFFF
+     *    R2: NS RAM     0x20240000..0x2047FFFF
+     */
+    sil_wrw_mem((uint32_t *)SAU_RNR, 0);
+    sil_wrw_mem((uint32_t *)SAU_RBAR, 0x183FFE00);
+    sil_wrw_mem((uint32_t *)SAU_RLAR, (0x183FFFFF & SAU_RLAR_LADDR_MASK) | SAU_RLAR_NSC | SAU_RLAR_ENABLE);
+    sil_wrw_mem((uint32_t *)SAU_RNR, 1);
+    sil_wrw_mem((uint32_t *)SAU_RBAR, 0x08400000);
+    sil_wrw_mem((uint32_t *)SAU_RLAR, (0x087FFFFF & SAU_RLAR_LADDR_MASK) | SAU_RLAR_ENABLE);
+    sil_wrw_mem((uint32_t *)SAU_RNR, 2);
+    sil_wrw_mem((uint32_t *)SAU_RBAR, 0x20240000);
+    sil_wrw_mem((uint32_t *)SAU_RLAR, (0x2047FFFF & SAU_RLAR_LADDR_MASK) | SAU_RLAR_ENABLE);
+    sil_wrw_mem((uint32_t *)SAU_CTRL, SAU_CTRL_ENABLE);
+#endif /* TOPPERS_SAFEG_M */
+
     /*
      *  コア依存部の初期化
      */

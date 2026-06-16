@@ -81,7 +81,11 @@ list(APPEND ASP3_LINK_OPTIONS
 
 list(APPEND ASP3_LINK_LIBS c gcc)
 
-set(ASP3_LDSCRIPT ${TARGETDIR}/mimxrt685.ld)
+if(ENABLE_SAFEG_M)
+    set(ASP3_LDSCRIPT ${TARGETDIR}/mimxrt685_safeg.ld)  # 【SAFEG】Secure/NS分割+NSC veneer
+else()
+    set(ASP3_LDSCRIPT ${TARGETDIR}/mimxrt685.ld)
+endif()
 
 #
 #  ターゲット依存部のソース
