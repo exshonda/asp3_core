@@ -1,11 +1,16 @@
 #
-#		ターゲット依存部のCMake定義（ARM MPS2-AN521 / QEMU用）
+#		ターゲット依存部のCMake定義（ARM MPS2-AN505 / QEMU用）
 #
 #  変数を積み上げ，アーキ依存部の arch.cmake をincludeする
 #  （AGENTS.md §11．Makefile.targetのCMake版に相当）．
 #
+#  AN505 は IoTKit（シングル Cortex-M33）．CPU0 が FPU を実装するため
+#  （QEMU armsse.c の iotkit_properties：CPU0_FPU=true），ハードウェア FPU
+#  （FPv5-SP・単精度）を有効化する．AN521=SSE-200 では CPU0 に FPU が無く
+#  ソフト浮動小数点だったが，AN505 への置換でこの制約が解消した．
+#
 
-set(TARGETDIR ${ASP3_ROOT_DIR}/target/mps2_an521_gcc)
+set(TARGETDIR ${ASP3_ROOT_DIR}/target/mps2_an505_gcc)
 
 #
 #  コンフィギュレーション関連
@@ -38,6 +43,9 @@ list(APPEND ASP3_COMPILE_DEFS
     TOPPERS_CORTEX_M33
     TOPPERS_ENABLE_TRUSTZONE
     __TARGET_ARCH_THUMB=5
+    TOPPERS_FPU_ENABLE       # CPACR で FPU(CP10/CP11)を有効化（core_kernel_impl.c）
+    TOPPERS_FPU_CONTEXT      # ディスパッチ時に S16-S31 を退避（core_support.S）
+    TOPPERS_FPU_LAZYSTACKING # FPCCR=ASPEN|LSPEN（遅延スタッキング．pico2_arm 等と同一）
 )
 
 #
@@ -47,6 +55,8 @@ list(APPEND ASP3_COMPILE_OPTIONS
     -mcpu=cortex-m33
     -mthumb
     -mlittle-endian
+    -mfloat-abi=softfp
+    -mfpu=fpv5-sp-d16
     -ffunction-sections
     -fdata-sections
 )
@@ -57,13 +67,15 @@ list(APPEND ASP3_LINK_OPTIONS
     -mcpu=cortex-m33
     -mthumb
     -mlittle-endian
+    -mfloat-abi=softfp
+    -mfpu=fpv5-sp-d16
     -Wl,--print-memory-usage
     -Wl,--gc-sections
 )
 
 list(APPEND ASP3_LINK_LIBS c gcc)
 
-set(ASP3_LDSCRIPT ${TARGETDIR}/mps2_an521.ld)
+set(ASP3_LDSCRIPT ${TARGETDIR}/mps2_an505.ld)
 
 #
 #  ターゲット依存部のソース
@@ -90,7 +102,7 @@ include(${ASP3_ROOT_DIR}/arch/arm_m_gcc/common/arch.cmake)
 #  QEMUによる実行（cmake --build <dir> --target run）
 #
 set(ASP3_RUN_COMMAND
-    qemu-system-arm -machine mps2-an521 -nographic
+    qemu-system-arm -machine mps2-an505 -nographic
     -semihosting-config enable=on,target=native
     -kernel $<TARGET_FILE:asp>
 )

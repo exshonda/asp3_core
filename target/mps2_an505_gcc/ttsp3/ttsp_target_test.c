@@ -1,5 +1,5 @@
 /*
- *  TTSP3 適合性テスト：ターゲット依存処理（mps2_an521_gcc / Cortex-M33）
+ *  TTSP3 適合性テスト：ターゲット依存処理（mps2_an505_gcc / Cortex-M33）
  *
  *  asp3_core 側に置く TTSP3 ターゲットテスト資産（TTSP3 本体は不変）．
  *  詳細は ttsp_target_test.h 冒頭・docs/dev/ttsp3-conformance.md を参照．

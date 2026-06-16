@@ -41,14 +41,14 @@ target/<name>/
 
 | 実装したいもの | 参照ターゲット | 参照ファイル |
 |---|---|---|
-| SysTickによるHRTタイマ | `mps2_an521_gcc` | `target_timer.c` |
-| NVICによる割り込み制御 | `mps2_an521_gcc` | `target_config.h`, `target_kernel.c` |
+| SysTickによるHRTタイマ | `mps2_an505_gcc` | `target_timer.c` |
+| NVICによる割り込み制御 | `mps2_an505_gcc` | `target_config.h`, `target_kernel.c` |
 | Pico SDK統合タイマ／UART | 外部リポジトリ `asp3_pico_sdk` | （SDK統合は別リポジトリ＝`ASP3_TARGET_DIR`方式。本リポジトリのベアメタル版は `pico2_arm_gcc`） |
 | GICv3割り込み制御 | `stm32mp257f_dk_arm64_gcc` | `target_kernel.c` |
 | Cortex-A35アーキテクチャ | `stm32mp257f_dk_arm64_gcc` | `arch/arm64_gcc/` |
 | RISC-V コンテキストスイッチ | `pico2_riscv_gcc` | `arch/riscv_gcc/common/core_support.S` |
 | POSIXシミュレーション | `linux_gcc` | 全ファイル |
-| セミホスティングシリアル | `mps2_an521_gcc` | `target_serial.c` |
+| セミホスティングシリアル | `mps2_an505_gcc` | `target_serial.c` |
 
 ---
 
@@ -87,7 +87,7 @@ cd target/<name>
 
 ### AIへの指示
 `target_spec.yaml` の `memory` / `tick_timer` / `architecture` セクションを読み、  
-`mps2_an521_gcc/target_config.h` を参照しながら以下のマクロを定義する。
+`mps2_an505_gcc/target_config.h` を参照しながら以下のマクロを定義する。
 
 ### 定義すべき主要マクロ
 
@@ -265,7 +265,7 @@ void target_fput_log(char c) {
 #### セミホスティング（QEMU / デバッガ接続時）
 
 ```c
-/* mps2_an521_gcc/target_serial.c を参照 */
+/* mps2_an505_gcc/target_serial.c を参照 */
 void target_fput_log(char c) {
     /* ARM semihosting SYS_WRITEC (0x03) */
     register uint32_t r0 asm("r0") = 0x03;

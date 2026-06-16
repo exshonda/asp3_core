@@ -3,7 +3,7 @@
  *
  *  asp3_core 側に置く TTSP3 ターゲットテスト資産（TTSP3 本体は不変＝
  *  読み取り専用とする方針のため・docs/dev/ttsp3-conformance.md）。
- *  Cortex-M33/arm_m_gcc 共通（mps2_an521_gcc と同形）。
+ *  Cortex-M33/arm_m_gcc 共通（mps2_an505_gcc と同形）。
  *
  *  本ファイルは TTSP3 library/ASP/test/ttsp_test_lib.h から include される．
  *  kernel.h / sil.h / TCB 定義は include 側で取り込み済み．

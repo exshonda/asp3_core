@@ -83,10 +83,10 @@ jobs:
           if-no-files-found: ignore
 
   #
-  #  QEMU Cortex-M33（mps2-an521）：build → testexecスモーク
+  #  QEMU Cortex-M33（mps2-an505）：build → testexecスモーク
   #
   mps2-qemu:
-    name: QEMU mps2-an521 (Cortex-M33)
+    name: QEMU mps2-an505 (Cortex-M33)
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/exshonda/asp3_core-dev:20260606
@@ -100,12 +100,12 @@ jobs:
       - uses: actions/checkout@v5
       - name: Build (sample1)
         run: |
-          cmake --preset mps2_an521-qemu -B build/mps2_an521-qemu
-          cmake --build build/mps2_an521-qemu
+          cmake --preset mps2_an505-qemu -B build/mps2_an505-qemu
+          cmake --build build/mps2_an505-qemu
       - name: Smoke tests (testexec.py)
         run: |
-          scripts/ci/run_testexec.py --options "--preset mps2_an521-qemu" \
-            --run "timeout 60 qemu-system-arm -machine mps2-an521 -nographic \
+          scripts/ci/run_testexec.py --options "--preset mps2_an505-qemu" \
+            --run "timeout 60 qemu-system-arm -machine mps2-an505 -nographic \
                    -semihosting-config enable=on,target=native -kernel asp.elf" \
             --workdir build/testexec-mps2 \
             task1 sem1 flg1 int1 tmevt1 hrt1

@@ -1,4 +1,4 @@
-# Target (MPS2-AN521) awareness helpers for gdb OS-awareness (ASP3).
+# Target (MPS2-AN505) awareness helpers for gdb OS-awareness (ASP3).
 #
 # 役割: ターゲット（ボード）依存の知識。本ターゲットはチップ層を持たず
 #       コア（arm_m 共通）の上に直接実装されている（target.cmake が
@@ -9,7 +9,7 @@
 # sys.path に追加してから import する。os_awareness.py（scripts/gdb_os_aware/）は
 # この target_os_awareness を（発見できれば）import して，割込み状態の表示等に用いる。
 #
-# 注意: mps2-an521 は Secure 動作（QEMU -cpu cortex-m33）。NVIC 読み出しの
+# 注意: mps2-an505 は Secure 動作（QEMU -cpu cortex-m33）。NVIC 読み出しの
 # セキュア/非セキュアエイリアスについては core_os_awareness.py 冒頭を参照。
 
 import os

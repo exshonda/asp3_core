@@ -1,0 +1,31 @@
+{
+  "version": 4,
+  "include": [
+    "../../cmake/presets-base.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "mps2_an505-qemu",
+      "inherits": "_base",
+      "displayName": "Cortex-M33+FPU / QEMU (mps2-an505)",
+      "description": "QEMU専用ターゲット。ハードなし・ARMv8-M(IoTKit/FPU)確認用",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
+      "cacheVariables": {
+        "ASP3_TARGET": "mps2_an505_gcc"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "mps2_an505-qemu",
+      "configurePreset": "mps2_an505-qemu"
+    },
+    {
+      "name": "run-mps2_an505-qemu",
+      "configurePreset": "mps2_an505-qemu",
+      "targets": [
+        "run"
+      ]
+    }
+  ]
+}

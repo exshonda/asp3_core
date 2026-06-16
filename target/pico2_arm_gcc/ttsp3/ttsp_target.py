@@ -4,7 +4,7 @@
 #  test/ttsp/run_ttsp.py が自動探索する（パスは asp3_core ルート相対）。
 #  TTSP3 は本ボード用 ASP ターゲットを同梱しないため、asp3 側テスト資産
 #  （ttsp_target_test.{c,h}・ttsp_target.cfg）を本フォルダに置く（lib＝本フォルダ）。
-#  Cortex-M33＝mps2_an521 と同形の SKIP 規則。
+#  Cortex-M33＝mps2_an505 と同形の SKIP 規則。
 #
 #  実機は OpenOCD（CMSIS-DAP/Debugprobe）で書込み＆実行する（既存 run.cmake の
 #  `run` ターゲットを再利用＝`program ... verify reset exit`。フラッシュへ書込み後

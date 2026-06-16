@@ -163,6 +163,8 @@ asp3_pico_sdk リポジトリ側の作業（本リポジトリのスコープ外
 
 #### 検証結果（POSIX）
 
+（注：2026-06-16 に QEMU の M33 ターゲットを mps2-an505/IoTKit へ置換〔現プリセット mps2_an505-qemu・ターゲット名 mps2_an505_gcc〕。FPU が CPU0 に実装されハード浮動小数点で再検証可能になった。本節以下の `mps2_an521-qemu` / `mps2_an521_gcc` 表記は置換前の記録。以降の M33 QEMU 検証は mps2-an505 を使用。）
+
 1. **既存プリセット無変更（CI green維持）**：
    - `linux`（POSIX CLI）— ビルドOK・`asp` 実行で `task1 is running` 確認。
    - `mps2_an521-qemu`（Cortex-M33）— ビルドOK・`asp.elf` 生成。QEMU(mps2-an521) 実行で起動確認。

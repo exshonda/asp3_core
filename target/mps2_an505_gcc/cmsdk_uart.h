@@ -15,7 +15,7 @@
 /*
  *		ARM CMSDK APB UART用 簡易SIOドライバ（非TECS版専用）
  *
- *  レジスタの定義は mps2_an521.h に置かれている．
+ *  レジスタの定義は mps2_an505.h に置かれている．
  */
 
 #ifndef TOPPERS_CMSDK_UART_H
@@ -24,7 +24,7 @@
 #ifdef TOPPERS_OMIT_TECS
 
 #include <sil.h>
-#include "mps2_an521.h"
+#include "mps2_an505.h"
 
 /*
  *  SIOポート数の定義

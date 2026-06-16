@@ -12,7 +12,7 @@
 # arm_m の INTNO は例外番号そのもの（15=SysTick，16以降=IRQ0〜。
 # arm_m.h: IRQNO_SYSTICK=15，target_syssvc.h 等: INTNO_SIO=IRQn+16）。
 #
-# 注意: mps2-an521 等の Secure 動作では NVIC（0xE000Exxx）は現在のセキュリティ
+# 注意: mps2-an505 等の Secure 動作では NVIC（0xE000Exxx）は現在のセキュリティ
 # 状態のバンクが見える。QEMU の gdbserver 経由ではアクセスできない場合があり，
 # その場合は呼び出し側（intr コマンド）が "?" 表示に劣化する。
 #

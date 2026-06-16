@@ -27,7 +27,7 @@ cmake --preset linux -B build/linux && cmake --build build/linux
 ./build/linux/asp
 
 # QEMU（Cortex-M33）
-cmake --preset mps2_an521-qemu && cmake --build --preset run-mps2_an521-qemu
+cmake --preset mps2_an505-qemu && cmake --build --preset run-mps2_an505-qemu
 ```
 
 プリセット一覧は `cmake --list-presets`。詳細は [docs/building.md](docs/building.md)。
@@ -47,7 +47,7 @@ cmake --preset mps2_an521-qemu && cmake --build --preset run-mps2_an521-qemu
 | ターゲット | ISA | 実行環境 |
 |---|---|---|
 | linux_gcc | (host) | POSIXシミュレーション |
-| mps2_an521_gcc | ARMv8-M (Cortex-M33) | QEMU |
+| mps2_an505_gcc | ARMv8-M (Cortex-M33) | QEMU |
 | zybo_z7_gcc | ARMv7-A (Cortex-A9) | 実機 / QEMU |
 | zcu102_arm64_gcc | ARMv8-A (Cortex-A53) | 実機 / QEMU |
 | polarfire_soc_kit_gcc | RISC-V (RV64GC) | 実機 / QEMU |

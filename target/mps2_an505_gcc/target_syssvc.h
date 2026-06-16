@@ -13,19 +13,19 @@
  */
 
 /*
- *  システムサービスのターゲット依存部（ARM MPS2-AN521 用）
+ *  システムサービスのターゲット依存部（ARM MPS2-AN505 用）
  */
 #ifndef TOPPERS_TARGET_SYSSVC_H
 #define TOPPERS_TARGET_SYSSVC_H
 
 #ifdef TOPPERS_OMIT_TECS
 
-#include "mps2_an521.h"
+#include "mps2_an505.h"
 
 /*
  *  起動メッセージのターゲットシステム名
  */
-#define TARGET_NAME "ARM MPS2-AN521"
+#define TARGET_NAME "ARM MPS2-AN505"
 
 /*
  *  システムログの低レベル出力のための文字出力
@@ -40,7 +40,7 @@ extern void target_fput_log(char c);
 /*
  *  SIOドライバで使用するUARTに関する設定
  */
-#define SIO_UART_BASE		MPS2_AN521_UART0_BASE	/* UARTのベース番地 */
+#define SIO_UART_BASE		MPS2_AN505_UART0_BASE	/* UARTのベース番地 */
 #define SIO_UART_BAUDRATE	115200U					/* ボーレート */
 #define SIO_UART_BAUDDIV	(CPU_CLOCK_HZ / SIO_UART_BAUDRATE)
 												/* ボーレート分周比の設定値 */
@@ -48,7 +48,7 @@ extern void target_fput_log(char c);
 /*
  *  SIO割込みを登録するための定義（combined割込みを使用）
  */
-#define INTNO_SIO		(MPS2_AN521_UART0_COMBINED_IRQn + 16)
+#define INTNO_SIO		(MPS2_AN505_UART0_COMBINED_IRQn + 16)
 												/* UART割込み番号 */
 #define ISRPRI_SIO		1						/* UART ISR優先度 */
 #define INTPRI_SIO		(-2)					/* UART割込み優先度 */

@@ -153,6 +153,7 @@ FSP 6.2.0 パック導入後、A案（Pico同型）で移行・**EK-RA6M5 を実
 レジスタ構造体メンバ名と衝突し `core_cm33.h` でコンパイル不能）。`CPACR_BASE`（既存）＋
 `FPCCR_ADDR`（新規）に置換、`core_kernel_impl.c` の FPU有効化2箇所を追随。
 mps2_an521/pico2_arm 無影響を確認・CI 全9 green・DIVERGENCE_MAP 記録。
+（注：2026-06-16 に QEMU ターゲットを mps2-an505/IoTKit へ置換。FPU が CPU0 に実装されハード浮動小数点で再検証可能になった。上記 mps2_an521 は置換前の確認記録。以降の M33 QEMU 検証は mps2-an505 を使用。）
 
 **検証（EK-RA6M5・RASC 6.2.0＋ATfE clang 21.1.1）**：
 - 環境：`ARM_TOOLCHAIN_PATH=~/.renesas/platform/arm-llvm/21.1.1/ATfE-21.1.1-Linux-x86_64/bin`、

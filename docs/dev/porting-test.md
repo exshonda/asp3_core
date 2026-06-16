@@ -78,6 +78,8 @@ test_porting.cfg／test_porting_cfg.h・README.md。計約290行）
 
 ### 検証結果
 
+（注：2026-06-16 に QEMU ターゲットを mps2-an505/IoTKit へ置換。FPU が CPU0 に実装されハード浮動小数点で再検証可能になった。下表の mps2-an521（M33）は置換前の検証記録。以降の M33 QEMU 検証は mps2-an505 を使用。）
+
 | 環境 | 結果 |
 |---|---|
 | linux（ネイティブ） | **6/6 passed**＋ctest 1/1 Passed |

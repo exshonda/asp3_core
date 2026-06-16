@@ -17,9 +17,9 @@
 #	scripts/ci/run_testexec.py --options "--preset linux" \
 #	    --run "timeout 60 ./asp" --workdir build/testexec-linux task1 sem1
 #
-#	# QEMU mps2-an521
-#	scripts/ci/run_testexec.py --options "--preset mps2_an521-qemu" \
-#	    --run "timeout 60 qemu-system-arm -machine mps2-an521 -nographic \
+#	# QEMU mps2-an505
+#	scripts/ci/run_testexec.py --options "--preset mps2_an505-qemu" \
+#	    --run "timeout 60 qemu-system-arm -machine mps2-an505 -nographic \
 #	           -semihosting-config enable=on,target=native -kernel asp.elf" \
 #	    --workdir build/testexec-mps2 task1 sem1 flg1 tmevt1 hrt1
 #

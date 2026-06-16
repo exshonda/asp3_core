@@ -3,6 +3,8 @@
 > **状態：原因判明・対処方針は未決（ユーザーがゆっくり判断）**。
 > 本ファイルは判断のための調査結果の整理。実装はまだ行っていない。
 > 関連：`docs/dev/ci.md` 既知事項表（cpuexc行）／CI整備の「要調査」項目。
+>
+> （注：2026-06-16 に QEMU の M33 ターゲットを mps2-an521 から mps2-an505/IoTKit へ置換〔現ターゲット名 mps2_an505_gcc・プリセット mps2_an505-qemu〕。FPU が CPU0 に実装された点以外はメモリマップ等が同一で、本件（PRIMASKベースSILでのCPU例外HardFault昇格）は arm_m 共通の特性のため an505 でも同一に再現する。以下の再現手順は an505 で更新済み。本文中の `mps2_an521` 表記は置換前の調査時点の記録。）
 
 ## 要約（結論を先に）
 
@@ -20,8 +22,8 @@
 
 ```bash
 mkdir CE && cd CE
-echo '--preset mps2_an521-qemu' > TARGET_OPTIONS
-echo 'timeout 30 qemu-system-arm -machine mps2-an521 -nographic \
+echo '--preset mps2_an505-qemu' > TARGET_OPTIONS
+echo 'timeout 30 qemu-system-arm -machine mps2-an505 -nographic \
   -semihosting-config enable=on,target=native -kernel asp.elf' > TARGET_RUN
 python3 <ASP3>/test/testexec.py cpuexc1
 ```
