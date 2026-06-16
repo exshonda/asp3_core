@@ -147,6 +147,14 @@ python3 test/ttsp/run_ttsp.py --only yaml --tap api_test/ASP
 逐次実行（1件＝独立 build dir、build 後に削除）。所要は環境により十数分〜数十分。
 これと staticAPI 138 件（うち error 113＝QEMU不要）を合わせ、**ASP api_test の自動判定が全件成立**。
 
+> **運用上の注意（並列ビルドの flaky・2026-06-16）**：複数ターゲットの functional を
+> 連続/並行で回すと、共有 build ディレクトリ上でごく稀に「ビルド失敗」が出ることがある
+> （単体で再実行すると PASS＝レース起因のフレーキー。mps2-an386 で2件観測）。**ターゲット
+> 別に `--build-dir build/ttsp-<target>` を分ける**ことで回避する（`nightly.yml` の
+> `ttsp3-mprofile` マトリクスもターゲット別 build-dir を指定済み）。functional の FAIL は
+> 原則 0 が正しく、「ビルド失敗」だけが出た場合はまず単体再実行で切り分けること。
+> なお TTSP3 ルートはこの開発機では `../ttsp3`（`--ttsp3-root ../ttsp3`。既定パスと異なる）。
+
 ### ターゲット横断 完了（2026-06-14・mps2_an521／polarfire／zcu102）
 
 TTSP3 が同梱する ASP ターゲットライブラリは `zybo_z7_gcc`・`lpc55s69evk_gcc`・`nucleo_f401re_gcc`
