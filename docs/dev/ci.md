@@ -208,6 +208,17 @@ zcu102／polarfire）、③build-onlyジョブ（pico2／stm32mp257）、
 > （an505／an386／an547 で functional＋staticAPI）化した。経緯は
 > `docs/dev/mps2-an386.md`・`docs/dev/mps3-an547.md`・`docs/dev/ttsp3-conformance.md`。
 
+> **2026-06-16 追記（CI使用量の削減）**：Actions 使用量を抑えるため以下を実施。
+> - `ci.yml` の `push` を **main のみ**に（`feat/**` を除外）。feat ブランチは
+>   `pull_request` で検証＝「PRのある feat push の二重実行」「PR前WIP pushの実行」を停止。
+> - `ci.yml` の push/pull_request に **`paths-ignore: ['**.md','docs/**','LICENSE']`**
+>   ＝ドキュメントのみの変更では CI スキップ（コードとdoc混在コミットは実行）。
+> - `nightly.yml` を **daily → weekly**（cron `0 18 * * 0`＝月曜 03:00 JST）。全件
+>   testexec＋TTSP3 functional/staticAPI（3ターゲット）は重いため週次に集約。
+>   緊急時は `workflow_dispatch` で即時実行可。
+> - 留意：branch 保護で必須チェックを設定している場合、doc専用 PR は当該チェックが
+>   走らないため、必要なら保護設定側で除外（path）を調整する。
+
 ### Git情報
 
 - ベースコミット：`815938c`（docs(dev): add CI整備 plan）

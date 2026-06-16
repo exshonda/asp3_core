@@ -12,10 +12,18 @@
 #
 name: CI
 
+#  CI使用量の削減（2026-06-16）：
+#  - push は main のみ（feat/** を外す）。feat ブランチの検証は pull_request 経由。
+#    これで「PRのある feat への push で push＋pull_request の二重実行」と
+#    「PR前のWIP push での実行」を停止する。
+#  - paths-ignore：ドキュメント（**.md・docs/**・LICENSE）のみの変更では CI を
+#    スキップ（コード非変更＝ビルド/テスト不要）。コードとdocの混在コミットは実行される。
 on:
   push:
-    branches: [main, 'feat/**']
+    branches: [main]
+    paths-ignore: ['**.md', 'docs/**', 'LICENSE']
   pull_request:
+    paths-ignore: ['**.md', 'docs/**', 'LICENSE']
   workflow_dispatch:
 
 concurrency:
