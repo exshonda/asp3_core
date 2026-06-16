@@ -20,8 +20,8 @@
 | CMake対応 | `cmake.md` | 完了 |
 | ファイルの削除 | `file-cleanup.md` | 完了 |
 | QEMUターゲット(ARMv8-M) | `mps2-an505.md` | 完了（mps2-an521→an505/IoTKit 置換でハードFPU有効化。testexec 5/5・TTSP3 staticAPI 退行なし） |
-| QEMUターゲット(ARMv7-M) | `mps2-an386.md` | 計画中（Cortex-M4・非TZ・FPv4-SP。`__TARGET_ARCH_THUMB=4` 経路の検証） |
-| QEMUターゲット(ARMv8.1-M) | `mps3-an547.md` | 計画中（Cortex-M55/SSE-300。MVE VPR 退避を asp3_fsp@30bf318 から共通archへ復活） |
+| QEMUターゲット(ARMv7-M) | `mps2-an386.md` | 完了（Cortex-M4・非TZ・FPv4-SP。`__TARGET_ARCH_THUMB=4` 経路の検証。testexec 6/6・TTSP3 staticAPI an505と同一〔PASS 91/120〕。FP命令〔vpush/vpop {s16-s31}〕実行確認） |
+| QEMUターゲット(ARMv8.1-M) | `mps3-an547.md` | 完了（Cortex-M55/SSE-300。MVE VPR 退避を asp3_fsp@30bf318 から共通archへ復活。testexec 5/5・VPR保持テスト PASS・非MVE回帰 an505 退行なし） |
 | QEMUターゲット(ARMv8-A) | `qemu-target-a64.md` | 完了 |
 | QEMUターゲット(RISC-V) | `qemu-target-riscv.md` | 完了 |
 | CLIターゲット | `cli-target.md` | 完了 |

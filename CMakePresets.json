@@ -8,6 +8,7 @@
   "include": [
     "target/linux_gcc/presets.json",
     "target/mps2_an505_gcc/presets.json",
+    "target/mps2_an386_gcc/presets.json",
     "target/mps3_an547_gcc/presets.json",
     "target/zybo_z7_gcc/presets.json",
     "target/zcu102_arm64_gcc/presets.json",
