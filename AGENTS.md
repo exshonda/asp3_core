@@ -34,6 +34,8 @@ TOPPERS/ASP3カーネルを上流追従しながら、各社SDK（Raspberry Pi P
 | ファイルの削除 | 不要なファイルを削除 | 高 |
 | QEMUターゲット(ARMv8-A) | ZCU102依存部を追加してサポートする | 高 |
 | QEMUターゲット(RISC-V) | Polafire依存部を追加してサポートする | 高 |
+| QEMUターゲット(ARMv7-M) | mps2-an386（Cortex-M4）依存部を追加。ARMv7-M（非TrustZone・FPv4-SP）の動作検証用。`__TARGET_ARCH_THUMB=4` 経路の確認 | 中 |
+| QEMUターゲット(ARMv8.1-M) | mps3-an547（Cortex-M55/SSE-300）依存部を追加。ARMv8.1-M＋MVE(Helium) の検証用。asp3_fsp@30bf318 の MVE VPR 退避を共通archへ復活（RA8M2積み残しの解消） | 中 |
 | CLIターゲット | POSIX sim。エージェントのbuild→run→testループ用 | 高 |
 | CI整備 | GitHub Actions：全ターゲットbuild＋POSIX/QEMUテスト実行 | 高 |
 | OS Awareness 対応 | OS Awareness を全ターゲット使用可能とする | 高  |
