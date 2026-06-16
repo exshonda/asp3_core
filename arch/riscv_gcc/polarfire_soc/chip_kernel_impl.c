@@ -78,6 +78,16 @@ chip_initialize(void)
     plic_context_initialize();
 
     /*
+     *  CLINTのソフトウェア割込み保留（MSIP）のクリア
+     *
+     *  実機（JTAG起動）では，HSS等が残したMSIP（プロセッサ間割込み）が，
+     *  下のMSIE許可で発火し未登録割込み（default_int_handler）になる．
+     *  シングルプロセッサのasp3はMSIを使用しないため，許可前にブートハート
+     *  のMSIPをクリアする（FMP3のclear_msip相当．QEMUでは保留なしで無害）．
+     */
+    sil_wrw_mem(CLINT_MSIP(TOPPERS_BOOT_HARTID), 0U);
+
+    /*
      *  MSI/MTI/MEIの許可
      */
     riscv_set_mie(MIE_MSIE | MIE_MTIE | MIE_MEIE);

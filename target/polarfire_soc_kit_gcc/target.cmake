@@ -40,6 +40,20 @@ list(APPEND ASP3_INCLUDE_DIRS
 option(POLARFIRE_QEMU "Build for QEMU microchip-icicle-kit (OFF: real Icicle Kit)" ON)
 
 #
+#  実機ボード選択（POLARFIRE_QEMU=OFF 時のみ意味を持つ）．
+#
+#  ON  … Discovery Kit（FlashPro5．コンソール＝MMUART1＝FT4232 if1）
+#  OFF … Icicle Kit（FlashPro6．コンソール＝MMUART0）
+#
+#  ボードによりコンソールに配線された MMUART が異なる（polarfire_soc_kit.h）．
+#
+option(POLARFIRE_DISCOVERY "Real board is Discovery Kit (OFF: Icicle Kit)" OFF)
+
+if(POLARFIRE_DISCOVERY AND NOT POLARFIRE_QEMU)
+    list(APPEND ASP3_COMPILE_DEFS POLARFIRE_BOARD_DISCOVERY)
+endif()
+
+#
 #  コンパイル定義
 #
 #  QEMUが-kernelでELFを直接ロードするため，.dataのROM化コピーは不要
@@ -60,7 +74,15 @@ list(APPEND ASP3_LINK_OPTIONS
     -Wl,--build-id=none
 )
 
-set(ASP3_LDSCRIPT ${TARGETDIR}/polarfire_soc_kit.ld)
+#
+#  リンカスクリプト：QEMUはDDR（0x80000000，-kernelで直接ロード），
+#  実機はL2-LIM（0x08000000．JTAGデバッガがロード＝lim-debug）．
+#
+if(POLARFIRE_QEMU)
+    set(ASP3_LDSCRIPT ${TARGETDIR}/polarfire_soc_kit.ld)
+else()
+    set(ASP3_LDSCRIPT ${TARGETDIR}/polarfire_soc_kit_lim.ld)
+endif()
 
 #
 #  ターゲット依存部のソース

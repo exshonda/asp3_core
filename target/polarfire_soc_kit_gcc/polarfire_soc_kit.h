@@ -48,6 +48,8 @@
  */
 #ifdef TOPPERS_USE_QEMU
 #define TARGET_NAME  "PolarFire SoC Icicle Kit(QEMU) <U54, RISC-V>"
+#elif defined(POLARFIRE_BOARD_DISCOVERY)  /* 実機 Discovery Kit */
+#define TARGET_NAME  "PolarFire SoC Discovery Kit <U54, RISC-V>"
 #else  /* 実機 Icicle Kit */
 #define TARGET_NAME  "PolarFire SoC FPGA Icicle Kit <U54, RISC-V>"
 #endif /* TOPPERS_USE_QEMU */
@@ -66,8 +68,16 @@
 
 /*
  *  コンソールに使用するUART
+ *
+ *  Icicle Kit / QEMU は MMUART0，Discovery Kit は MMUART1 が
+ *  FlashPro5(FT4232 if1) のコンソールに配線されている（実機確認済み．
+ *  TTSP3_HOWTO.md 参照）．ボード選択は target.cmake の POLARFIRE_DISCOVERY．
  */
+#if defined(POLARFIRE_BOARD_DISCOVERY)
+#define USE_UART1
+#else
 #define USE_UART0
+#endif
 
 /*
  *  微少時間待ちのための定義（本来はSILのターゲット依存部）

@@ -269,6 +269,8 @@ def configure_and_build(tgt, ttsp_root, appldir, build_dir):
         f"-DASP3_APP_INCLUDE_DIRS={inc}",
         f"-DASP3_EXTRA_APP_C_FILES={extra}",
     ]
+    #  ターゲット固有の追加 CMake 定義（例：polarfire 実機の -DPOLARFIRE_DISCOVERY=ON）
+    cfg_cmd += tgt.get("cmake_extra", [])
     rc, log = run(cfg_cmd, cwd=REPO_ROOT, timeout=BUILD_TIMEOUT)
     if rc != 0:
         return rc, log
@@ -300,9 +302,90 @@ def run_hw(tgt, build_dir):
       xsct_zybo  … Zybo Z7（Vitis xsct）
       openocd_swd… STM32MP257F-DK（OpenOCD/SWD．既存 run.cmake の swd-run を再利用）
     """
-    if tgt["hw"].get("kind") == "openocd_swd":
+    kind = tgt["hw"].get("kind")
+    if kind == "openocd_swd":
         return run_hw_openocd_swd(tgt, build_dir)
+    if kind == "openocd_gdb_riscv":
+        return run_hw_openocd_gdb_riscv(tgt, build_dir)
     return run_hw_xsct(tgt, build_dir)
+
+
+def run_hw_openocd_gdb_riscv(tgt, build_dir):
+    """PolarFire SoC 実機（SoftConsole openocd + gdb）でロード＆実行し，UART を返す．
+
+    asp3 は mpfs_hal の system_startup を持たず HSS の MSS IO/クロック初期化に依存する
+    ため，**reset init はしない**（HSS の設定を保持）．openocd（SoftConsole 版）は別途
+    常駐させておく前提（TTSP3_HOWTO.md 参照）．gdb で halt→load→全hartに pc=start→
+    continue し，UART を背景キャプチャして完走マーカで早期打ち切る．continue は
+    ブロックするので gdb は別プロセスで起動し，検出後に kill する（harts は走り続ける）．
+    シリアル1本＝逐次のみ（--jobs 1）．
+
+    env 上書き：$TTSP_HW_SERIAL / $TTSP_HW_CAPTURE / $TTSP_RISCV_GDB．
+    """
+    hw = tgt["hw"]
+    elf = os.path.join(build_dir, "asp.elf")
+    if not os.path.exists(elf):
+        elf = os.path.join(build_dir, "asp")
+    serial = os.environ.get("TTSP_HW_SERIAL", hw["serial"])
+    baud = str(hw.get("baud", 115200))
+    cap = int(os.environ.get("TTSP_HW_CAPTURE", hw.get("capture", 30)))
+    gdb = os.environ.get("TTSP_RISCV_GDB",
+                         hw.get("gdb", "riscv64-unknown-elf-gdb"))
+    port = hw.get("gdb_port", 3333)
+    log = os.path.join(build_dir, "uart.log")
+    gscript = os.path.join(build_dir, "ttsp_load.gdb")
+    with open(gscript, "w", encoding="utf-8") as f:
+        f.write("set pagination off\n"
+                "set confirm off\n"
+                "set mem inaccessible-by-default off\n"
+                f"target extended-remote :{port}\n"
+                "set architecture riscv:rv64\n"
+                f"file {elf}\n"
+                "monitor halt\n"          # reset init はしない（HSS設定を保持）
+                "load\n"
+                "thread apply all set $pc=start\n"
+                "continue\n")
+
+    #  シリアルを raw 設定（失敗は無視）
+    subprocess.run(["stty", "-F", serial, baud, "raw", "-echo"],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    with open(log, "wb") as lf:
+        catp = subprocess.Popen(["timeout", str(cap), "cat", serial],
+                                stdout=lf, stderr=subprocess.DEVNULL)
+        time.sleep(1)
+        #  gdb を background 起動（continue でブロックするため）
+        gdbp = subprocess.Popen([gdb, "-q", "-batch", "-x", gscript, elf],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL)
+        deadline = time.time() + cap
+        while time.time() < deadline and catp.poll() is None:
+            try:
+                with open(log, "r", encoding="utf-8", errors="replace") as rf:
+                    txt = _current_boot(rf.read())
+            except OSError:
+                txt = ""
+            if HW_BANNER in txt and any(m in txt for m in HW_DONE_MARKERS):
+                break
+            time.sleep(0.5)
+        #  gdb を終了（harts は走り続ける）→ 次テストの gdb が halt→load する
+        if gdbp.poll() is None:
+            gdbp.kill()
+        try:
+            gdbp.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
+        if catp.poll() is None:
+            catp.terminate()
+        try:
+            catp.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            catp.kill()
+    try:
+        with open(log, "r", encoding="utf-8", errors="replace") as rf:
+            out = _current_boot(rf.read())
+    except OSError:
+        out = ""
+    return 0, out
 
 
 def run_hw_openocd_swd(tgt, build_dir):
