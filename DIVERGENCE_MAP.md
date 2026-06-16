@@ -19,6 +19,7 @@
 | `target/zybo_z7_gcc/`（非TECS化） | 改変＋新規追加 | TECSレス化（`target_serial.{c,h,cfg}`新規・`target_syssvc.h`/`target_kernel_impl.c`/`Makefile.target`/`MANIFEST`改変） | **上流ZYBOターゲットパッケージ由来のため上流更新時要確認** | target | 3.7.2 |
 | `arch/arm_gcc/zynq7000/xuartps.[ch]` | `xuartps.c`新規・`xuartps.h`改変（非TECSドライバAPI追加）・`MANIFEST`改変 | 非TECS版SIOドライバ | 上流zynq7000依存部の`xuartps.h`変更時に要確認 | arch | 3.7.2 |
 | `target/mps2_an505_gcc/`（非TECS化） | 新規追加（`cmsdk_uart.[ch]`・`target_serial.{c,h,cfg}`）＋改変 | TECSレス化 | （ターゲット自体がNEW・上流衝突なし） | target(NEW) | — |
+| `target/mps2_an386_gcc/`（非TECS化） | 新規追加（`cmsdk_uart.[ch]`・`target_serial.{c,h,cfg}`）＋改変．mps2_an505_gcc を雛形にボード固有部を全面差し替え（メモリマップ・UART番地/IRQ・クロック・CPU） | TECSレス化．ARMv7-M（Cortex-M4・非TZ・FPv4-SP）＝`__TARGET_ARCH_THUMB=4` 経路の検証用 | （ターゲット自体がNEW・上流衝突なし） | target(NEW) | — |
 | `target/stm32mp257f_dk_arm64_gcc/`・`arch/arm64_gcc/stm32mp2/`（非TECS化） | 新規追加（`stm32usart.c`・`target_serial.{c,h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING_ASP3_STM32MP2.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
 | `target/pico2_arm_gcc/`・`arch/arm_m_gcc/rp2350/`（非TECS化） | 新規追加（`rp2350_uart.[ch]`・`chip_serial.{c,h,cfg}`・`target_serial.{h,cfg}`）＋改変 | TECSレス化（経緯は`PORTING.md`）．`rp2350_uart_cls_por()`に送信FIFOドレイン待ちを追加（終了時の末尾出力欠落の修正．`docs/dev/porting-test.md`） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
 | `target/mimxrt685evk_gcc/`・`arch/arm_m_gcc/imxrt600/`（非TECS化） | 新規追加（`imxrt600_usart.[ch]`・`chip_serial.{c,h,cfg}`・`target_serial.{h,cfg}`） | genuine ASP3 3.7.0のMIMXRT685-EVK移植をTECSレス化＋Python cfg化＋CMake化（経緯は`docs/dev/nxp-integration.md`）．`imxrt600_usart_cls_por()`に送信FIFOドレイン待ちを追加（pico2と同趣旨） | （ターゲット自体がNEW・上流衝突なし） | target/arch(NEW) | — |
@@ -42,6 +43,7 @@
 | `asp3_core.cmake`・`arch/*/arch.cmake`・`arch/*/*/chip.cmake`・`target/*/target.cmake` | 新規追加（`asp3_core.cmake`：`ASP3_TARGET_DIR`変数で外部SDKターゲットの受け入れ口を追加＝後方互換拡張．経緯は`docs/dev/pico-sdk-integration.md`） | CMakeビルド（変数積み上げ方式） | （上流に存在せず・衝突なし） | build(NEW) | — |
 | `arch/riscv_gcc/common/`・`arch/riscv_gcc/polarfire_soc/` | 新規追加 | RISC-V（XLEN抽象＝RV64GC/RV32IMAC）コア依存部＋PolarFire SoCチップ依存部（FMP3のPolarFire SoC移植をASP3変換．経緯は`docs/dev/qemu-target-riscv.md`．RV32対応のSTK_T分岐・PLIC/mtimer除外オプション・target_hrt_*リネーム削除は`docs/dev/pico2-riscv.md`） | 上流がRISC-V対応を追加した場合は統合検討（FMP3側の更新は手動反映） | arch(NEW) | — |
 | `target/mps2_an505_gcc/` | 新規追加 | QEMU Cortex-M33ターゲット | （上流に存在せず・衝突なし） | target(NEW) | — |
+| `target/mps2_an386_gcc/` | 新規追加 | QEMU Cortex-M4ターゲット（ARMv7-M・非TZ・FPv4-SP．レガシーCMSDK系＝`hw/arm/mps2.c`．経緯は`docs/dev/mps2-an386.md`） | （上流に存在せず・衝突なし） | target(NEW) | — |
 | `arch/riscv_gcc/rp2350/`・`target/pico2_riscv_gcc/` | 新規追加 | RP2350 RISC-V（Hazard3）＝SDK非依存ベアメタル移植（Xh3irq・RISC-V IMAGE_DEF．経緯は`docs/dev/pico2-riscv.md`．RP2350.h/rp2350_uart等はarm_m_gcc/rp2350をパス参照で共有） | （上流に存在せず・衝突なし） | arch/target(NEW) | — |
 | `target/stm32mp257f_dk_arm64_gcc/` | 新規追加 | asp3_stm32cube（旧 stm32_vscode_asp）から移植 | （上流に存在せず・衝突なし） | target(NEW) | — |
 | `arch/arm64_gcc/zynqmp/`・`target/zcu102_arm64_gcc/` | 新規追加 | QEMU(xlnx-zcu102)用ARMv8-Aターゲット（FMP3のZynqMP移植をASP3変換．経緯は`docs/dev/qemu-target-a64.md`） | （上流に存在せず・衝突なし．FMP3側の更新は手動反映） | arch/target(NEW) | — |

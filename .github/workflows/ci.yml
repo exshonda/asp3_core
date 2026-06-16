@@ -118,6 +118,42 @@ jobs:
           if-no-files-found: ignore
 
   #
+  #  QEMU Cortex-M4（mps2-an386）：build → testexecスモーク
+  #  ARMv7-M（非TrustZone・FPv4-SP）＝ __TARGET_ARCH_THUMB=4 経路の検証
+  #
+  mps2-an386-qemu:
+    name: QEMU mps2-an386 (Cortex-M4)
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      #  イメージの既定ユーザはvscode（devcontainer用）のため、Actionsの
+      #  ランナーファイルに書けるようrootで実行する
+      options: --user root
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build (sample1)
+        run: |
+          cmake --preset mps2_an386-qemu -B build/mps2_an386-qemu
+          cmake --build build/mps2_an386-qemu
+      - name: Smoke tests (testexec.py)
+        run: |
+          scripts/ci/run_testexec.py --options "--preset mps2_an386-qemu" \
+            --run "timeout 60 qemu-system-arm -machine mps2-an386 -nographic \
+                   -semihosting-config enable=on,target=native -kernel asp.elf" \
+            --workdir build/testexec-mps2-an386 \
+            task1 sem1 flg1 int1 tmevt1 hrt1
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mps2-an386-qemu-logs
+          path: build/testexec-mps2-an386/testexec.log
+          if-no-files-found: ignore
+
+  #
   #  QEMU Cortex-A9（zybo_z7／xilinx-zynq-a9）：build → sample1スモーク
   #
   zybo-qemu:
