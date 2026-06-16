@@ -159,6 +159,17 @@ ALABEL(pendsv_handler)
 #ifdef TOPPERS_FPU_CONTEXT
 	tst    lr, #EXC_RETURN_FP
 	bne    pendsv_handler_0
+#ifdef TOPPERS_SAFEG_M
+	/*
+	 *  【SAFEG】#1 実行中タスクが BTASK の場合は FPU 退避をスキップ．
+	 *  NS→Secure gate veneer が NS 復帰前に FP スクラッチをゼロ化して
+	 *  CONTROL_S.FPCA=1 を残すため，退避すると BTASK Secure スタックを超え
+	 *  PSPLIM_S 違反(HardFault)となる．復帰側(#2)も対称にスキップ．
+	 */
+	ldr    r3, =_kernel_tcb_table
+	cmp    r0, r3
+	beq    pendsv_handler_0
+#endif /* TOPPERS_SAFEG_M */
 	vstmdb r2!, {s16-s31}
 	/* vstmdb により，Lazy Stacking の際もスクラッチが保存される． */
 ALABEL(pendsv_handler_0)
@@ -200,6 +211,12 @@ ALABEL(pendsv_handler_1)
 #ifdef TOPPERS_FPU_CONTEXT
 	tst    r1, #EXC_RETURN_FP
 	bne    pendsv_handler_2
+#ifdef TOPPERS_SAFEG_M
+	/* 【SAFEG】#2 BTASK は退避していないため FPU 復帰もスキップ(#1対) */
+	ldr    r3, =_kernel_tcb_table
+	cmp    r0, r3
+	beq    pendsv_handler_2
+#endif /* TOPPERS_SAFEG_M */
 	vldmia r2!, {s16-s31}
 ALABEL(pendsv_handler_2)
 #endif /* TOPPERS_FPU_CONTEXT */
@@ -209,7 +226,16 @@ ALABEL(pendsv_handler_2)
 	 * この区間でカーネル管理の割り込みが発生しないよう faultmask をセットする．
 	 * 例外リターンにより，faultmask は自動的に解除される．
 	 */
+#ifdef TOPPERS_SAFEG_M
+	/* 【SAFEG】#3 p_runtsk==BTASK なら NS割込許可(basepri=0)，否なら IIPM_ENAALL */
+	ldr    r2, =_kernel_tcb_table
+	cmp    r0, r2
+	ite    eq
+	moveq  r0, #0
+	movne  r0, #IIPM_ENAALL
+#else
 	movs   r0, #IIPM_ENAALL
+#endif /* TOPPERS_SAFEG_M */
 	cpsid  f
 	msr    basepri, r0
 	bx     r1
@@ -303,18 +329,31 @@ ALABEL(svc_handler)
 	ldr    r0, =lock_flag
 	movs   r1, #0
 	str    r1, [r0]
+#ifdef TOPPERS_SAFEG_M
+	/* 【SAFEG】#4 do_dispatch が設定した basepri 値(BTASK=0/他=IIPM_ENAALL) */
+	msr    basepri, r6
+#else
 	movs   r0, #IIPM_ENAALL
 	msr    basepri, r0
+#endif /* TOPPERS_SAFEG_M */
 #if __TARGET_ARCH_THUMB >= 5
 	ldr    r0, [r4, #TCB_stk_top]
 	msr    psplim, r0
 #endif
 	ldr    r0, [r4, #TCB_sp]
 	movs   r1, r5
+#if defined(TOPPERS_FPU_CONTEXT) && defined(TOPPERS_SAFEG_M)
+	/* 【SAFEG】#5a ldmfd で r4 が壊れる前に BTASK 判定(r3==0 で BTASK) */
+	ldr    r3, =_kernel_tcb_table
+	subs   r3, r4, r3
+#endif
 	ldmfd  r0!, {r4-r11}
 #ifdef TOPPERS_FPU_CONTEXT
 	tst    r1, #EXC_RETURN_FP
 	bne    svc_handler_0
+#ifdef TOPPERS_SAFEG_M
+	cbz    r3, svc_handler_0 /* 【SAFEG】#5b BTASK は FPU 復帰スキップ */
+#endif /* TOPPERS_SAFEG_M */
 	vldmia r0!, {s16-s31}
 ALABEL(svc_handler_0)
 #endif /* TOPPERS_FPU_CONTEXT */
@@ -392,6 +431,12 @@ ALABEL(exit_and_dispatch)
 	AGLOBAL(do_dispatch)
 ALABEL(do_dispatch)
 #ifdef TOPPERS_FPU_CONTEXT
+#ifdef TOPPERS_SAFEG_M
+	/* 【SAFEG】#6 BTASK は FPU 退避しない(veneer由来FPCA→PSPLIM_S違反回避) */
+	ldr   r3, =_kernel_tcb_table
+	cmp   r0, r3
+	beq   dispatch_btask_nofp
+#endif /* TOPPERS_SAFEG_M */
 	mrs   r3, control
 	ands  r3, #CONTROL_FPCA
 	beq   dispatch_1 /* FPU の使用がなければ保存をスキップ */
@@ -403,6 +448,14 @@ ALABEL(do_dispatch)
 	movs  r3, #CONTROL_INIT
 	msr   control, r3 /* FPCA をクリア */
 	isb
+#ifdef TOPPERS_SAFEG_M
+	b     dispatch_1
+ALABEL(dispatch_btask_nofp)
+	movs  r3, #CONTROL_INIT
+	msr   control, r3 /* 【SAFEG】#6b veneer scratch 由来の FPCA をクリア */
+	isb
+	movs  r3, #0      /* fpu_flag = 0 (FP コンテキスト無し) */
+#endif /* TOPPERS_SAFEG_M */
 ALABEL(dispatch_1)
 	/* fpu_flag はゼロもしくは CONTROL_INIT と同じ値（非ゼロ） */
 	str   r3, [r0, #TCB_fpu_flag]
@@ -426,6 +479,14 @@ ALABEL(dispatcher_0)
 	/* r1, r2 は例外ハンドラの先頭で未定義となるため退避 */
 	movs  r4, r1
 	movs  r5, r2
+#ifdef TOPPERS_SAFEG_M
+	/* 【SAFEG】#7 svc_handler 用 basepri 値: BTASK=0 / 他=IIPM_ENAALL */
+	ldr   r3, =_kernel_tcb_table
+	cmp   r1, r3
+	ite   eq
+	moveq r6, #0
+	movne r6, #IIPM_ENAALL
+#endif /* TOPPERS_SAFEG_M */
 	svc   #0
 
 /*

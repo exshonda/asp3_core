@@ -48,6 +48,15 @@
 #define ARM_M_H
 
 /*
+ *  【SAFEG】SafeG-M(デュアルOS)は TrustZone を前提とする．
+ *  ENABLE_SAFEG_M=1 のときは TOPPERS_ENABLE_TRUSTZONE が必須(M0 §11.1)．
+ *  arch.cmake が自動付与するが，万一の不整合を早期検出する．
+ */
+#if defined(TOPPERS_SAFEG_M) && !defined(TOPPERS_ENABLE_TRUSTZONE)
+#error "TOPPERS_SAFEG_M requires TOPPERS_ENABLE_TRUSTZONE"
+#endif
+
+/*
  *  EPSRのTビット
  */
 #define EPSR_T   0x01000000
@@ -74,6 +83,11 @@
 #define EXC_RETURN_MSP          0x0
 #define EXC_RETURN_PSP          0x4
 #define EXC_RETURN_FP           0x10
+#ifdef TOPPERS_ENABLE_TRUSTZONE
+/* 【SAFEG】TrustZone 時の EXC_RETURN 追加(M0 §11.3, C2 純追加) */
+#define EXC_RETURN_S            0x40        /* bit6: Secure レジスタ */
+#define EXC_RETURN_NESTED       0xFFFFFFF1  /* S/Handler/MSP: deactivate でネスト Handler へ連鎖 */
+#endif /* TOPPERS_ENABLE_TRUSTZONE */
 
 /*
  *  CONTROLレジスタ

@@ -49,6 +49,9 @@
 | `target/stm32mp257f_dk_arm64_gcc/` | 新規追加 | asp3_stm32cube（旧 stm32_vscode_asp）から移植 | （上流に存在せず・衝突なし） | target(NEW) | — |
 | `arch/arm64_gcc/zynqmp/`・`target/zcu102_arm64_gcc/` | 新規追加 | QEMU(xlnx-zcu102)用ARMv8-Aターゲット（FMP3のZynqMP移植をASP3変換．経緯は`docs/dev/qemu-target-a64.md`） | （上流に存在せず・衝突なし．FMP3側の更新は手動反映） | arch/target(NEW) | — |
 | `target/polarfire_soc_kit_gcc/` | 新規追加 | QEMU(microchip-icicle-kit)用RISC-Vターゲット（FMP3のPolarFire SoC Kit移植をASP3変換．経緯は`docs/dev/qemu-target-riscv.md`） | （上流に存在せず・衝突なし．FMP3側の更新は手動反映） | target(NEW) | — |
+| `arch/arm_m_gcc/common/core_support.S` | 改変【SAFEG】 | SafeG-M(デュアルOS)取り込み(M1)．`#ifdef TOPPERS_SAFEG_M` 7サイト(pendsv #1#2#3／svc #4#5／do_dispatch #6／dispatcher_0 #7)．BTASKのFPU退避skip(修正A)とNS向けbasepri制御 | **pendsv #3/svc #4の#elseは最脆弱・上流変更時要再確認**．残サイト⑧⑨(deactivate/usagefault)はM2 | arch【SAFEG】 | 3.7.2 |
+| `arch/arm_m_gcc/common/arm_m.h` | 改変【SAFEG】 | SafeG-M(M1)．`#error`ガード(SAFEG_M⇒TRUSTZONE必須)＋`EXC_RETURN_S`/`EXC_RETURN_NESTED`純追加(`#ifdef TOPPERS_ENABLE_TRUSTZONE`下) | C1: bare CPACR/FPCCR非持込(CPACR_BASE/FPCCR_ADDR使用)．SAU/SCB_NS等の純追加はM2 | arch【SAFEG】 | 3.7.2 |
+| `arch/arm_m_gcc/common/arch.cmake` | 改変【SAFEG】 | SafeG-M(M1)．`option(ENABLE_SAFEG_M OFF)`→`-DTOPPERS_SAFEG_M`＋TrustZone強制 | 既定OFFで素ASP3不変 | arch【SAFEG】 | 3.7.2 |
 
 ---
 
