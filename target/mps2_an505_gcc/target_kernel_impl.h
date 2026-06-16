@@ -37,6 +37,15 @@
  */
 #define DEFAULT_ISTKSZ    (0x1000)  /* 4KByte */
 
+#ifdef TOPPERS_SAFEG_M
+/*
+ *  【SAFEG】Non-secure ベクタテーブル先頭アドレス
+ *    AN505: NS code エイリアス 0x00200000（Secure code は 0x10000000）。
+ *    _SAFEG_BTASK の exinf として launch_ns に渡る。
+ */
+#define TOPPERS_NS_VTOR    0x00200000
+#endif /* TOPPERS_SAFEG_M */
+
 #ifndef TOPPERS_MACRO_ONLY
 
 /*
