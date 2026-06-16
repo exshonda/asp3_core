@@ -154,6 +154,42 @@ jobs:
           if-no-files-found: ignore
 
   #
+  #  QEMU Cortex-M55（mps3-an547）：build → testexecスモーク（mvevpr 含む）
+  #  ARMv8.1-M（SSE-300・FPv5-D16・MVE/Helium）＝ __TARGET_ARCH_THUMB=5 経路の検証．
+  #  mvevpr は MVE VPR レジスタのコンテキスト退避（core_support.S）を検証する
+  #  （an547=PASS／非MVEターゲットでは SKIP）．
+  #
+  mps3-an547-qemu:
+    name: QEMU mps3-an547 (Cortex-M55)
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/exshonda/asp3_core-dev:20260606
+      options: --user root
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build (sample1)
+        run: |
+          cmake --preset mps3_an547-qemu -B build/mps3_an547-qemu
+          cmake --build build/mps3_an547-qemu
+      - name: Smoke tests (testexec.py, incl. MVE VPR preservation)
+        run: |
+          scripts/ci/run_testexec.py --options "--preset mps3_an547-qemu" \
+            --run "timeout 60 qemu-system-arm -machine mps3-an547 -nographic \
+                   -semihosting-config enable=on,target=native -kernel asp.elf" \
+            --workdir build/testexec-mps3-an547 \
+            task1 sem1 flg1 tmevt1 hrt1 mvevpr
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mps3-an547-qemu-logs
+          path: build/testexec-mps3-an547/testexec.log
+          if-no-files-found: ignore
+
+  #
   #  QEMU Cortex-A9（zybo_z7／xilinx-zynq-a9）：build → sample1スモーク
   #
   zybo-qemu:

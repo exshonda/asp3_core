@@ -100,7 +100,8 @@ jobs:
           if-no-files-found: ignore
 
   #
-  #  TTSP3 適合性テスト：mps2-an505（Cortex-M33）で functional 全件 build+run
+  #  TTSP3 適合性テスト：M-profile 3ターゲット（mps2-an505=M33／mps2-an386=M4/v7-M／
+  #  mps3-an547=M55/v8.1-M+MVE）で functional 全件 build+run（matrix・fail-fast=false）
   #
   #  - TTSP3（private 別リポジトリ・読み取り専用のテスト供給源）を checkout．
   #    要 secret TTSP3_TOKEN（exshonda/TTSP3 への read 権限 PAT）．
@@ -110,9 +111,16 @@ jobs:
   #    （docs/dev/ttsp3-conformance.md）非gate（continue-on-error）で可視化のみ．
   #  - 全 yaml の逐次 build+run のため重い（nightly 専用）．
   #
-  ttsp3-mps2:
-    name: TTSP3 conformance mps2-an505 (Cortex-M33)
+  ttsp3-mprofile:
+    name: TTSP3 conformance ${{ matrix.label }}
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: mps2_an505, label: "mps2-an505 (Cortex-M33)" }
+          - { target: mps2_an386, label: "mps2-an386 (Cortex-M4/v7-M)" }
+          - { target: mps3_an547, label: "mps3-an547 (Cortex-M55/v8.1-M+MVE)" }
     container:
       image: ghcr.io/exshonda/asp3_core-dev:20260606
       options: --user root
@@ -145,21 +153,23 @@ jobs:
       - name: TTSP3 functional full (build+run, gate＝FAIL 0)
         run: |
           set -o pipefail
-          python3 test/ttsp/run_ttsp.py --target mps2_an505 --only yaml --tap \
+          python3 test/ttsp/run_ttsp.py --target ${{ matrix.target }} --only yaml --tap \
+            --build-dir build/ttsp-${{ matrix.target }} \
             --ttsp3-root "$GITHUB_WORKSPACE/TTSP3" api_test/ASP \
-            | tee ttsp3-mps2-functional.tap
+            | tee ttsp3-${{ matrix.target }}-functional.tap
       - name: TTSP3 staticAPI (error/runtime, non-gating＝ターゲット依存差あり)
         continue-on-error: true
         run: |
-          python3 test/ttsp/run_ttsp.py --target mps2_an505 --tap \
+          python3 test/ttsp/run_ttsp.py --target ${{ matrix.target }} --tap \
+            --build-dir build/ttsp-${{ matrix.target }}-static \
             --ttsp3-root "$GITHUB_WORKSPACE/TTSP3" api_test/ASP/staticAPI \
-            | tee ttsp3-mps2-staticapi.tap
+            | tee ttsp3-${{ matrix.target }}-staticapi.tap
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: nightly-ttsp3-mps2
+          name: nightly-ttsp3-${{ matrix.target }}
           path: |
-            ttsp3-mps2-functional.tap
-            ttsp3-mps2-staticapi.tap
+            ttsp3-${{ matrix.target }}-functional.tap
+            ttsp3-${{ matrix.target }}-staticapi.tap
           if-no-files-found: ignore
