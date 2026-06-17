@@ -280,6 +280,26 @@
 #define FPCCR_INIT FPCCR_LAZYSTACKING
 #endif /* defined(TOPPERS_FPU_NO_PRESERV) */
 
+/*
+ *  DWT（Data Watchpoint and Trace）CYCCNT サイクルカウンタ関連レジスタ
+ *
+ *  性能評価（core_syssvc.h の DWT 時間源）が使用する．DWT/CYCCNT は ARMv7-M
+ *  以降のオプション機能で，ARMv6-M（Cortex-M0/M0+）には存在しない．実装
+ *  有無は実行時に DWT_CTRL.NOCYCCNT で判定できる．
+ *
+ *  bareな DEMCR/DWT_CTRL/DWT_CYCCNT は CMSIS のレジスタ構造体メンバ名と
+ *  衝突しうるため，既存の FPCCR_ADDR / CPACR_BASE と同じく _ADDR を付けた
+ *  アドレスマクロのみを定義する（CMSIS同居SDKとの協調動作のため）．
+ */
+#define DEMCR_ADDR          0xE000EDFCU     /* Debug Exception and Monitor Control */
+#define DEMCR_TRCENA        0x01000000U     /* bit24: DWT/ITM トレース有効 */
+#define DWT_CTRL_ADDR       0xE0001000U     /* DWT Control Register */
+#define DWT_CTRL_CYCCNTENA  0x00000001U     /* bit0: CYCCNT 計数有効 */
+#define DWT_CTRL_NOCYCCNT   0x02000000U     /* bit25: CYCCNT 非実装（RO） */
+#define DWT_CYCCNT_ADDR     0xE0001004U     /* Cycle Count Register */
+#define DWT_LAR_ADDR        0xE0001FB0U     /* DWT Lock Access Register */
+#define DWT_LAR_KEY         0xC5ACCE55U     /* ソフトウェアロック解除キー */
+
 #ifdef TOPPERS_SAFEG_M
 /*
  *  【SAFEG】Security Attribution Unit

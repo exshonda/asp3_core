@@ -194,6 +194,27 @@ disable_exc(EXCNO excno)
 
 
 /*
+ *  DWT CYCCNT サイクルカウンタの初期化（性能評価）
+ *
+ *  USE_ARM_DWT_PMCNT を定義したビルドでのみコンパイルされる（オプトイン）．
+ *  DWT のソフトウェアロックを解除し，DEMCR.TRCENA で DWT を有効化したうえで，
+ *  CYCCNT をクリアして計数を開始する．時間源の設定は core_syssvc.h を参照．
+ *  arm_gcc の arm_pmcnt_initialize（PMCCNTR）に相当する．
+ */
+#if defined(USE_ARM_DWT_PMCNT) && __TARGET_ARCH_THUMB >= 4
+
+void
+arm_m_pmcnt_initialize(void)
+{
+	sil_wrw_mem((uint32_t *) DWT_LAR_ADDR, DWT_LAR_KEY);   /* ロック解除 */
+	sil_orw((uint32_t *) DEMCR_ADDR, DEMCR_TRCENA);        /* DWT 有効化 */
+	sil_wrw_mem((uint32_t *) DWT_CYCCNT_ADDR, 0U);         /* カウンタクリア */
+	sil_orw((uint32_t *) DWT_CTRL_ADDR, DWT_CTRL_CYCCNTENA); /* 計数開始 */
+}
+
+#endif /* defined(USE_ARM_DWT_PMCNT) && __TARGET_ARCH_THUMB >= 4 */
+
+/*
  *  コア依存の初期化
  */
 void
@@ -258,6 +279,13 @@ core_initialize(void)
 	sil_wrw_mem((uint32_t *)NSACR, NSACR_FPU_ENABLE);   /* 【SAFEG】NSへFPU許可 */
 #endif /* TOPPERS_SAFEG_M */
 #endif /* TOPPERS_FPU_ENABLE */
+
+#if defined(USE_ARM_DWT_PMCNT) && __TARGET_ARCH_THUMB >= 4
+	/*
+	 *  DWT CYCCNT サイクルカウンタを有効化（性能評価．オプトイン）
+	 */
+	arm_m_pmcnt_initialize();
+#endif /* defined(USE_ARM_DWT_PMCNT) && __TARGET_ARCH_THUMB >= 4 */
 
 	/*
 	 * スタックの境界値をタスクコンテキストにキャッシュ

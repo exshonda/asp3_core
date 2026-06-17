@@ -69,4 +69,12 @@ extern void target_fput_log(char c);
 
 #endif /* TOPPERS_OMIT_TECS */
 
+/*
+ *  システムサービスのコア依存部の読み込み（性能評価の時間源等）
+ *
+ *  QEMU は DWT CYCCNT を実装しないため，USE_ARM_DWT_PMCNT は指定せず
+ *  histogram は既定の fch_hrt を用いる（core_syssvc.h は何も上書きしない）．
+ */
+#include "core_syssvc.h"
+
 #endif /* TOPPERS_TARGET_SYSSVC_H */

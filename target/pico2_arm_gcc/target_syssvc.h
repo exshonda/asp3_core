@@ -90,4 +90,25 @@ extern void target_fput_log(char c);
  */
 #include "chip_syssvc.h"
 
+/*
+ * システムサービスのコア依存部の読み込み
+ *
+ * USE_ARM_DWT_PMCNT 定義時は，histogram の時間源を DWT CYCCNT（サイクル精度）
+ * にする（RP2350=Cortex-M33 は DWT を実装）．未定義なら既定の fch_hrt．
+ */
+#include "core_syssvc.h"
+
+#ifdef USE_ARM_DWT_PMCNT
+/*
+ * DWT CYCCNT のサイクル数をナノ秒へ変換する（HIST_CONV_TIM）．
+ *
+ * 変換係数はコアクロック依存なので，ターゲット依存部で与える（CYCCNT は
+ * コアクロック＝CPU_CLOCK_HZ で計数）．ns = cycles * 1000 / (CPU_CLOCK_HZ[MHz])．
+ * RP2350 は CPU_CLOCK_HZ=150MHz なので 1cycle≒6.67ns（18cycle≒120ns）．
+ * 乗算は uint64 で行いオーバフローを防ぐ．
+ */
+#define HIST_CONV_TIM(time)	\
+			((uint_t)((uint64_t)(time) * 1000U / (CPU_CLOCK_HZ / 1000000U)))
+#endif /* USE_ARM_DWT_PMCNT */
+
 #endif /* TOPPERS_TARGET_SYSSVC_H */

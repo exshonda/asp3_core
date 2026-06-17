@@ -291,6 +291,9 @@ void target_initialize(void)
 
     /*
      *  コア依存部の初期化
+     *
+     *  USE_ARM_DWT_PMCNT 定義時は core_initialize() 内で DWT CYCCNT も
+     *  有効化される（性能評価の時間源．core_kernel_impl.c）．
      */
     core_initialize();
     /*
