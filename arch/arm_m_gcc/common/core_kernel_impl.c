@@ -434,9 +434,28 @@ _Static_assert((TOPPERS_NS_VTOR & 0x7FU) == 0U,
 typedef void __attribute__((cmse_nonsecure_call)) (*nonsecure_call_t)(void);
 void launch_ns(intptr_t exinf)
 {
+	/*
+	 *  NS ベクタテーブル先頭(exinf)から初期 MSP_NS(=vector[0]) と
+	 *  NS エントリ(=vector[1]) を取得する．Secure は NS 領域を読めるので可．
+	 */
+	uint32_t ns_msp = *(uint32_t *)exinf;
+	uint32_t ns_entry = *(uint32_t *)(exinf + 4);
+
+	/*
+	 *  【防御】半初期化のまま BLXNS して診断不能な SecureFault/INVEP に陥るのを
+	 *  防ぐため，NS 起動の前提を検査する(設定誤りの早期発見)．
+	 *    - exinf は VTOR 要件の 128byte アライメント
+	 *    - 初期 MSP_NS は ARMv8-M スタック要件の 8byte アライメント
+	 *    - NS エントリは Non-secure 空間であること(SAU/IDAU を tt 命令で確認．
+	 *      Secure 空間ならば設定誤りで，そのまま分岐すると INVEP となる)
+	 */
+	assert((exinf & 0x7F) == 0);
+	assert((ns_msp & 0x7U) == 0U);
+	assert(!is_secure((uintptr_t)ns_entry));
+
 	set_faultmask_ns(1); /* Non-secure の割り込みを禁止 */
 	set_control_ns(0); /* 特権かつスタックポインタを MSP に設定 */
-	set_msp_ns(*(uint32_t *)exinf); /* スタックポインタの初期値を設定 */
+	set_msp_ns(ns_msp); /* スタックポインタの初期値を設定 */
 	sil_wrw_mem((uint32_t *)SCB_NS_VTOR, exinf); /* ベクタテーブルオフセットを設定 */
 	/*
 	 * Non-secure 側で Lazy stack preservation がアクティブだと，Secure 側の
@@ -446,7 +465,7 @@ void launch_ns(intptr_t exinf)
 	 */
 	sil_wrw_mem((uint32_t *)FPCCR_NS_ADDR, FPCCR_INIT);
 	set_basepri(0);
-	nonsecure_call_t entry = (nonsecure_call_t)*(uint32_t *)(exinf + 4);
+	nonsecure_call_t entry = (nonsecure_call_t)ns_entry;
 	entry();
 }
 #endif /* TOPPERS_SAFEG_M */
