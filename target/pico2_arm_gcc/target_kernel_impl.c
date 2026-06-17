@@ -185,6 +185,51 @@ extern void tPutLogSIOPort_initialize(void);
 /*
  * ターゲット依存部 初期化処理
  */
+#ifdef TOPPERS_SAFEG_M
+/*
+ *  【SAFEG/B】NS 専用 UART1 の Secure 側ブリングアップ。
+ *  RESETS/CLOCKS/IO_BANK0/PADS は Secure 専有のまま Secure が初期化し，
+ *  データレジスタ領域(0x40078000)のみ SAU で NS に開放する(R3, 下記)。
+ *  これにより NS(FreeRTOS 等)が自前 UART を直接駆動できる(出力は Secure を介さない)。
+ *  ピン: GP8=UART1 TX, GP9=UART1 RX (funcsel 2)。115200-8N1。UART0 と同手順。
+ */
+#define NS_UART1_BASE   RP2350_UART1_BASE
+#define NS_UART1_BAUD   115200U
+static void safeg_ns_uart1_init(void)
+{
+    uint64_t divisor;
+
+    /* clk_peri を clk_sys に(UART0 初期化で設定済みだが冪等に再設定) */
+    sil_wrw_mem(RP2350_CLOCKS_CLK_PERI_CTRL,
+                RP2350_CLOCKS_CLK_PERI_CTRL_ENABLE | RP2350_CLOCKS_CLK_PERI_CTRL_SRC_CLK_SYS);
+    /* UART1 リセット解除 */
+    sil_orw(RP2350_RESETS_RESET, RP2350_RESETS_RESET_UART1);
+    sil_clrw(RP2350_RESETS_RESET, RP2350_RESETS_RESET_UART1);
+    while ((sil_rew_mem(RP2350_RESETS_RESET_DONE) & RP2350_RESETS_RESET_UART1) == 0U) ;
+    /* GP8=UART1 TX, GP9=UART1 RX (funcsel 2), pad IE/ISO クリア(UART0=GP0/1 と同手順) */
+    sil_wrw_mem(RP2350_IO_BANK0_GPIO_CTRL(8), 2);
+    sil_wrw_mem(RP2350_IO_BANK0_GPIO_CTRL(9), 2);
+    sil_orw(RP2350_PADS_BANK0_GPIO(8), RP2350_PADS_BANK0_GPIOX_IE);
+    sil_clrw(RP2350_PADS_BANK0_GPIO(8), RP2350_PADS_BANK0_GPIOX_ISO | RP2350_PADS_BANK0_GPIOX_OD);
+    sil_orw(RP2350_PADS_BANK0_GPIO(9), RP2350_PADS_BANK0_GPIOX_IE);
+    sil_clrw(RP2350_PADS_BANK0_GPIO(9), RP2350_PADS_BANK0_GPIOX_ISO | RP2350_PADS_BANK0_GPIOX_OD);
+    /* 割込み禁止・クリア */
+    sil_wrw_mem(RP2350_UART_IMSC(NS_UART1_BASE), 0U);
+    sil_wrw_mem(RP2350_UART_ICR(NS_UART1_BASE), 0x7ffU);
+    /* ボーレート(115200) */
+    divisor = ((((uint64_t)CPU_CLOCK_HZ) << 7) / (16U * NS_UART1_BAUD) + 1U) >> 1;
+    sil_wrw_mem(RP2350_UART_IBRD(NS_UART1_BASE), (uint32_t)(divisor >> 6));
+    sil_wrw_mem(RP2350_UART_FBRD(NS_UART1_BASE), (uint32_t)(divisor & 0x3fU));
+    /* 8bit, FIFO 有効 */
+    sil_wrw_mem(RP2350_UART_LCR_H(NS_UART1_BASE),
+                RP2350_UART_LCR_H_WLEN_8BITS | RP2350_UART_LCR_H_FEN);
+    sil_wrw_mem(RP2350_UART_IFLS(NS_UART1_BASE), (0x0U << 3) | (0x4U << 0));
+    /* TX/RX イネーブル */
+    sil_wrw_mem(RP2350_UART_CR(NS_UART1_BASE),
+                RP2350_UART_CR_RXE | RP2350_UART_CR_TXE | RP2350_UART_CR_UARTEN);
+}
+#endif /* TOPPERS_SAFEG_M */
+
 void target_initialize(void)
 {
 #ifdef TOPPERS_SAFEG_M
@@ -214,6 +259,16 @@ void target_initialize(void)
     sil_wrw_mem((uint32_t *)SAU_RBAR, 0x20040000);
     sil_wrw_mem((uint32_t *)SAU_RLAR,
                 (0x2007FFFF & SAU_RLAR_LADDR_MASK) | SAU_RLAR_ENABLE);
+    /*
+     *  【SAFEG/B】R3: NS 専用 UART1 のデータレジスタ領域 0x40078000..0x40078FFF を NS 化。
+     *  Secure が safeg_ns_uart1_init() で UART1 をブリングアップ後、本領域のみ NS へ開放。
+     *  (RESETS/CLOCKS/IO_BANK0/PADS は Secure 専有のまま=分離維持)
+     */
+    safeg_ns_uart1_init();
+    sil_wrw_mem((uint32_t *)SAU_RNR, 3);
+    sil_wrw_mem((uint32_t *)SAU_RBAR, 0x40078000);
+    sil_wrw_mem((uint32_t *)SAU_RLAR,
+                (0x40078FFF & SAU_RLAR_LADDR_MASK) | SAU_RLAR_ENABLE);
     sil_wrw_mem((uint32_t *)SAU_CTRL, SAU_CTRL_ENABLE);
 #endif /* TOPPERS_SAFEG_M */
 
