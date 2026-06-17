@@ -201,9 +201,9 @@ SKIP モジュール専用（mps2 は実コール、polarfire の int_raise は 
 |---|---|---|---|
 | zybo_z7 (A9) | zybo_z7-qemu | build+run | **functional 1813/1813・staticAPI 138/138 PASS**（FAIL 0） |
 | mps2_an521 (M33) | mps2_an521-qemu | build+run | **PASS 1265・SKIP 639・FAIL 29**（functional FAIL 0／FAILは全て staticAPI 系）〔2026-06-14 時点。下記注参照〕 |
-| mps2_an505 (M33+FPU) | mps2_an505-qemu | build+run | **staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（an521 と FAIL 内訳一致＝退行なし）〔2026-06-16 置換後の再検証〕 |
-| mps2_an386 (M4/v7-M) | mps2_an386-qemu | build+run | **functional PASS 1174・FAIL 0・SKIP 639 / 1813**＋**staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（functional FAIL 0／staticAPI FAIL 内訳まで an505 と完全一致＝ARMv7-M でも適合性同等）〔2026-06-16 新規〕 |
-| mps3_an547 (M55/v8.1-M+MVE) | mps3_an547-qemu | build+run | **functional PASS 1174・FAIL 0・SKIP 639 / 1813**＋**staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（functional FAIL 0／staticAPI FAIL 内訳まで an505 と完全一致＝MVE arch 変更の影響なし）〔2026-06-16 新規〕 |
+| mps2_an505 (M33+FPU) | mps2_an505-qemu | build+run | **functional PASS 1178・FAIL 0・SKIP 635 / 1813**＋**staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（functional FAIL 0）〔2026-06-17 functional 通し初記録〕 |
+| mps2_an386 (M4/v7-M) | mps2_an386-qemu | build+run | **functional PASS 1175・FAIL 0・SKIP 638 / 1813**＋**staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（functional FAIL 0／staticAPI FAIL 内訳まで an505 と完全一致＝ARMv7-M でも適合性同等）〔2026-06-17 通し再走行〕 |
+| mps3_an547 (M55/v8.1-M+MVE) | mps3_an547-qemu | build+run | **functional PASS 1178・FAIL 0・SKIP 635 / 1813**＋**staticAPI PASS 100・FAIL 29・SKIP 9 / 138**（functional FAIL 0／staticAPI FAIL 内訳まで an505 と完全一致＝MVE arch 変更の影響なし）〔2026-06-17 通し再走行〕 |
 | polarfire (RV64GC) | polarfire_soc_kit-qemu | **build-only**（qemu-riscv64 未導入） | **PASS 1504・SKIP 423・FAIL 6**（全ビルド成立確認。FAILは staticAPI error系のみ） |
 
 > **2026-06-16 注**：M33 QEMU ターゲットを `mps2-an521`（SSE-200・CPU0 に FPU 無し）から
@@ -213,6 +213,13 @@ SKIP モジュール専用（mps2 は実コール、polarfire の int_raise は 
 > 内訳は an521 と完全一致（29 件）で**退行なし**。以降の M33 QEMU 検証は `mps2_an505` を使用する。
 > 経緯は [`mps2-an505.md`](mps2-an505.md) を参照。
 | zcu102 (A53) | zcu102_arm64-qemu | 不可（aarch64 ツールチェーン未導入） | 資産作成済・検証は devcontainer/CI へ |
+
+> **2026-06-17 注（mps系3ターゲット functional 通し走行）**：an505／an386／an547 の
+> functional **全 1813 件**を独立 build-dir で並列に通し、**3 ターゲットとも FAIL 0**を確認
+> （an505/an547＝PASS 1178・SKIP 635、an386＝PASS 1175・SKIP 638）。SKIP 件数の ±数件差は
+> soft_hw 系（`stop_tick`）の実行時再分類によるゆらぎで、PASS+SKIP=1813 は不変。staticAPI も
+> 3 ターゲットで **FAIL 29 件が完全一致（同一テストID・同一差分）**＝ターゲット非依存の cfg
+> エンジン差分であることを md5 一致で確認（28 [error]＋1 [runtime]）。
 
 - **mps2 の functional は実行可能な全件 PASS・FAIL 0**（SKIP 639＝gain_tick 379・stop_tick 228・
   int/cpuexc/interrupt/exception 等）。
