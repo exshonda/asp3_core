@@ -185,7 +185,10 @@ Inline void set_msp_ns(uint32_t val)
 
 Inline void set_control_ns(uint32_t val)
 {
-	Asm("msr control_ns, %0" : : "r"(val) : "memory");
+	/* control レジスタセット後には isb が必須(set_control と対称) */
+	Asm("msr control_ns, %0 \n"
+		" isb"
+		: : "r"(val) : "memory");
 }
 
 Inline void set_faultmask_ns(uint32_t val)

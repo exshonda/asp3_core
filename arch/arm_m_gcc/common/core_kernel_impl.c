@@ -421,6 +421,16 @@ default_int_handler(void)
  *  【SAFEG】Non-secure の起動
  *    exinf = Non-secure ベクタテーブル先頭(=TOPPERS_NS_VTOR)
  */
+#ifdef TOPPERS_NS_VTOR
+/*
+ *  ARMv8-M の VTOR は下位 7bit が RAZ/WI(>=128byte アライメント必須)．
+ *  ボード毎に手書きする TOPPERS_NS_VTOR が誤アライメントだと SCB_NS_VTOR への
+ *  書込みが無言で切り捨てられ NS ベクタが破綻するため，コンパイル時に検査する．
+ */
+_Static_assert((TOPPERS_NS_VTOR & 0x7FU) == 0U,
+	"TOPPERS_NS_VTOR must be 128-byte aligned (ARMv8-M VTOR[6:0] are RAZ/WI)");
+#endif /* TOPPERS_NS_VTOR */
+
 typedef void __attribute__((cmse_nonsecure_call)) (*nonsecure_call_t)(void);
 void launch_ns(intptr_t exinf)
 {
