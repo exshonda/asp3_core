@@ -199,6 +199,16 @@ static void safeg_ns_uart1_init(void)
 {
     uint64_t divisor;
 
+    /*
+     *  【SAFEG/B/#3】RP2350 ACCESSCTRL: UART1 への Non-secure アクセスを許可。
+     *  RP2350 は SAU(プロセッサ属性)に加え ACCESSCTRL(バス層)でも S/NS をゲートし，
+     *  UART1 の既定は Secure のみ(SP|CORE0)。許可しないと NS の UART1 アクセスが
+     *  BusFault(Excno=5)になる(実機確認済)。base=0x40060000, UART1 reg=+0xA4。
+     *  ※ RP2350 ACCESSCTRL レジスタへの書込みは上位16bit に書込みパスワード
+     *    0xACCE が必須(無しの書込みは無視される=実機で 0xfc のまま→NS 拒否を確認)。
+     *    下位8bit = DBG|DMA|CORE1|CORE0|SP|SU|NSP|NSU。0xFF で全マスタ・S/NS 両方許可。
+     */
+    sil_wrw_mem((uint32_t *)(uintptr_t)0x400600A4u, 0xACCE0000u | 0xFFu);
     /* clk_peri を clk_sys に(UART0 初期化で設定済みだが冪等に再設定) */
     sil_wrw_mem(RP2350_CLOCKS_CLK_PERI_CTRL,
                 RP2350_CLOCKS_CLK_PERI_CTRL_ENABLE | RP2350_CLOCKS_CLK_PERI_CTRL_SRC_CLK_SYS);
