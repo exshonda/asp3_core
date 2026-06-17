@@ -202,10 +202,17 @@ static void safeg_ns_uart1_init(void)
     /* clk_peri を clk_sys に(UART0 初期化で設定済みだが冪等に再設定) */
     sil_wrw_mem(RP2350_CLOCKS_CLK_PERI_CTRL,
                 RP2350_CLOCKS_CLK_PERI_CTRL_ENABLE | RP2350_CLOCKS_CLK_PERI_CTRL_SRC_CLK_SYS);
-    /* UART1 リセット解除 */
+    /* UART1 リセット解除（待ちは上限付き＝万一 DONE が立たなくても Secure を止めない） */
     sil_orw(RP2350_RESETS_RESET, RP2350_RESETS_RESET_UART1);
     sil_clrw(RP2350_RESETS_RESET, RP2350_RESETS_RESET_UART1);
-    while ((sil_rew_mem(RP2350_RESETS_RESET_DONE) & RP2350_RESETS_RESET_UART1) == 0U) ;
+    {
+        volatile uint32_t spin = 0U;
+        while ((sil_rew_mem(RP2350_RESETS_RESET_DONE) & RP2350_RESETS_RESET_UART1) == 0U) {
+            if (++spin > 1000000U) {
+                break;
+            }
+        }
+    }
     /* GP8=UART1 TX, GP9=UART1 RX (funcsel 2), pad IE/ISO クリア(UART0=GP0/1 と同手順) */
     sil_wrw_mem(RP2350_IO_BANK0_GPIO_CTRL(8), 2);
     sil_wrw_mem(RP2350_IO_BANK0_GPIO_CTRL(9), 2);
