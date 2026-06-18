@@ -330,7 +330,9 @@ ALABEL(svc_handler)
 	movs   r1, #0
 	str    r1, [r0]
 #ifdef TOPPERS_SAFEG_M
-	/* 【SAFEG】#4 do_dispatch が設定した basepri 値(BTASK=0/他=IIPM_ENAALL) */
+	/* 【SAFEG】#4 契約1(消費): r6=basepri値(BTASK=0/他=IIPM_ENAALL)。
+	 *  r6 は dispatcher_0 #7 で算出済み。svc #0 を跨いで生存させる暗黙契約(対=#7)。
+	 *  ※上流が svc/dispatcher のレジスタ割当を変えると無言で破綻する。 */
 	msr    basepri, r6
 #else
 	movs   r0, #IIPM_ENAALL
@@ -343,7 +345,9 @@ ALABEL(svc_handler)
 	ldr    r0, [r4, #TCB_sp]
 	movs   r1, r5
 #if defined(TOPPERS_FPU_CONTEXT) && defined(TOPPERS_SAFEG_M)
-	/* 【SAFEG】#5a ldmfd で r4 が壊れる前に BTASK 判定(r3==0 で BTASK) */
+	/* 【SAFEG】#5a 契約2(生産): r3=BTASK判定フラグ(r3==0 で BTASK)。
+	 *  ldmfd {r4-r11} が r4 を壊す前に r4 から算出し，ldmfd を跨いで生存させる
+	 *  暗黙契約(対=#5b の cbz r3)。r3 を {r4-r11} 復元集合の外に保つこと。 */
 	ldr    r3, =_kernel_tcb_table
 	subs   r3, r4, r3
 #endif
@@ -352,7 +356,7 @@ ALABEL(svc_handler)
 	tst    r1, #EXC_RETURN_FP
 	bne    svc_handler_0
 #ifdef TOPPERS_SAFEG_M
-	cbz    r3, svc_handler_0 /* 【SAFEG】#5b BTASK は FPU 復帰スキップ */
+	cbz    r3, svc_handler_0 /* 【SAFEG】#5b 契約2(消費): r3 は #5a で ldmfd 前に算出。r3==0=BTASK で FPU 復帰スキップ */
 #endif /* TOPPERS_SAFEG_M */
 	vldmia r0!, {s16-s31}
 ALABEL(svc_handler_0)
@@ -480,7 +484,9 @@ ALABEL(dispatcher_0)
 	movs  r4, r1
 	movs  r5, r2
 #ifdef TOPPERS_SAFEG_M
-	/* 【SAFEG】#7 svc_handler 用 basepri 値: BTASK=0 / 他=IIPM_ENAALL */
+	/* 【SAFEG】#7 契約1(生産): r6=svc_handler 用 basepri 値(BTASK=0/他=IIPM_ENAALL)。
+	 *  直後の svc #0 を跨いで r6 を生存させ svc_handler #4(msr basepri,r6)が消費する
+	 *  暗黙契約(対=#4)。この svc #0 が唯一の r6 設定サイト。 */
 	ldr   r3, =_kernel_tcb_table
 	cmp   r1, r3
 	ite   eq
@@ -614,7 +620,7 @@ ALABEL(sil_dly_nse1)
 
 /* 【SAFEG】#7 Non-secure 割込みデアクティベート群(usagefault_handler /
  *  deactivate_nonsecure_interrupts ほか)．SafeG-M デュアルOS の核心ルーチン．
- *  自己完結ブロックとしてファイル末尾に追加(M2 spec §1.1⑦)． */
+ *  自己完結ブロックとしてファイル末尾に追加(M2 spec §1.1(7))． */
 #ifdef TOPPERS_SAFEG_M
 
 	ATHUMB(usagefault_handler)
