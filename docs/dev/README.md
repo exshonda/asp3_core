@@ -37,7 +37,7 @@
 | NXP MCUXpresso SDK統合 | `nxp-integration.md` | 完了（Phase A＝mimxrt685evk・Phase B＝asp3_mcuxsdk とも実機検証済＝testexec全件33/36 PASS。asp3_mcuxsdk側のCI・移植skillも消し込み済） |
 | skillパッケージ | `skill-package.md` | 完了（移植ガイドskillとして各SDKリポジトリ内に実装＝asp3_fsp/asp3_stm32cube。picoは不要と判断。当初計画からの変更点は本ファイル参照） |
 | メモリ保護 | `memory-protection.md` | 計画中 |
-| TTSP3 適合性テスト | `ttsp3-conformance.md` | 実施中（zybo_z7 functional 1813/1813＋staticAPI 138/138 PASS。横断＝mps2(M33) build+run functional FAIL0／polarfire(RV64) build-only／zcu102 資産済。HWタイマ/割込み本対応・CIは後続） |
+| TTSP3 適合性テスト | `ttsp3-conformance.md` | 実施中（zybo_z7 functional 1813/1813＋staticAPI 138/138 PASS。横断＝mps系3ターゲット〔an505/an386/an547＝M33/M4/M55〕で functional 全1813件通し走行・いずれも FAIL0、staticAPI も3ターゲットで FAIL29件が完全一致＝cfgエンジン差分と確定／polarfire(RV64) build-only／zcu102 資産済。nightly CI実装済〔TTSP3 public化待ちで停止中〕。HWタイマ/割込み本対応は後続） |
 
 状態：計画中 → 実施中 → 完了（各項目の進行に合わせて更新する）
 
