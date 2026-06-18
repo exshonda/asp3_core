@@ -177,7 +177,25 @@ sense_context(void)
  *  は，外部優先度 -1 に対応する．
  */
 #ifdef TOPPERS_SAFEG_M
-/* 【SAFEG】NSへ優先度ビットを1本譲る(AIRCR.PRIS)ためシフト量を7起点に */
+/*
+ * 【SAFEG】NSへ優先度ビットを1本譲る(AIRCR.PRIS)ためシフト量を「7起点」にする。
+ *
+ *  ◆不変条件(single source of truth):
+ *    SAFEG時の TBITW_IPRI は「Secure が使う実効優先度ビット幅」であり，
+ *    各チップの物理 NVIC 優先度ビット数より 1 少なくしなければならない：
+ *        TBITW_IPRI(SAFEG) == (物理 __NVIC_PRIO_BITS) - 1
+ *    理由: PRIS=1 では NS が優先度空間の下半分(0x80以上)へ写像され，Secure は
+ *    BASEPRI=IIPM_ENAALL(0x80) でそれを一括マスクする。よって Secure 優先度は
+ *    必ず 0x80 未満＝8bit フィールドの bit7 を 0 に保つ必要がある(bit7 を NS 予約)。
+ *    INT_IPM は TBITW ビットの値を bit[6 : 7-TBITW] に配置するため：
+ *      - bit7=0 は常に成立(値の MSB は bit6)。
+ *      - 値の LSB(bit 7-TBITW)が「実装された優先度ビット[7 : 8-物理]」に載るには
+ *        7-TBITW >= 8-物理 ⟹ TBITW <= 物理-1 が必要。
+ *    これを破ると INT_IPM の LSB が未実装ビットに落ち，隣接優先度レベルが同一
+ *    NVIC 値へ衝突する(優先度逆転)。"7" = 8(物理上限) - 1(NS予約) のマジック値。
+ *    → 各チップは SAFEG時 TBITW_IPRI を (物理-1) に #ifdef で定義すること
+ *       (imxrt600=3→2, an505=3→2, rp2350=4→3)。
+ */
 #define EXT_IPM(iipm)   (CAST(PRI,((iipm >> (7 - TBITW_IPRI)) - (1 << TBITW_IPRI))))       /* 内部表現を外部表現に */
 #define INT_IPM(ipm)    (((1 << TBITW_IPRI) - CAST(uint8_t, -(ipm)))  << (7 - TBITW_IPRI)) /* 外部表現を内部表現に */
 #else /* TOPPERS_SAFEG_M */

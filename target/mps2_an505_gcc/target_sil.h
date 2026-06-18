@@ -33,7 +33,11 @@
  *  実装するが，3 ビットで設定した割込み優先度は上位 3 ビットに配置される
  *  ため，QEMU・実機の双方で正しく動作する．
  */
+#ifdef TOPPERS_SAFEG_M
+#define TBITW_IPRI     2   /* 【SAFEG】Secure 実効ビット幅=物理3-1。NSへ1本譲る(F1) */
+#else
 #define TBITW_IPRI     3
+#endif /* TOPPERS_SAFEG_M */
 
 /*
  *  プロセッサで共通な定義

@@ -55,8 +55,13 @@
 
 /*
  *  割込み優先度のビット幅
+ *  RP2350 M33 は 4 ビット(16 レベル)を実装。
  */
+#ifdef TOPPERS_SAFEG_M
+#define TBITW_IPRI     3   /* 【SAFEG】Secure 実効ビット幅=物理4-1。NSへ1本譲る(F1) */
+#else
 #define TBITW_IPRI     4
+#endif /* TOPPERS_SAFEG_M */
 
 /*
  *  プロセッサで共通な定義
