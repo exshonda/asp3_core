@@ -49,6 +49,7 @@ TOPPERS/ASP3カーネルを上流追従しながら、各社SDK（Raspberry Pi P
 | NXP MCUXpresso SDK統合 | NXP MCUXpresso SDKと協調動作（第一目的の第4弾・EVK-MIMXRT685/CM33）。Phase A＝ベアメタルターゲットをasp3_core本体へ（genuine 3.7.0移植を非TECS+Python cfg変換・SDK不要・CIビルド可）→Phase B＝外側リポジトリでSDK統合 | 中 |
 | skillパッケージ | 移植ガイドskill。**完了**（2026-06-12）：各SDKリポジトリ内 `.claude/skills/` に実装（asp3_fsp=porting-asp3-to-renesas-ra・asp3_stm32cube=porting-asp3-to-stm32。picoは不要と判断） | 中 |
 | メモリ保護 | Zephyr相当のセーフティネット型保護（コードRO・SRAM実行禁止・NULL検出．スタック下限保護=PSPLIMは実装済み）。MPU(arm_m)/MMU(arm64)/PMP(riscv)で静的設定・kernel/無改変 | 中 |
+| SAFEG（ARMv8-M TrustZone） | 上流SafeG（A-profileデュアルOS）のCortex-M（TrustZone-M）版を arm_m 共通へ取り込み。ASP3をセキュア側に置きNS側を隔離。既定OFF（`ENABLE_SAFEG_M`）で素ASP3不変・kernel/無改変（`#ifdef TOPPERS_SAFEG_M`ガード）。an505(QEMU)/pico2/mimxrt685evk。経緯は`docs/dev/safeg.md` | 中 |
 | TTSP3 適合性テスト | TOPPERSテストスイートTTSP3のAPI/SIL適合性テストをQEMUで各ターゲットに対し実行。TTSP3不変＝asp3_coreのCMake+QEMUで回す外部ドライバ方式（経緯は`docs/dev/ttsp3-conformance.md`） | 中 |
 
 ### 機能追加の実施ルール
