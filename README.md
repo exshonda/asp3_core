@@ -14,8 +14,9 @@ A bare-metal RTOS kernel based on TOPPERS/ASP3, restructured for AI-driven devel
 - **AI開発フレンドリ**：TECSレス（プレーンC）・Pythonコンフィギュレータ・
   構造化ログ（`T=,EV=`）・TAP出力・gdb OS Awareness — エージェントが
   build→run→test→debug をテキストで完結できる
-- **ハードなしで4 ISA検証**：POSIXシミュレーション＋QEMU 4機種
-  （Cortex-M33 / A9 / A53 / RV64GC）。push毎にCIが全ターゲットを回帰
+- **ハードなしで全ISA検証**：POSIXシミュレーション＋QEMU 6機種
+  （Cortex-M33 / M4 / M55 ・ A9 / A53 / RV64GC）。push毎にCIが全ターゲットを回帰し、
+  nightlyで TTSP3（TOPPERSテストスイート）適合性テストも実行
 - **CMake一本**：`cmake --preset <名前>` だけでcfg 3パス〜ELF生成まで自動
 - **上流追従を前提とした構造**：kernel/はPRISTINE維持・乖離はDIVERGENCE_MAPで台帳管理
 
@@ -48,10 +49,14 @@ cmake --preset mps2_an505-qemu && cmake --build --preset run-mps2_an505-qemu
 |---|---|---|
 | linux_gcc | (host) | POSIXシミュレーション |
 | mps2_an505_gcc | ARMv8-M (Cortex-M33) | QEMU |
+| mps2_an386_gcc | ARMv7-M (Cortex-M4) | QEMU |
+| mps3_an547_gcc | ARMv8.1-M (Cortex-M55 / MVE) | QEMU |
 | zybo_z7_gcc | ARMv7-A (Cortex-A9) | 実機 / QEMU |
 | zcu102_arm64_gcc | ARMv8-A (Cortex-A53) | 実機 / QEMU |
 | polarfire_soc_kit_gcc | RISC-V (RV64GC) | 実機 / QEMU |
 | pico2_arm_gcc | ARMv8-M (Cortex-M33) | 実機 |
+| pico2_riscv_gcc | RISC-V (RV32IMAC / Hazard3) | 実機 |
+| mimxrt685evk_gcc | ARMv8-M (Cortex-M33) | 実機 |
 | stm32mp257f_dk_arm64_gcc | ARMv8-A (Cortex-A35) | 実機 |
 
 ## ドキュメント
