@@ -20,7 +20,7 @@
 ### 新規に追加・統合するもの
 - 各社SDK協調（Pico SDK／Renesas FSP／STM32 HAL）を1つの共通カーネル基盤に統合
   （既存3リポジトリは submodule として本体を参照する形に再編）
-- 対象ターゲット追加：RISC-V Hazard3（RP2350）、ホスト(Linux)シミュレータ（上流 `extension/non_tecs/target/linux_gcc`／mac は `macos_xcode`）、QEMU（mps2-an505）
+- 対象ターゲット追加：RISC-V Hazard3（RP2350）、ホスト(Linux)シミュレータ（上流 `extension/non_tecs/target/linux_gcc`／mac は `macos_xcode`＝未検証）、QEMU 6機種（M-profile＝mps2-an505〔Cortex-M33/ARMv8-M〕・mps2-an386〔Cortex-M4/ARMv7-M〕・mps3-an547〔Cortex-M55/ARMv8.1-M+MVE〕／A-profile＝zynq-a9・zcu102-a53／RISC-V＝polarfire RV64GC）
 - 構造化ログ（`T=<tick>,EV=<event>` 形式）
 
 ### 維持する設計制約
@@ -39,7 +39,7 @@
 ### 手動マージ支援（上流追従の台帳）
 - `DIVERGENCE_MAP.md`：上流からの乖離点を記録（cfgエンジン／定義／生成テンプレートを区別）
 - `UPSTREAM_VERSION` / `UPSTREAM_PRISTINE.txt`：マージ基準点の管理
-- CFG_SPEC_MAP（計画書内）：cfgエンジン（DIVERGED）と定義（テキストマージ可）の追跡
+- CFG_SPEC_MAP（`docs/dev/cfg-spec-map.md`）：cfgエンジン（DIVERGED）と定義（テキストマージ可）の追跡
 
 ### ドキュメント（RAG・AI参照向け）
 - `docs/api/`：サービスコール＋静的API（ASP3に絞り込み＋派生差分。静的APIの構造正本は `kernel_api.def`）
@@ -52,7 +52,7 @@
 - `compile_commands.json` ＋ `.clangd`（クロスコンパイルのコード知能）
 
 ### CI・品質ゲート（生成コードの自動検証）
-- ビルド/テストマトリクス：POSIX・QEMU(mps2-an505)・各実機ターゲットを自動ビルドし、TAPテストを実行
+- ビルド/テストマトリクス：POSIX・QEMU 6機種（mps2-an505/an386・mps3-an547・zcu102・polarfire 等）・各実機ターゲットを自動ビルドし、TAPテストを実行。nightly では TTSP3 適合性テストも実行
 - **静的解析のCI統合**：`clang-tidy` / `cppcheck`（MISRA-C:2012サブセット相当）。生成コードがこれを通過することを必須とする
 - 上記「自己検証ループ」をCIが自動実行し、回帰を検知（AI生成コードの品質ゲート）
 

@@ -45,8 +45,10 @@ ninja run    # ビルドして実行
 ninja -C build/mps2_an505-qemu run
 ```
 
-buildPresets（`run-linux`／`run-mps2_an505-qemu`／`run-zybo_z7-qemu`／`run-zcu102_arm64-qemu`）でルートから
-`cmake --build --preset run-mps2_an505-qemu` の1コマンド実行もできる。
+buildPresets（`run-linux`／`run-mps2_an505-qemu`／`run-mps2_an386-qemu`／`run-mps3_an547-qemu`／
+`run-zybo_z7-qemu`／`run-zcu102_arm64-qemu`／`run-polarfire_soc_kit-qemu`）でルートから
+`cmake --build --preset run-mps2_an505-qemu` の1コマンド実行もできる
+（一覧は `cmake --list-presets=build`）。
 
 ---
 
@@ -197,7 +199,9 @@ python3 ../test_cfg/testcfg.py all
 | ターゲット | プリセット | 実行 |
 |---|---|---|
 | linux_gcc | linux | ホスト実行（run） |
-| mps2_an505_gcc | mps2_an505-qemu | QEMU（run．QEMU専用ターゲット） |
+| mps2_an505_gcc | mps2_an505-qemu | QEMU（run．QEMU専用ターゲット．Cortex-M33/ARMv8-M） |
+| mps2_an386_gcc | mps2_an386-qemu | QEMU（run．QEMU専用ターゲット．Cortex-M4/ARMv7-M・`__TARGET_ARCH_THUMB=4` 経路検証） |
+| mps3_an547_gcc | mps3_an547-qemu | QEMU（run．QEMU専用ターゲット．Cortex-M55/ARMv8.1-M＋MVE） |
 | zybo_z7_gcc | zybo_z7／**zybo_z7-qemu** | 実機（xilinx_sdk/jtag.tcl）／QEMU（run） |
 | zcu102_arm64_gcc | zcu102_arm64／**zcu102_arm64-qemu** | 実機（実行手段は今後整備）／QEMU（run）．aarch64-none-elf が無い環境は `-DA35_TOOLCHAIN_PREFIX=aarch64-linux-gnu-` を付与 |
 | pico2_arm_gcc | pico2_arm | 実機（run=OpenOCD書込み．gdb/console等） |
@@ -220,7 +224,7 @@ CMake対応の経緯は `docs/dev/cmake.md` を参照。
 ### VS Code / Claude Code（devcontainer）
 
 `.devcontainer/devcontainer.json` がイメージ・clangd拡張・postCreateを
-定義済み。「Reopen in Container」だけで全7ターゲットのbuild→run→test
+定義済み。「Reopen in Container」だけで全ターゲットのbuild→run→test
 ループが揃う。
 
 privateリポジトリのGHCRイメージのため、初回は docker login が必要：
