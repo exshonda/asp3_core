@@ -210,7 +210,7 @@
 | `SRecord.rb` | SRecordクラスの定義 |
 | `cfg/doc/cfg_user.txt` | コンフィギュレータ ユーザーズマニュアル |
 
-> **asp3_core注**: Python版に置換済み（DIVERGED）：`cfg.py`・`pass1.py`・`pass2.py`・`gen_file.py`・`srecord.py`。上流cfg.rbとの仕様対応は `docs/asp3_derivative_plan.md` の CFG_SPEC_MAP節 で管理しています。
+> **asp3_core注**: Python版に置換済み（DIVERGED）：`cfg.py`・`pass1.py`・`pass2.py`・`gen_file.py`・`srecord.py`。上流cfg.rbとの仕様対応は `docs/dev/cfg-spec-map.md`（CFG_SPEC_MAP）で管理しています。
 
 ### utils/
 

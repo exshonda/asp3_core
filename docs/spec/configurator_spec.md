@@ -11,7 +11,7 @@
 >
 > - 本書の「生成スクリプト」は asp3_coreでは Python です：パス2＝`kernel/kernel.py`・パス3＝`kernel/kernel_check.py`・各機能＝`kernel/task.py` 等（旧 `.trb`）
 > - 静的APIテーブルの正本は `kernel/kernel_api.def`（[2.1節](#21-静的api一覧)の一覧と1対1対応）
-> - 上流cfg.rb仕様変更の追従管理は `docs/asp3_derivative_plan.md` の **CFG_SPEC_MAP節** を参照
+> - 上流cfg.rb仕様変更の追従管理は `docs/dev/cfg-spec-map.md`（CFG_SPEC_MAP）を参照
 > - コンフィギュレータの起動方法は [07_configurator.md](07_configurator.md) を参照
 > - エラー条件の各記号（［NGKI〜］［ASPS〜］）は統合仕様書・ASP3拡張仕様の要件番号であり，照合用に全数保持しています
 

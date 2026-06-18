@@ -5,7 +5,7 @@
 
 > **asp3_core注（本章の位置付け）**: asp3_coreのコンフィギュレータは **Python版（`cfg/cfg.py`）** です（上流のRuby版cfg.rbから移植・DIVERGED）。コマンドラインオプションはRuby版とほぼ互換で，本章の記述は**おおむねそのまま有効**です（差異：`-r`→`--rom-image`・`-s`→`--rom-symbol` のショートオプション廃止，`-C`は`--class-file`，生成スクリプトは`.trb`→`.py`）。
 >
-> **CMakeビルドが3パスを自動実行する**ため，通常は手動起動しません（`AGENTS.md` §7）。cfg仕様の上流追従は `docs/asp3_derivative_plan.md` の CFG_SPEC_MAP節 で管理しています。
+> **CMakeビルドが3パスを自動実行する**ため，通常は手動起動しません（`AGENTS.md` §7）。cfg仕様の上流追従は `docs/dev/cfg-spec-map.md`（CFG_SPEC_MAP）で管理しています。
 
 コンフィギュレータ（cfg）による処理は，「TOPPERS第3世代カーネル（ITRON系）統合仕様書」の「2.12.5 コンフィギュレータの処理モデル」の節の記述の通り，3つのパスで構成される。
 

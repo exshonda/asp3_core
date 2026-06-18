@@ -5,7 +5,7 @@
 
 > **asp3_core注（本書の位置付け）**: 全体目次・分冊構成は [porting_01_common.md](porting_01_common.md) を参照。本分冊に対するasp3_coreの主な差異：
 >
-> - **７章（コンフィギュレータ）**: 生成スクリプトは Ruby（.trb）→ **Python（.py）**。`target_kernel.trb`→`target_kernel.py`・`target_check.trb`→`target_check.py`。本章の `$VARIABLE` 記法・「リストはRubyでは配列」はPython版では変数・listに対応します。生成仕様の正本は [configurator_spec.md](configurator_spec.md)，上流仕様追従は `docs/asp3_derivative_plan.md` の CFG_SPEC_MAP節。
+> - **７章（コンフィギュレータ）**: 生成スクリプトは Ruby（.trb）→ **Python（.py）**。`target_kernel.trb`→`target_kernel.py`・`target_check.trb`→`target_check.py`。本章の `$VARIABLE` 記法・「リストはRubyでは配列」はPython版では変数・listに対応します。生成仕様の正本は [configurator_spec.md](configurator_spec.md)，上流仕様追従は `docs/dev/cfg-spec-map.md`（CFG_SPEC_MAP）。
 > - **８章（システムサービス）**: **TECSは廃止**（TECSレス・プレーンC実装＝`syssvc/`）。セルタイプ・シグニチャ・.cdlの記述は適用されず，対応するC言語APIは **[non_tecs_services.md](non_tecs_services.md) §3 が移植時の正本仕様**です（本章原文は照合用に保持）。
 > - **９章9.2（パッケージ記述）**: `utils/makerelease.rb` は asp3_coreでは削除済み（配布はGitリポジトリ・MANIFEST/E_PACKAGEは不使用）。
 

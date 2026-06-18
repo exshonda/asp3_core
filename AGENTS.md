@@ -245,7 +245,7 @@ cfgは3要素に分かれ、要素ごとにマージ難易度が異なる：
 
 - 静的APIの構造（パラメータ・型）の**正本は `kernel/kernel_api.def`**（接頭辞DSL：`#`=ID, `.`=符号無し, `+`=符号付き, `&`=一般, `^`=ポインタ, `$`=文字列, 後置 `*`=キー `?`=オプション `...`=リスト）。YAML等の二重定義は持たない。
 - 新しい静的APIは `kernel_api.def` の行追加で対応（テキストマージ可）。
-- エンジン（cfg.py系）が上流 cfg.rb の挙動変更を受けたときのみ手動再反映が必要。対応は `docs/asp3_derivative_plan.md` の **CFG_SPEC_MAP節** で管理する。
+- エンジン（cfg.py系）が上流 cfg.rb の挙動変更を受けたときのみ手動再反映が必要。対応は `docs/dev/cfg-spec-map.md`（CFG_SPEC_MAP）で管理する。
 
 ---
 
@@ -324,7 +324,7 @@ scope: target / syssvc / cfg / cmake / upstream / ci
 3. `git diff upstream main` と上流diffを `DIVERGENCE_MAP` に照合し、影響ファイルを列挙する。
 4. `UPSTREAM_PRISTINE.txt` に記載のファイルは上流版で上書き更新してよい。
 5. `DIVERGENCE_MAP` に該当するファイルは**「要人間確認」とマークして停止**すること。
-6. cfgに関わる変更は `docs/asp3_derivative_plan.md` の CFG_SPEC_MAP節 を参照する（静的API追加なら `kernel_api.def` のマージで足りる／エンジン変更なら手動再反映）。
+6. cfgに関わる変更は `docs/dev/cfg-spec-map.md`（CFG_SPEC_MAP）を参照する（静的API追加なら `kernel_api.def` のマージで足りる／エンジン変更なら手動再反映）。
 7. 変更後、POSIX → QEMU(mps2-an505) の順で回帰テストを実行する。
 8. マージ完了後に `UPSTREAM_VERSION` を更新する。
 
@@ -376,7 +376,7 @@ scope: target / syssvc / cfg / cmake / upstream / ci
 | 既存実装の参照 | `docs/porting/IMPL_INDEX.md` |
 | 機能追加の実施記録・経緯 | `docs/dev/README.md` + 本ファイル §1「機能追加の実施ルール」 |
 | 上流マージ | `DIVERGENCE_MAP.md` + `UPSTREAM_PRISTINE.txt` + 本ファイル §10 |
-| cfg仕様の追従 | `docs/asp3_derivative_plan.md`（CFG_SPEC_MAP節） |
+| cfg仕様の追従 | `docs/dev/cfg-spec-map.md`（CFG_SPEC_MAP） |
 | API仕様 | `docs/api/` |
 | エラーコードの意味 | `docs/errors.md` |
 | フォルダ構成・Git運用 | `docs/FILE_PLAN.md` |

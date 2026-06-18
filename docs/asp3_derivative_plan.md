@@ -286,36 +286,12 @@ kernel/eventflag.c
 
 ---
 
-#### `CFG_SPEC_MAP.md`（`docs/`）
+#### `CFG_SPEC_MAP`（現役の正本は `docs/dev/cfg-spec-map.md`）
 
-cfgは2層に分かれる。マージ難易度が層ごとに異なるため、それを区別して管理する台帳。
-
-**層① 静的API定義 = `kernel/kernel_api.def`（api-table）**  
-各静的APIのパラメータ列・型を宣言するテキストDSL。**上流と同形式のためテキストマージ可能**。
-上流が静的APIを追加・変更してもこのファイルの差分で追える（PRISTINEに近い扱い）。
-
-```
-CRE_TSK #tskid* { .tskatr &exinf &task +itskpri .stksz &stk? }
-```
-
-**層② cfgエンジン = `cfg.py` / `pass1.py` / `pass2.py`（Ruby→Python移植）**  
-api-tableを解釈してコード生成する汎用エンジン。**ここが「テキスト差分が効かない」DIVERGED部分**。
-上流のcfg.rb / pass1.rb / pass2.rb の変更を、移植版へ手作業で反映する必要がある。
-
-| 上流（Ruby） | 移植版（Python） | 役割 | 最終確認バージョン |
-|---|---|---|---|
-| `cfg.rb` | `cfg.py` | エントリ・多パス制御 | cfg 1.7.1 |
-| `pass1.rb` | `pass1.py` | api-table読込・構文解析 | cfg 1.7.1 |
-| `pass2.rb` | `pass2.py` | コード生成 | cfg 1.7.1 |
-| `GenFile.rb` | `gen_file.py` | 生成ファイル管理 | cfg 1.7.1 |
-| `SRecord.rb` | `srecord.py` | Sレコード読込 | cfg 1.7.1 |
-
-加えて，生成テンプレート（`kernel/*.trb`・`arch/*/*.trb`・`target/*/target_*.trb`）の
-Python版（`.py`）を併設している（移植元: asp3_fsp，2026-06-05導入）。
-上流の`.trb`変更時は対応する`.py`へ手動再反映する（`DIVERGENCE_MAP.md`参照）。
-
-新バージョンで上流cfgが変わった場合：静的APIの追加なら `kernel_api.def` の差分で済む。  
-エンジンの挙動変更（cfg.rb系）なら、上記対応表と「最終確認バージョン」で移植版の更新箇所を特定する。
+> **2026-06-17 更新**：当初この節に書かれていた CFG_SPEC_MAP の台帳（層①静的API定義／
+> 層②cfgエンジン／層③生成テンプレートの対応表と「最終確認バージョン」）は、
+> 現役の参照ドキュメント **[`docs/dev/cfg-spec-map.md`](dev/cfg-spec-map.md)** へ独立・移設した。
+> 以降の追従管理はそちらを正本とする。本節は発足時の構想記録として凍結。
 
 ---
 
