@@ -104,3 +104,14 @@ core_insn.h・rename系・core_kernel.py・arch.cmake）と imxrt600 chip 定数
 すべて【SAFEG】タグで `DIVERGENCE_MAP.md` に登録済み（`#ifdef TOPPERS_SAFEG_M`
 ガードで上流不変）。`core_support.S` の pendsv #3/svc #4 の `#else` 経路が
 最脆弱＝上流変更時に要再確認、と台帳に明記。
+
+## コードレビュー指摘 (F1-F4) と対応状況（2026-06-18）
+
+SAFEG-M コードレビューで挙がった指摘 F1-F4 の対応記録（詳細メモは別途 NSBIT.md）。
+
+| # | 重大度 | 指摘 | 対応 |
+|---|---|---|---|
+| **F1** | 中 | NS優先度ビット縮小の表現がチップ間で非対称（imxrt600 のみ SAFEG時 TBITW 3→2、an505/rp2350 は据置） | **解決**。不変条件 `TBITW_IPRI(SAFEG)=物理__NVIC_PRIO_BITS-1`（最上位1本を PRIS の NS 分割へ予約）を `core_kernel_impl.h` に明文化し、an505 `3→2`・rp2350 `4→3` を `#ifdef` で追加（imxrt600 に統一）。据置だと `INT_IPM` の LSB が未実装優先度ビットに落ち隣接優先度が衝突する潜在バグ。**実機 rp2350 A〜D1 9/9 で非回帰確認**。 |
+| **F2** | 低 | `core_support.S` のサイト間レジスタ暗黙契約（asm・宣言不可・上流マージで破綻し得る） | **解決(コメント)**。契約1: `r6`=basepri を dispatcher_0 #7→svc_handler #4（svc #0 跨ぎ）、契約2: `r3`=BTASK判定を svc #5a→#5b（ldmfd 跨ぎ）。各生産/消費サイトに対サイトと生存条件を明記。コード不変。 |
+| **F3** | 低 | マクロ命名の非対称：C側ガードは `TOPPERS_SAFEG_M`（ENABLE 無し、`TOPPERS_ENABLE_TRUSTZONE` 規約と不整合）、CMake は `ENABLE_SAFEG_M` | **現状維持（記録のみ）**。整合させるなら `TOPPERS_ENABLE_SAFEG_M` だが全 `#ifdef` サイトに波及するため見送り。`arch.cmake` で `ENABLE_SAFEG_M→ -DTOPPERS_SAFEG_M -DTOPPERS_ENABLE_TRUSTZONE`。 |
+| **F4** | 低 | `core_kernel.cfg` の BTASK(id=1) 生成は cfg-pass の cpp が `-DTOPPERS_SAFEG_M`（`arch.cmake` 由来）を受けることに依存 | **確認済（記録のみ）**。an505(QEMU) id=1 ＋ rp2350 実機 9/9 で動作確認。cfg plumbing 変更時に BTASK 生成が静かに変わる結合だけ留意（id=1 保証は `core_kernel.cfg` の最初の CRE_TSK＝§「_SAFEG_BTASK 配置」参照）。 |
