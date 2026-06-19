@@ -72,6 +72,10 @@ python3 test/ttsp/run_ttsp.py --target mps2_an505 --tap api_test/ASP/staticAPI
 [`references/ttsp3-driver.md`](references/ttsp3-driver.md)。経緯は `docs/dev/ttsp3-conformance.md`。
 TTSP3 の概念・PASS/FAIL/SKIP の意味は skill `toppers-kernel-debug`。
 
+**実機 HW で回す**（`--target <t>_hw`）：QEMU の代わりにデバッガでロード実行する。
+PolarFire SoC Discovery Kit は §7 と `target/polarfire_soc_kit_gcc/TTSP3_HOWTO.md`
+（SoftConsole openocd+gdb・reset init なし・staticAPI 123/6/9・semaphore 73/0/44）。
+
 ## 4. 上流マージの台帳（このリポジトリの実ファイル）
 
 | ファイル | 役割 |
@@ -125,6 +129,23 @@ cmake --build build/perf0-pico2
 - フラグ off でも `core_syssvc.h` は空＝回帰しない。perf 経路の手早いコンパイル検証は
   `compile_commands.json` の core_kernel_impl.c/histogram.c のコマンドに
   `-DUSE_ARM_DWT_PMCNT -fsyntax-only` を足して再実行（SDK統合リポで実機が無いとき有効）。
+
+## 7. 実機ブリングアップ（PolarFire SoC Discovery Kit / U54・RV64GC）
+
+asp3 は mpfs_hal の `system_startup` を持たず、**HSS が起動時に設定した MSS IO・クロックに
+依存**する。実機（JTAG 起動）では次の要点で起こす（詳細・落とし穴は
+`target/polarfire_soc_kit_gcc/REALBOARD_BRINGUP.md`）：
+
+- **`-DPOLARFIRE_DISCOVERY=ON`** … Discovery ボード選択（コンソール=MMUART1・L2-LIM リンカ）。
+- **L2-LIM(0x08000000) リンク**（`polarfire_soc_kit_lim.ld`）… DDR 学習不要のデバッグロード領域。
+- **`reset init` をしない** … `monitor halt`→`load`→PC=`start`→`continue`。reset init は HSS の
+  MSS IO 設定を壊し MMUART1 が無音になる。
+- **起動時 CLINT MSIP クリア**（`chip_initialize` で実装済み）… HSS 残存の MSIP が MSIE 許可時に
+  発火して未登録割込みになるのを防ぐ（FMP3 の `clear_msip` 相当）。
+
+ロード手段は SoftConsole openocd + gdb。HW TTSP3 は §3 と `TTSP3_HOWTO.md`。
+TOPPERS 共通の概念（前段ブートFW依存・デバッガ観測・MP→SP の割込み残留）は
+skill `toppers-kernel-debug`/`toppers-kernel-dev`。
 
 ## references/
 
