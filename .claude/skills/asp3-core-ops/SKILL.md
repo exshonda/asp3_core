@@ -1,6 +1,6 @@
 ---
 name: asp3-core-ops
-description: asp3_core リポジトリ固有の運用（ビルド・QEMU/実機実行・TAPテスト・構造化ログ(slog)解析・TTSP3適合性テスト・上流マージ台帳）の具体コマンドとツール。CMakeプリセットでビルドするとき、QEMU(mps2_an505/mps2_an386/mps3_an547/zcu102/polarfire 等)で動かすとき、`--tap`/`--slog` を使うとき、`scripts/parse_slog.py`/`check_events.py` でトレースを解析するとき、`test/ttsp/run_ttsp.py` で TTSP3 を回すとき、`DIVERGENCE_MAP.md`/`UPSTREAM_PRISTINE.txt`/`docs/dev/cfg-spec-map.md` を扱うとき、SAFEG(`ENABLE_SAFEG_M`)ビルドを確認するときに使う。**規約の正本は `AGENTS.md`。TOPPERS共通の概念は別skill `toppers-kernel-dev`/`toppers-kernel-debug`/`toppers-asp`。本skillはasp3_core固有の具体手順だけを補う。**
+description: asp3_core リポジトリ固有の運用（ビルド・QEMU/実機実行・TAPテスト・構造化ログ(slog)解析・TTSP3適合性テスト・上流マージ台帳）の具体コマンドとツール。CMakeプリセットでビルドするとき、QEMU(mps2_an505/mps2_an386/mps3_an547/zcu102/polarfire 等)で動かすとき、`--tap`/`--slog` を使うとき、`scripts/parse_slog.py`/`check_events.py` でトレースを解析するとき、`test/ttsp/run_ttsp.py` で TTSP3 を回すとき、`DIVERGENCE_MAP.md`/`UPSTREAM_PRISTINE.txt`/`docs/dev/cfg-spec-map.md` を扱うとき、SAFEG(`ENABLE_SAFEG_M`)ビルドを確認するとき、ARM-M実機で性能評価（DWT CYCCNT・`USE_ARM_DWT_PMCNT` で ns 精度の histogram／`PERF_DWT.md`）を行うときに使う。**規約の正本は `AGENTS.md`。TOPPERS共通の概念は別skill `toppers-kernel-dev`/`toppers-kernel-debug`/`toppers-asp`。本skillはasp3_core固有の具体手順だけを補う。**
 ---
 
 # asp3_core 運用ツール（リポジトリ固有）
@@ -91,6 +91,40 @@ TTSP3 の概念・PASS/FAIL/SKIP の意味は skill `toppers-kernel-debug`。
 - 実行結果を根拠に報告する。「動くはず」は禁止。
 - `compile_commands.json` をルートにリンク維持：
   `ln -sf build/<preset>/compile_commands.json compile_commands.json`。
+
+## 6. 性能評価（DWT CYCCNT・ns精度 histogram）
+
+ARM-M **実機**で `syssvc/histogram` の計測時間源を DWT CYCCNT サイクルカウンタに
+差し替え、ns 精度で実行時間分布を採る。概念・対象ボード・変換式（cycles→ns）・
+レジスタは `arch/arm_m_gcc/common/PERF_DWT.md`（このリポ）。汎用の考え方（histogram
+の時間源差し替え／エミュレータは性能カウンタを実装しないことが多い）は skill
+`toppers-kernel-debug`。
+
+- **オプトインフラグ**：`USE_ARM_DWT_PMCNT`（`arm_gcc` の `USE_ARM_PMCNT` と同型）。
+  未指定の通常ビルドは既定の `fch_hrt`（μs精度）＝無影響。
+- **実機専用**：QEMU の ARM-M は DWT CYCCNT を実装せず常に 0（`DWT_CTRL.NOCYCCNT=0`
+  で「実装あり」に見える罠）。QEMU では指定しない（指定すると全計測 0）。
+- **対象**：`core_syssvc.h` を取り込む ARM-M 実機。asp3_core 本体は `pico2_arm` /
+  `mimxrt685evk`。SDK統合リポは RA6M5/RA8M2(asp3_fsp)・RT685/MCXN947(asp3_mcuxsdk)・
+  pico2_arm_sdk(asp3_pico_sdk)。RISC-V(`pico2_riscv` 等)は DWT 非対象。
+
+```bash
+# 例：既存 perf0 を pico2_arm で DWT(ns)計測ビルド（histogram を SYSOBJ 追加）
+R=$(pwd)
+cmake -S . -B build/perf0-pico2 --preset pico2_arm \
+  -DASP3_APPLDIR=$R/test -DASP3_APPLNAME=perf0 \
+  "-DASP3_EXTRA_APP_C_FILES=$R/syssvc/test_svc.c;$R/syssvc/histogram.c" \
+  "-DASP3_EXTRA_COMPILE_DEFS=USE_ARM_DWT_PMCNT"
+cmake --build build/perf0-pico2
+# OpenOCD(CMSIS-DAP)で program verify reset exit → UART に ns 単位の分布
+#   実測（PICO2/M33/150MHz）：計測オーバヘッド ≈ 140 ns
+```
+
+- 新ボードで有効化する手順（target_syssvc.h で `core_syssvc.h` を取り込み、
+  `HIST_CONV_TIM` をクロック依存で与える）は `PERF_DWT.md` を参照。
+- フラグ off でも `core_syssvc.h` は空＝回帰しない。perf 経路の手早いコンパイル検証は
+  `compile_commands.json` の core_kernel_impl.c/histogram.c のコマンドに
+  `-DUSE_ARM_DWT_PMCNT -fsyntax-only` を足して再実行（SDK統合リポで実機が無いとき有効）。
 
 ## references/
 
