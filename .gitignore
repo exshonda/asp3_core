@@ -25,8 +25,9 @@ test/OBJ-*/
 test/TARGET_OPTIONS
 test/TARGET_RUN
 
-# AIツールのローカル状態
-.claude/
+# AIツールのローカル状態（skills だけは追跡＝チーム共有・submodule経由で参照可）
+.claude/*
+!.claude/skills/
 
 # エディタ
 .vscode/settings.json
