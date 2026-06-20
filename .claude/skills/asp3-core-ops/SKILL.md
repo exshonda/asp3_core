@@ -42,8 +42,10 @@ cmake --build --preset run-mps2_an505-qemu
 - **プリセット名＝ターゲット名から `_gcc` を除いたもの**。QEMU/実機両対応はQEMU側を `-qemu`。
 - QEMUマシン名はハイフン（`mps2-an505`）、ASP3ターゲット名はアンダースコア（`mps2_an505_gcc`）。
 - 対応ターゲット・コマンドの全量は `AGENTS.md` §4 と `docs/building.md`。
-- **SAFEG（ARMv8-M TrustZone）**：`-DENABLE_SAFEG_M=ON` で有効化（既定OFF＝素ASP3不変）。
-  対象は mps2_an505 / pico2_arm / mimxrt685evk。詳細は `docs/dev/safeg.md`。
+- **SAFEG（ARMv8-M TrustZone Dual-OS）**：`-DENABLE_SAFEG_M=ON` で有効化（既定OFF＝素ASP3不変）。
+  対象は mps2_an505 / pico2_arm / mimxrt685evk（各 `*_safeg.ld`＋SAU/NS_VTOR を target に同梱）。詳細は `docs/dev/safeg.md`。
+  - `-DENABLE_SAFEG_IMPLIB=ON`：gate(`cmse_nonsecure_entry`)を持つアプリで CMSE import lib `secure_nsclib.o` を最終ELFに生成（NS がリンク）。gate無アプリ(sample)では "no symbols" 失敗するため opt-in（既定OFF）。
+  - **Secure+NS の遷移テスト(test/) を実機で回す手順**（test_safeg ビルドレシピ／NS の TST_ENABLE／2イメージ書込み／`[TST]` 取得／imxrt685 の RESET自走+capture先行／RP2350 の SWD-lock→UF2／QEMU の INVEP 限界）は **SafeG-M リポの skill `safeg-m-ops`**（asp3_core はベース／ビルド基盤を提供する側）。
 
 ## 2. 構造化ログ（slog）でのデバッグ
 
